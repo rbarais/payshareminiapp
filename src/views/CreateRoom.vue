@@ -3,306 +3,263 @@ import { ref } from 'vue';
 import type { Room } from '../types';
 import { getCurrentUser } from '../utils/nimiq';
 import { addRoom, generateRoomId } from '../utils/storage';
+import { encodeRoomToUrl } from '../utils/room';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 
 const emit = defineEmits<{
-  (e: 'roomCreated', room: Room): void;
+  (e: 'back'): void;
 }>();
 
-// Formulaire
-const amount = ref<number>(0);
-const currency = ref<string>('NIM');
-const reason = ref<string>('');
-const maxParticipants = ref<number>(2);
+const reason = ref('');
+const amount = ref<number | null>(null);
+const maxParticipants = ref(2);
+const isCreating = ref(false);
+const error = ref('');
 
-// État après création
 const createdRoom = ref<Room | null>(null);
-const isCreating = ref<boolean>(false);
-const error = ref<string>('');
+const shareUrl = ref('');
 
-// Options de devise
-const currencyOptions = ['NIM', 'EUR', 'USD', 'CHF'];
-
-/**
- * Crée une nouvelle room
- */
 async function createRoom() {
   error.value = '';
-  
-  // Validation
+
+  if (!reason.value.trim()) {
+    error.value = 'Indique la raison';
+    return;
+  }
   if (!amount.value || amount.value <= 0) {
     error.value = 'Le montant doit être supérieur à 0';
     return;
   }
-  
-  if (!reason.value.trim()) {
-    error.value = 'Veuillez indiquer une raison';
-    return;
-  }
-  
-  if (!maxParticipants.value || maxParticipants.value < 2) {
+  if (maxParticipants.value < 2) {
     error.value = 'Il faut au moins 2 participants';
     return;
   }
 
   isCreating.value = true;
-
   try {
-    // Récupérer l'utilisateur courant
-    const currentUser = await getCurrentUser();
-
-    // Créer la room
+    const user = await getCurrentUser();
     const room: Room = {
       id: generateRoomId(),
-      creatorId: currentUser.id,
-      creatorName: currentUser.name,
+      creatorId: user.id,
+      creatorName: user.name,
       amount: amount.value,
-      currency: currency.value,
+      currency: 'NIM',
       reason: reason.value.trim(),
       maxParticipants: maxParticipants.value,
       participants: [{
-        id: currentUser.id,
-        name: currentUser.name,
-        amountPaid: amount.value, // Le créateur a déjà payé sa part
+        id: user.id,
+        name: user.name,
+        amountPaid: amount.value / maxParticipants.value,
         joinedAt: new Date(),
-        status: 'paid' as const
+        status: 'paid',
       }],
       createdAt: new Date(),
-      status: 'open'
+      status: 'open',
     };
 
-    // Sauvegarder la room
     addRoom(room);
     createdRoom.value = room;
-
-    // Émettre l'événement
-    emit('roomCreated', room);
-  } catch (err) {
-    error.value = 'Erreur lors de la création de la room';
-    console.error(err);
+    shareUrl.value = encodeRoomToUrl(room);
+  } catch {
+    error.value = 'Erreur lors de la création';
   } finally {
     isCreating.value = false;
   }
 }
 
-/**
- * Réinitialise le formulaire
- */
-function resetForm() {
-  amount.value = 0;
-  reason.value = '';
-  maxParticipants.value = 2;
-  error.value = '';
-  createdRoom.value = null;
+async function copyUrl() {
+  await navigator.clipboard.writeText(shareUrl.value);
 }
 </script>
 
 <template>
   <div class="create-room">
-    <!-- Formulaire de création -->
-    <div v-if="!createdRoom" class="form-container">
-      <h2>Créer une Room</h2>
-      <p class="subtitle">Remboursez vos frais entre amis</p>
+    <button class="back-btn" @click="emit('back')">← Retour</button>
+
+    <!-- Formulaire -->
+    <div v-if="!createdRoom" class="card">
+      <h2>Nouvelle dépense</h2>
+      <p class="subtitle">Tes amis paieront leur part en scannant le QR</p>
 
       <form @submit.prevent="createRoom" class="form">
-        <div class="form-group">
-          <label for="amount">Montant total</label>
-          <div class="amount-input">
-            <input
-              id="amount"
-              v-model.number="amount"
-              type="number"
-              placeholder="0"
-              min="0.01"
-              step="0.01"
-              required
-            />
-            <select v-model="currency" class="currency-select">
-              <option v-for="curr in currencyOptions" :key="curr" :value="curr">
-                {{ curr }}
-              </option>
-            </select>
+        <div class="field">
+          <label>Pour quoi ?</label>
+          <input v-model="reason" type="text" placeholder="Pizza du vendredi, Essence…" required />
+        </div>
+
+        <div class="field">
+          <label>Montant total (NIM)</label>
+          <input v-model.number="amount" type="number" placeholder="0" min="0.01" step="0.01" required />
+        </div>
+
+        <div class="field">
+          <label>Nombre de personnes</label>
+          <div class="stepper">
+            <button type="button" @click="maxParticipants = Math.max(2, maxParticipants - 1)">−</button>
+            <span>{{ maxParticipants }}</span>
+            <button type="button" @click="maxParticipants = Math.min(20, maxParticipants + 1)">+</button>
           </div>
+          <p class="hint" v-if="amount && amount > 0">
+            {{ (amount / maxParticipants).toFixed(2) }} NIM par personne
+          </p>
         </div>
 
-        <div class="form-group">
-          <label for="reason">Raison</label>
-          <input
-            id="reason"
-            v-model="reason"
-            type="text"
-            placeholder="Ex: Pizza du vendredi, Courses, Essence"
-            required
-          />
-        </div>
+        <p v-if="error" class="error">{{ error }}</p>
 
-        <div class="form-group">
-          <label for="participants">Nombre de participants</label>
-          <input
-            id="participants"
-            v-model.number="maxParticipants"
-            type="number"
-            placeholder="2"
-            min="2"
-            max="20"
-            required
-          />
-          <p class="hint">(Toi + {{ maxParticipants - 1 }} autres)</p>
-        </div>
-
-        <div v-if="error" class="error-message">
-          {{ error }}
-        </div>
-
-        <button type="submit" :disabled="isCreating" class="btn-primary">
-          <span v-if="isCreating">Création en cours...</span>
-          <span v-else>Créer la Room</span>
+        <button type="submit" class="btn-primary" :disabled="isCreating">
+          {{ isCreating ? 'Création…' : 'Générer le QR code' }}
         </button>
       </form>
     </div>
 
-    <!-- Résultat avec QR Code -->
-    <div v-else class="result-container">
-      <h2>Room créée avec succès !</h2>
-      <p class="room-info">
-        Montant: <strong>{{ createdRoom.amount }} {{ createdRoom.currency }}</strong> | 
-        Raison: <strong>{{ createdRoom.reason }}</strong>
+    <!-- QR code de partage -->
+    <div v-else class="card result">
+      <h2>{{ createdRoom.reason }}</h2>
+      <p class="amount-label">
+        {{ (createdRoom.amount / createdRoom.maxParticipants).toFixed(2) }} NIM / personne
+        <span class="muted">· {{ createdRoom.maxParticipants }} personnes</span>
       </p>
 
       <div class="qr-section">
-        <QRCodeGenerator :room-id="createdRoom.id" />
-        <p class="qr-hint">Scannez ce QR code pour rejoindre la room</p>
+        <QRCodeGenerator :url="shareUrl" :size="240" />
+        <p class="qr-hint">Fais scanner ce QR à tes amis</p>
       </div>
 
-      <div class="room-details">
-        <p>ID de la room: <code>{{ createdRoom.id }}</code></p>
-        <p>Partagez ce code ou le QR code avec vos amis</p>
-      </div>
-
-      <div class="actions">
-        <button @click="resetForm" class="btn-secondary">Créer une autre room</button>
-        <button @click="emit('roomCreated', createdRoom!)" class="btn-primary">
-          Voir la room
-        </button>
-      </div>
+      <button class="btn-secondary" @click="copyUrl">Copier le lien</button>
+      <button class="btn-ghost" @click="createdRoom = null; shareUrl = ''">Créer une autre</button>
     </div>
   </div>
 </template>
 
 <style scoped>
 .create-room {
-  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  max-width: 440px;
   margin: 0 auto;
-  padding: 20px;
 }
 
-.form-container,
-.result-container {
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 15px;
+  cursor: pointer;
+  align-self: flex-start;
+  padding: 4px 0;
+}
+
+.card {
   background: var(--code-bg);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 24px;
   box-shadow: var(--shadow);
 }
 
-.form-container h2,
-.result-container h2 {
+h2 {
   color: var(--text-h);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .subtitle {
   color: var(--text);
-  margin-bottom: 24px;
   font-size: 14px;
+  margin-bottom: 24px;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
-.form-group {
+.field {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.form-group label {
+.field label {
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text-h);
-  font-size: 14px;
-  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.form-group input,
-.form-group select {
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+.field input {
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
   background: var(--bg);
   color: var(--text-h);
   font-size: 16px;
   transition: border-color 0.2s;
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.field input:focus {
   outline: none;
   border-color: var(--accent);
 }
 
-.amount-input {
+.stepper {
   display: flex;
-  gap: 8px;
-}
-
-.amount-input input {
-  flex: 1;
-}
-
-.currency-select {
-  width: 80px;
+  align-items: center;
+  gap: 0;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
   background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
+}
+
+.stepper button {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 20px;
   cursor: pointer;
+  color: var(--accent);
+  transition: background 0.15s;
+}
+
+.stepper button:hover {
+  background: var(--accent-bg);
+}
+
+.stepper span {
+  flex: 1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-h);
 }
 
 .hint {
-  color: var(--text);
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.error-message {
-  color: #ff4444;
-  font-size: 14px;
-  padding: 12px;
-  background: rgba(255, 68, 68, 0.1);
-  border-radius: 8px;
-  text-align: center;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  font-size: 13px;
+  color: var(--accent);
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 14px;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 8px;
 }
 
 .btn-primary {
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
   background: var(--accent);
   color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-border);
-  box-shadow: var(--shadow);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
 }
 
 .btn-primary:disabled {
@@ -310,72 +267,73 @@ function resetForm() {
   cursor: not-allowed;
 }
 
-.btn-secondary {
-  background: var(--social-bg);
-  color: var(--text-h);
-  margin-right: 12px;
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
 }
 
-.btn-secondary:hover {
-  background: var(--border);
-}
-
-.result-container {
+/* Résultat */
+.result {
   text-align: center;
 }
 
-.room-info {
+.amount-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-h);
+  margin-bottom: 28px;
+}
+
+.muted {
+  font-weight: 400;
   color: var(--text);
-  margin-bottom: 24px;
+  font-size: 15px;
 }
 
 .qr-section {
-  margin: 24px 0;
-}
-
-.qr-hint {
-  color: var(--text);
-  font-size: 14px;
-  margin-top: 12px;
-}
-
-.room-details {
-  background: var(--bg);
-  border-radius: 8px;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 24px;
 }
 
-.room-details code {
-  background: var(--code-bg);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  word-break: break-all;
+.qr-hint {
+  font-size: 14px;
+  color: var(--text);
 }
 
-.actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
+.btn-secondary {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  border: 1.5px solid var(--accent);
+  border-radius: 12px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.2s;
 }
 
-@media (max-width: 600px) {
-  .amount-input {
-    flex-direction: column;
-  }
-  
-  .currency-select {
-    width: 100%;
-  }
-  
-  .actions {
-    flex-direction: column;
-  }
-  
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-  }
+.btn-secondary:hover {
+  background: rgba(170, 59, 255, 0.15);
+}
+
+.btn-ghost {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  background: var(--social-bg);
 }
 </style>

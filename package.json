@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@nimiq/mini-app-sdk": "^0.1.0",
+    "jsqr": "^1.4.0",
     "qrcode.vue": "^3.10.0",
     "vue": "^3.5.34"
   },
   "devDependencies": {
     "@types/node": "^24.12.3",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",
     "typescript": "~6.0.2",
