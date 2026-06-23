@@ -2,6 +2,12 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import jsQR from 'jsqr';
 
+declare const BarcodeDetector: {
+  new(options: { formats: string[] }): {
+    detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string }>>;
+  };
+};
+
 const emit = defineEmits<{
   (e: 'scanned', text: string): void;
   (e: 'cancel'): void;
@@ -21,11 +27,13 @@ function submitManual() {
 
 let stream: MediaStream | null = null;
 let rafId: number | null = null;
+let pollId: ReturnType<typeof setInterval> | null = null;
+
+const useNativeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window;
 
 async function start() {
   error.value = '';
 
-  // getUserMedia n'existe qu'en contexte sécurisé (HTTPS ou localhost)
   if (!navigator.mediaDevices?.getUserMedia) {
     error.value = !window.isSecureContext
       ? `La caméra nécessite une connexion sécurisée (HTTPS). Ouvre l'app en https:// ou colle le lien manuellement.`
@@ -34,14 +42,27 @@ async function start() {
   }
 
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment' },
-    });
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+      });
+    } catch {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    }
     if (!videoEl.value) return;
     videoEl.value.srcObject = stream;
-    await videoEl.value.play();
+    try {
+      await videoEl.value.play();
+    } catch {
+      // autoplay attribute handles policy on Android
+    }
     scanning.value = true;
-    tick();
+
+    if (useNativeDetector) {
+      startNativeDetector();
+    } else {
+      tick();
+    }
   } catch (err) {
     const name = (err as DOMException)?.name;
     if (name === 'NotAllowedError') {
@@ -54,6 +75,25 @@ async function start() {
   }
 }
 
+// Native BarcodeDetector (Android Chrome 83+): fast, offloaded to the OS
+function startNativeDetector() {
+  const detector = new BarcodeDetector({ formats: ['qr_code'] });
+  pollId = setInterval(async () => {
+    const video = videoEl.value;
+    if (!video || !scanning.value || video.readyState < video.HAVE_ENOUGH_DATA) return;
+    try {
+      const barcodes = await detector.detect(video);
+      if (barcodes.length > 0) {
+        stop();
+        emit('scanned', barcodes[0].rawValue);
+      }
+    } catch {
+      // ignore per-frame errors
+    }
+  }, 200);
+}
+
+// jsQR fallback: downsample to 640px max to keep it fast on mobile
 function tick() {
   const video = videoEl.value;
   const canvas = canvasEl.value;
@@ -64,11 +104,13 @@ function tick() {
     return;
   }
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+  const MAX = 640;
+  const scale = Math.min(1, MAX / Math.max(video.videoWidth, video.videoHeight));
+  canvas.width = Math.round(video.videoWidth * scale);
+  canvas.height = Math.round(video.videoHeight * scale);
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  ctx.drawImage(video, 0, 0);
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const result = jsQR(imageData.data, imageData.width, imageData.height);
@@ -85,6 +127,7 @@ function tick() {
 function stop() {
   scanning.value = false;
   if (rafId !== null) cancelAnimationFrame(rafId);
+  if (pollId !== null) clearInterval(pollId);
   stream?.getTracks().forEach(t => t.stop());
 }
 
@@ -116,7 +159,7 @@ onUnmounted(stop);
     </div>
 
     <div v-else class="camera-view">
-      <video ref="videoEl" class="video" playsinline muted />
+      <video ref="videoEl" class="video" playsinline muted autoplay />
       <canvas ref="canvasEl" class="canvas" />
 
       <!-- Viseur -->

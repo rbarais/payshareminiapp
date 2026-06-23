@@ -1,10 +1,10 @@
 import vue from '@vitejs/plugin-vue'
-import basicSsl from '@vitejs/plugin-basic-ssl'
+import nimiq from '@nimiq/core/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  // HTTPS requis pour l'accès caméra (getUserMedia) sur mobile via IP réseau
-  plugins: [vue(), basicSsl()],
+  // Le plugin Nimiq configure WASM + workers requis par le Web Client (@nimiq/core)
+  plugins: [vue(), nimiq()],
   server: {
     port: 5173,
     host: true,

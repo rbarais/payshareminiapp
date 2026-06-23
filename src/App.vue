@@ -35,25 +35,14 @@ function handleScanned(text: string) {
 
 <template>
   <!-- Scanner plein écran -->
-  <QRScanner
-    v-if="view === 'scan'"
-    @scanned="handleScanned"
-    @cancel="view = 'home'"
-  />
+  <QRScanner v-if="view === 'scan'" @scanned="handleScanned" @cancel="view = 'home'" />
 
   <div class="app" v-else>
     <!-- Vue paiement (ouverture via QR) -->
-    <PayRoom
-      v-if="view === 'pay' && incomingRoom"
-      :room="incomingRoom"
-      @back="view = 'home'"
-    />
+    <PayRoom v-if="view === 'pay' && incomingRoom" :room="incomingRoom" @back="view = 'home'" />
 
     <!-- Vue création -->
-    <CreateRoom
-      v-else-if="view === 'create'"
-      @back="view = 'home'"
-    />
+    <CreateRoom v-else-if="view === 'create'" @back="view = 'home'" />
 
     <!-- Accueil -->
     <div v-else class="home">

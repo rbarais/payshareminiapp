@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import type { ShareableRoom } from '../types';
 import { getCurrentUser, requestPayment, isNimiqEnvironment } from '../utils/nimiq';
-import { amountPerPerson } from '../utils/room';
+import { amountPerPerson, paymentData } from '../utils/room';
+import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 
 const props = defineProps<{
   room: ShareableRoom;
@@ -14,16 +15,55 @@ const emit = defineEmits<{
 
 const currentUser = ref<{ id: string; name: string } | null>(null);
 const isPaying = ref(false);
-const paid = ref(false);
+const paid = ref(false); // confirmation locale immédiate après envoi
 const txHash = ref('');
 const error = ref('');
+
+// Lecture blockchain (Web Client)
+const payments = ref<RoomPayment[]>([]);
+const syncing = ref(false);
+const loadError = ref('');
 
 const perPerson = computed(() => amountPerPerson(props.room));
 const isCreator = computed(() => currentUser.value?.id === props.room.creatorId);
 
-onMounted(async () => {
-  currentUser.value = await getCurrentUser();
+// Le suivi n'a de sens que pour une vraie adresse Nimiq (pas en mode dev)
+const trackingAvailable = computed(() => props.room.creatorId.startsWith('NQ'));
+
+const norm = (a: string) => a.replace(/\s/g, '').toUpperCase();
+
+const collected = computed(() =>
+  payments.value.reduce((sum, p) => sum + p.valueNim, 0),
+);
+const payersCount = computed(() => payments.value.length);
+const remaining = computed(() => Math.max(0, props.room.amount - collected.value));
+const progressPct = computed(() =>
+  props.room.amount > 0
+    ? Math.min(100, (collected.value / props.room.amount) * 100)
+    : 0,
+);
+
+// "Ai-je déjà payé ?" — vérifié on-chain, complété par la confirmation locale
+const hasPaidOnChain = computed(() => {
+  const me = currentUser.value ? norm(currentUser.value.id) : '';
+  return !!me && payments.value.some((p) => norm(p.from) === me);
 });
+const hasPaid = computed(() => paid.value || hasPaidOnChain.value);
+
+let pollId: ReturnType<typeof setInterval> | null = null;
+
+async function loadPayments() {
+  if (!trackingAvailable.value) return;
+  syncing.value = true;
+  loadError.value = '';
+  try {
+    payments.value = await fetchRoomPayments(props.room.creatorId, props.room.id);
+  } catch {
+    loadError.value = 'Synchronisation impossible pour le moment';
+  } finally {
+    syncing.value = false;
+  }
+}
 
 async function pay() {
   isPaying.value = true;
@@ -32,16 +72,32 @@ async function pay() {
     const hash = await requestPayment(
       perPerson.value,
       props.room.creatorId,
-      `PayShare: ${props.room.reason}`,
+      paymentData(props.room),
     );
     txHash.value = typeof hash === 'string' ? hash : '';
     paid.value = true;
+    // La transaction met quelques secondes à apparaître on-chain : on recharge.
+    setTimeout(loadPayments, 5000);
+    setTimeout(loadPayments, 15000);
   } catch {
     error.value = 'Paiement annulé ou échoué';
   } finally {
     isPaying.value = false;
   }
 }
+
+onMounted(async () => {
+  currentUser.value = await getCurrentUser();
+  loadPayments();
+  // Auto-refresh doux tant que la vue est ouverte (pas de rate-limit en P2P)
+  if (trackingAvailable.value) {
+    pollId = setInterval(loadPayments, 20000);
+  }
+});
+
+onUnmounted(() => {
+  if (pollId !== null) clearInterval(pollId);
+});
 </script>
 
 <template>
@@ -55,6 +111,30 @@ async function pay() {
       <p class="creator">par {{ room.creatorName }}</p>
     </div>
 
+    <!-- Avancement de la collecte (lecture blockchain) -->
+    <div v-if="trackingAvailable" class="progress-card">
+      <div class="progress-head">
+        <span class="progress-title">Avancement</span>
+        <button class="refresh-btn" :disabled="syncing" @click="loadPayments" title="Rafraîchir">
+          <span v-if="syncing" class="sync-dot" /> {{ syncing ? 'Sync…' : '↻' }}
+        </button>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" :style="{ width: progressPct + '%' }" />
+      </div>
+
+      <div class="progress-stats">
+        <span><strong>{{ collected.toFixed(2) }}</strong> / {{ room.amount.toFixed(2) }} NIM</span>
+        <span>{{ payersCount }}/{{ room.maxParticipants }} payés</span>
+      </div>
+
+      <p v-if="remaining > 0" class="remaining">Reste {{ remaining.toFixed(2) }} NIM à collecter</p>
+      <p v-else class="remaining done">✓ Entièrement collecté</p>
+
+      <p v-if="loadError" class="sync-error">{{ loadError }}</p>
+    </div>
+
     <!-- Montant dû -->
     <div class="amount-card">
       <p class="amount-label">Ta part</p>
@@ -65,7 +145,7 @@ async function pay() {
     </div>
 
     <!-- Statut : déjà payé -->
-    <div v-if="paid" class="success-card">
+    <div v-if="hasPaid" class="success-card">
       <p class="success-icon">✓</p>
       <p class="success-title">Paiement envoyé !</p>
       <p class="success-sub">{{ perPerson.toFixed(2) }} NIM envoyés à {{ room.creatorName }}</p>
@@ -144,6 +224,99 @@ async function pay() {
 .creator {
   font-size: 14px;
   opacity: 0.85;
+}
+
+.progress-card {
+  padding: 18px 20px;
+  background: var(--code-bg);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.progress-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text);
+}
+
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--accent);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.progress-bar {
+  height: 10px;
+  background: var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-border));
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--text-h);
+}
+
+.remaining {
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 8px;
+}
+
+.remaining.done {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sync-error {
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 8px;
+  font-style: italic;
 }
 
 .amount-card {
