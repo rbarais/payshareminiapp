@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import type { Room } from '../types';
 import { getCurrentUser } from '../utils/nimiq';
 import { addRoom, generateRoomId } from '../utils/storage';
 import { encodeRoomToUrl } from '../utils/room';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 
-const emit = defineEmits<{
-  (e: 'back'): void;
-  (e: 'done'): void;
-}>();
+const router = useRouter()
+
+function goBack() {
+  router.back()
+}
+
+function goDone() {
+  router.push({ name: 'group' })
+}
 
 const reason = ref('');
 const amount = ref<number | null>(null);
@@ -69,7 +75,7 @@ async function copyUrl() {
   <!-- QR Result -->
   <div v-if="createdRoom" class="screen">
     <div class="top-bar">
-      <button class="icon-btn gray" @click="emit('done')">
+      <button class="icon-btn gray" @click="goDone">
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
           <path d="M10.5 4L6 8.5L10.5 13" stroke="#1A1916" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -92,14 +98,14 @@ async function copyUrl() {
       <p class="qr-hint">Fais scanner ce QR à tes amis</p>
 
       <button class="btn-primary" @click="copyUrl">Copier le lien</button>
-      <button class="btn-ghost" @click="emit('done')">Retour au groupe</button>
+      <button class="btn-ghost" @click="goDone">Retour au groupe</button>
     </div>
   </div>
 
   <!-- Form -->
   <div v-else class="screen">
     <div class="top-bar">
-      <button class="icon-btn gray" @click="emit('back')">
+      <button class="icon-btn gray" @click="goBack">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M2 2L12 12M12 2L2 12" stroke="#3D3B35" stroke-width="1.8" stroke-linecap="round"/>
         </svg>

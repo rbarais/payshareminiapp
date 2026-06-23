@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-const emit = defineEmits<{
-  (e: 'new-group'): void;
-  (e: 'open-group'): void;
-  (e: 'open-scanner'): void;
-}>();
+const router = useRouter()
 
 const showEur = ref(false);
+
+function goToNewGroup() {
+  router.push({ name: 'newGroup' })
+}
+
+function goToGroup() {
+  router.push({ name: 'group' })
+}
+
+function goToScanner() {
+  router.push({ name: 'scan' })
+}
 
 const walletShort = 'NQ48 8CKH…BA76';
 
@@ -116,7 +125,7 @@ const owedEur = '−4.60 EUR';
       <!-- Groups header -->
       <div class="section-row">
         <span class="section-title">Mes groupes</span>
-        <button class="new-btn" @click="emit('new-group')">
+        <button class="new-btn" @click="goToNewGroup">
           <span class="new-plus">+</span>
           <span>Nouveau</span>
         </button>
@@ -128,7 +137,7 @@ const owedEur = '−4.60 EUR';
           v-for="g in groups"
           :key="g.id"
           class="group-card"
-          @click="emit('open-group')"
+          @click="goToGroup"
         >
           <div class="group-icon" :style="{ background: g.iconBg }">
             <!-- person -->
@@ -184,7 +193,7 @@ const owedEur = '−4.60 EUR';
         </svg>
         <span>Historique</span>
       </div>
-      <div class="nav-item" @click="emit('open-scanner')">
+      <div class="nav-item" @click="goToScanner">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
           <rect x="2" y="2" width="6" height="6" rx="1" stroke="#A09890" stroke-width="1.5"/>
           <rect x="2" y="14" width="6" height="6" rx="1" stroke="#A09890" stroke-width="1.5"/>
