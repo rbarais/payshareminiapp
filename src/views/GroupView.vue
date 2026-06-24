@@ -1,36 +1,80 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
+import { useToast } from '../stores/toast';
 
-const router = useRouter()
+const props = defineProps<{ id: string }>();
 
-const paid = ref(false);
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
+const toast = useToast();
+
+const userId = computed(() => session.user.value?.id ?? '');
+const group = computed(() => store.getGroup(props.id));
+const expenses = computed(() => store.groupExpenses(props.id));
+const balance = computed(() => store.groupBalanceForUser(props.id, userId.value));
+
+// Redirige si le groupe n'existe pas (id invalide / supprimé).
+onMounted(() => {
+  if (!group.value) router.replace({ name: 'home' });
+});
+
+const monthLabel = computed(() =>
+  group.value
+    ? group.value.createdAt.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
+    : '',
+);
+
+// Palette d'avatars (par initiale).
+const AVATAR_COLORS = [
+  { bg: '#BEE0FF', color: '#0D3A5C' },
+  { bg: '#C6F0DC', color: '#0A4028' },
+  { bg: '#F0D4E8', color: '#4A1040' },
+  { bg: '#FFE3C2', color: '#7A3E00' },
+  { bg: '#E0DCF5', color: '#3A2A6B' },
+];
+
+function avatarStyle(index: number) {
+  return AVATAR_COLORS[index % AVATAR_COLORS.length];
+}
+
+function memberName(id: string): string {
+  if (id === userId.value) return 'toi';
+  return group.value?.members.find((m) => m.id === id)?.name ?? 'Inconnu';
+}
+
+function userShare(expenseId: string): number {
+  const exp = expenses.value.find((e) => e.id === expenseId);
+  return exp?.shares.find((s) => s.memberId === userId.value)?.amount ?? 0;
+}
+
+function shortDate(d: Date): string {
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
 
 function goBack() {
-  router.back()
+  router.back();
 }
 
 function goToAddExpense() {
-  router.push({ name: 'addExpense' })
+  // L'ajout de dépense (et sa répartition) arrive en Phase 3.
+  toast.show('Ajout de dépense — bientôt disponible', 'info');
 }
 
-function goToPay() {
-  router.push({ name: 'pay' })
+function invite() {
+  toast.show('Invitation par QR — bientôt disponible', 'info'); // Phase 4
 }
 
-function goToScanner() {
-  router.push({ name: 'scan' })
+function settle() {
+  toast.show('Règlement — bientôt disponible', 'info'); // Phase 4
 }
-
-const expenses = [
-  { id: 1, title: 'Restaurant El Born', paidBy: 'Marie', date: '12 jan', total: '84 NIM', share: '−21 NIM', shareColor: '#CC3C3C', pct: 25, barColor: '#F6B221' },
-  { id: 2, title: 'Airbnb — 3 nuits', paidBy: 'Alex', date: '10 jan', total: '180 NIM', share: 'tu as payé', shareColor: '#198060', pct: 100, barColor: '#198060' },
-  { id: 3, title: 'Musée Picasso', paidBy: 'Lucas', date: '11 jan', total: '32 NIM', share: '−8 NIM', shareColor: '#CC3C3C', pct: 25, barColor: '#F6B221' },
-];
 </script>
 
 <template>
-  <div class="screen">
+  <div v-if="group" class="screen">
     <!-- Header -->
     <div class="header">
       <button class="icon-btn" @click="goBack">
@@ -39,8 +83,8 @@ const expenses = [
         </svg>
       </button>
       <div class="header-info">
-        <div class="header-title">Vacances Barcelone</div>
-        <div class="header-sub">4 membres · janv. 2025</div>
+        <div class="header-title">{{ group.name }}</div>
+        <div class="header-sub">{{ group.members.length }} membres · {{ monthLabel }}</div>
       </div>
       <button class="icon-btn">
         <svg width="16" height="16" viewBox="0 0 16 16">
@@ -51,24 +95,17 @@ const expenses = [
       </button>
     </div>
 
-    <!-- Members + QR -->
+    <!-- Members + invite -->
     <div class="members-row">
-      <div class="avatar" style="background:#5F4B8B; overflow:hidden; border-color: var(--bg);">
-        <svg width="36" height="36" viewBox="0 0 38 38">
-          <rect width="38" height="38" fill="#5F4B8B"/>
-          <polygon points="0,0 19,19 38,0" fill="#7B6BA5"/>
-          <polygon points="38,0 19,19 38,38" fill="#4E3D7A"/>
-          <polygon points="38,38 19,19 0,38" fill="#6B5A98"/>
-          <polygon points="0,38 19,19 0,0" fill="#533F85"/>
-          <circle cx="19" cy="19" r="6" fill="#F6B221"/>
-          <polygon points="15.5,23.5 19,12.5 22.5,23.5" fill="#5F4B8B"/>
-        </svg>
+      <div
+        v-for="(m, i) in group.members"
+        :key="m.id"
+        class="avatar"
+        :style="{ background: avatarStyle(i).bg, color: avatarStyle(i).color }"
+      >
+        {{ m.name.charAt(0).toUpperCase() }}
       </div>
-      <div class="avatar" style="background:#BEE0FF; color:#0D3A5C;">M</div>
-      <div class="avatar" style="background:#C6F0DC; color:#0A4028;">L</div>
-      <div class="avatar" style="background:#F0D4E8; color:#4A1040;">J</div>
-      <div class="avatar" style="background:var(--border); color:var(--text-mid); font-size:11px;">+2</div>
-      <button class="qr-btn" @click="goToScanner">
+      <button class="qr-btn" @click="invite">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <rect x="2" y="2" width="5" height="5" rx="1" stroke="#F6B221" stroke-width="1.4"/>
           <rect x="2" y="11" width="5" height="5" rx="1" stroke="#F6B221" stroke-width="1.4"/>
@@ -81,14 +118,17 @@ const expenses = [
       </button>
     </div>
 
-    <!-- Debt card -->
-    <div v-if="!paid" class="debt-card">
+    <!-- Balance card -->
+    <div v-if="balance < -0.005" class="debt-card">
       <div>
-        <div class="debt-who">Tu dois à Marie</div>
-        <div class="debt-amount">42.50 NIM</div>
-        <div class="debt-eur">≈ 2.91 EUR</div>
+        <div class="debt-who">Tu dois</div>
+        <div class="debt-amount">{{ Math.abs(balance).toFixed(2) }} NIM</div>
       </div>
-      <button class="settle-btn" @click="goToPay">Régler →</button>
+      <button class="settle-btn" @click="settle">Régler →</button>
+    </div>
+    <div v-else-if="balance > 0.005" class="credit-card">
+      <div class="credit-title">On te doit</div>
+      <div class="credit-amount">{{ balance.toFixed(2) }} NIM</div>
     </div>
     <div v-else class="settled-card">
       <div class="settled-icon">
@@ -98,7 +138,7 @@ const expenses = [
       </div>
       <div>
         <div class="settled-title">Groupe soldé ✓</div>
-        <div class="settled-sub">42.50 NIM envoyés à Marie</div>
+        <div class="settled-sub">Aucune dette en cours</div>
       </div>
     </div>
 
@@ -109,25 +149,40 @@ const expenses = [
     </div>
 
     <!-- Expense list -->
-    <div class="expense-list">
+    <div v-if="expenses.length" class="expense-list">
       <div v-for="exp in expenses" :key="exp.id" class="expense-card">
         <div class="expense-top">
           <div class="expense-left">
-            <div class="expense-title">{{ exp.title }}</div>
-            <div class="expense-meta">Payé par {{ exp.paidBy }} · {{ exp.date }}</div>
+            <div class="expense-title">{{ exp.description }}</div>
+            <div class="expense-meta">Payé par {{ memberName(exp.paidBy) }} · {{ shortDate(exp.createdAt) }}</div>
           </div>
           <div class="expense-right">
-            <div class="expense-total">{{ exp.total }}</div>
-            <div class="expense-share" :style="{ color: exp.shareColor }">{{ exp.share }}</div>
+            <div class="expense-total">{{ exp.amount.toFixed(2) }} {{ exp.currency }}</div>
+            <div
+              class="expense-share"
+              :style="{ color: exp.paidBy === userId ? '#198060' : '#CC3C3C' }"
+            >
+              {{ exp.paidBy === userId ? 'tu as payé' : `−${userShare(exp.id).toFixed(2)} ${exp.currency}` }}
+            </div>
           </div>
         </div>
         <div class="bar-bg">
-          <div class="bar-fill" :style="{ width: exp.pct + '%', background: exp.barColor }"/>
+          <div
+            class="bar-fill"
+            :style="{
+              width: Math.min(100, (userShare(exp.id) / exp.amount) * 100) + '%',
+              background: exp.paidBy === userId ? '#198060' : '#F6B221',
+            }"
+          />
         </div>
       </div>
     </div>
 
-    <div style="height:14px; flex-shrink:0;" />
+    <!-- Empty expenses -->
+    <div v-else class="expense-empty">
+      <div class="expense-empty-text">Aucune dépense pour l'instant</div>
+      <button class="expense-empty-cta" @click="goToAddExpense">+ Ajouter une dépense</button>
+    </div>
   </div>
 </template>
 
@@ -162,10 +217,7 @@ const expenses = [
   cursor: pointer;
 }
 
-.header-info {
-  flex: 1;
-  min-width: 0;
-}
+.header-info { flex: 1; min-width: 0; }
 
 .header-title {
   font-size: 17px;
@@ -174,11 +226,7 @@ const expenses = [
   letter-spacing: -0.3px;
 }
 
-.header-sub {
-  font-size: 11px;
-  color: var(--text);
-  margin-top: 1px;
-}
+.header-sub { font-size: 11px; color: var(--text); margin-top: 1px; }
 
 /* Members */
 .members-row {
@@ -187,6 +235,7 @@ const expenses = [
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .avatar {
@@ -218,7 +267,7 @@ const expenses = [
 
 .qr-btn:hover { opacity: 0.75; }
 
-/* Debt card */
+/* Balance cards */
 .debt-card {
   margin: 0 18px 14px;
   background: var(--red-bg);
@@ -231,26 +280,8 @@ const expenses = [
   flex-shrink: 0;
 }
 
-.debt-who {
-  font-size: 11px;
-  color: var(--red);
-  font-weight: 600;
-  margin-bottom: 3px;
-}
-
-.debt-amount {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--red);
-  letter-spacing: -0.5px;
-}
-
-.debt-eur {
-  font-size: 10px;
-  color: var(--red);
-  opacity: 0.75;
-  margin-top: 2px;
-}
+.debt-who { font-size: 11px; color: var(--red); font-weight: 600; margin-bottom: 3px; }
+.debt-amount { font-size: 22px; font-weight: 700; color: var(--red); letter-spacing: -0.5px; }
 
 .settle-btn {
   background: var(--red);
@@ -265,6 +296,18 @@ const expenses = [
 }
 
 .settle-btn:hover { opacity: 0.85; }
+
+.credit-card {
+  margin: 0 18px 14px;
+  background: var(--green-bg);
+  border: 1px solid #C6EFE0;
+  border-radius: 16px;
+  padding: 14px 16px;
+  flex-shrink: 0;
+}
+
+.credit-title { font-size: 11px; color: var(--green); font-weight: 600; margin-bottom: 3px; }
+.credit-amount { font-size: 22px; font-weight: 700; color: var(--green); letter-spacing: -0.5px; }
 
 .settled-card {
   margin: 0 18px 14px;
@@ -289,18 +332,8 @@ const expenses = [
   flex-shrink: 0;
 }
 
-.settled-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--green);
-}
-
-.settled-sub {
-  font-size: 11px;
-  color: var(--green);
-  opacity: 0.75;
-  margin-top: 2px;
-}
+.settled-title { font-size: 13px; font-weight: 700; color: var(--green); }
+.settled-sub { font-size: 11px; color: var(--green); opacity: 0.75; margin-top: 2px; }
 
 /* Expenses */
 .expenses-header {
@@ -312,11 +345,7 @@ const expenses = [
   flex-shrink: 0;
 }
 
-.expenses-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--dark);
-}
+.expenses-title { font-size: 15px; font-weight: 600; color: var(--dark); }
 
 .add-btn {
   background: var(--accent);
@@ -334,7 +363,7 @@ const expenses = [
 
 .expense-list {
   flex: 1;
-  padding: 0 18px;
+  padding: 0 18px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -357,44 +386,37 @@ const expenses = [
 }
 
 .expense-left { flex: 1; min-width: 0; }
+.expense-title { font-size: 13px; font-weight: 600; color: var(--dark); }
+.expense-meta { font-size: 11px; color: var(--text); margin-top: 2px; }
+.expense-right { text-align: right; flex-shrink: 0; margin-left: 8px; }
+.expense-total { font-size: 13px; font-weight: 600; color: var(--dark); }
+.expense-share { font-size: 10px; margin-top: 1px; }
 
-.expense-title {
+.bar-bg { height: 3px; background: var(--border-subtle); border-radius: 2px; }
+.bar-fill { height: 100%; border-radius: 2px; }
+
+/* Empty expenses */
+.expense-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 30px 18px;
+}
+
+.expense-empty-text { font-size: 13px; color: var(--text); }
+
+.expense-empty-cta {
+  background: var(--accent);
+  border: none;
+  border-radius: 14px;
+  padding: 12px 20px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--dark);
-}
-
-.expense-meta {
-  font-size: 11px;
-  color: var(--text);
-  margin-top: 2px;
-}
-
-.expense-right {
-  text-align: right;
-  flex-shrink: 0;
-  margin-left: 8px;
-}
-
-.expense-total {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--dark);
-}
-
-.expense-share {
-  font-size: 10px;
-  margin-top: 1px;
-}
-
-.bar-bg {
-  height: 3px;
-  background: var(--border-subtle);
-  border-radius: 2px;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 2px;
+  cursor: pointer;
+  font-family: inherit;
 }
 </style>

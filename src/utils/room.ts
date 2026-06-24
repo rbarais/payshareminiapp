@@ -19,6 +19,15 @@ export function decodeRoomFromUrl(): ShareableRoom | null {
   return decodeRoomFromText(window.location.href);
 }
 
+// Construit un lien d'invitation qui OUVRE la mini-app dans Nimiq Pay (deeplink),
+// en y embarquant l'URL de partage (?r=…). À envoyer à un invité par message :
+// tap → Nimiq Pay s'ouvre → la dépense se charge → il connecte son wallet et paie
+// (détection on-chain, sans backend). NB : 1re ouverture d'une URL non whitelistée
+// = avertissement de sécurité Nimiq Pay ; le destinataire doit avoir Nimiq Pay.
+export function buildInviteDeeplink(shareUrl: string): string {
+  return `nimiqpay://miniapp?url=${encodeURIComponent(shareUrl)}`;
+}
+
 // Extrait les données d'une room depuis n'importe quel texte (URL ou deeplink)
 export function decodeRoomFromText(text: string): ShareableRoom | null {
   try {

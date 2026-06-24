@@ -1,13 +1,36 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
+import GroupCard from '../components/GroupCard.vue';
+import BottomNav from '../components/BottomNav.vue';
 
 const router = useRouter()
 const session = useSession()
+const store = useGroupsStore()
 
 const showEur = ref(false);
 const showMenu = ref(false);
+
+const userId = computed(() => session.user.value?.id ?? '');
+
+// Groupes réels + nb de dépenses + solde net de l'utilisateur dans chacun.
+const groups = computed(() =>
+  store.groups.value.map((g) => ({
+    group: g,
+    expenseCount: store.groupExpenses(g.id).length,
+    balance: store.groupBalanceForUser(g.id, userId.value),
+  })),
+);
+
+// Solde global agrégé : ce qu'on te doit (soldes positifs) vs ce que tu dois.
+const credited = computed(() =>
+  groups.value.reduce((s, g) => s + Math.max(0, g.balance), 0),
+);
+const owed = computed(() =>
+  groups.value.reduce((s, g) => s + Math.max(0, -g.balance), 0),
+);
 
 function disconnect() {
   showMenu.value = false;
@@ -19,57 +42,9 @@ function goToNewGroup() {
   router.push({ name: 'newGroup' })
 }
 
-function goToGroup() {
-  router.push({ name: 'group' })
+function goToGroup(id: string) {
+  router.push({ name: 'group', params: { id } })
 }
-
-function goToScanner() {
-  router.push({ name: 'scan' })
-}
-
-const groups = [
-  {
-    id: 1,
-    name: 'Vacances Barcelone',
-    members: 4,
-    expenses: 8,
-    iconBg: '#FFF1CF',
-    icon: 'person',
-    iconColor: '#B07808',
-    amount: '-42.5 NIM',
-    amountColor: '#CC3C3C',
-    label: 'tu dois',
-  },
-  {
-    id: 2,
-    name: 'Appart commun',
-    members: 3,
-    expenses: 12,
-    iconBg: '#E0F5EE',
-    icon: 'home',
-    iconColor: '#198060',
-    amount: '+82.0 NIM',
-    amountColor: '#198060',
-    label: 'on te doit',
-  },
-  {
-    id: 3,
-    name: 'Road Trip Est',
-    members: 5,
-    expenses: 3,
-    iconBg: '#EAEEFF',
-    icon: 'car',
-    iconColor: '#3844B0',
-    amount: 'Soldé ✓',
-    amountColor: '#8B8880',
-    label: '',
-  },
-];
-
-const creditedNim = '+124.5 NIM';
-const creditedEur = '+8.05 EUR';
-const owedNim = '−67.2 NIM';
-const owedEur = '−4.60 EUR';
 </script>
 
 <template>
@@ -126,13 +101,11 @@ const owedEur = '−4.60 EUR';
         <div class="balance-row">
           <div>
             <div class="balance-label">On te doit</div>
-            <div class="balance-amount">{{ showEur ? creditedEur : creditedNim }}</div>
-            <div class="balance-sub">{{ showEur ? creditedNim : creditedEur }}</div>
+            <div class="balance-amount">{{ showEur ? 'Bientôt' : '+' + credited.toFixed(1) + ' NIM' }}</div>
           </div>
           <div class="balance-right">
             <div class="balance-label">Tu dois</div>
-            <div class="balance-amount">{{ showEur ? owedEur : owedNim }}</div>
-            <div class="balance-sub">{{ showEur ? owedNim : owedEur }}</div>
+            <div class="balance-amount">{{ showEur ? 'Bientôt' : '−' + owed.toFixed(1) + ' NIM' }}</div>
           </div>
         </div>
       </div>
@@ -147,80 +120,35 @@ const owedEur = '−4.60 EUR';
       </div>
 
       <!-- Group list -->
-      <div class="group-list">
-        <button
+      <div v-if="groups.length" class="group-list">
+        <GroupCard
           v-for="g in groups"
-          :key="g.id"
-          class="group-card"
-          @click="goToGroup"
-        >
-          <div class="group-icon" :style="{ background: g.iconBg }">
-            <!-- person -->
-            <svg v-if="g.icon === 'person'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M4 18C4 15 7.13 12.5 11 12.5C14.87 12.5 18 15 18 18" :stroke="g.iconColor" stroke-width="1.5" stroke-linecap="round"/>
-              <circle cx="11" cy="8" r="3.5" :stroke="g.iconColor" stroke-width="1.5"/>
-            </svg>
-            <!-- home -->
-            <svg v-else-if="g.icon === 'home'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M3 10L11 3L19 10V19H14V14H8V19H3V10Z" :stroke="g.iconColor" stroke-width="1.5" stroke-linejoin="round"/>
-            </svg>
-            <!-- car -->
-            <svg v-else width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <circle cx="6.5" cy="15.5" r="2.5" :stroke="g.iconColor" stroke-width="1.5"/>
-              <circle cx="15.5" cy="15.5" r="2.5" :stroke="g.iconColor" stroke-width="1.5"/>
-              <path d="M2 15.5H4M9 15.5H13M18 15.5H20M4 15.5V9L7 5H15L18 9V15.5" :stroke="g.iconColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div class="group-info">
-            <div class="group-name">{{ g.name }}</div>
-            <div class="group-meta">{{ g.members }} membres · {{ g.expenses }} dépenses</div>
-          </div>
-          <div class="group-balance">
-            <div class="group-amount" :style="{ color: g.amountColor }">{{ g.amount }}</div>
-            <div v-if="g.label" class="group-label">{{ g.label }}</div>
-          </div>
-        </button>
+          :key="g.group.id"
+          :group="g.group"
+          :expense-count="g.expenseCount"
+          :balance="g.balance"
+          @click="goToGroup(g.group.id)"
+        />
+      </div>
+
+      <!-- Empty state -->
+      <div v-else class="empty">
+        <div class="empty-icon">
+          <svg width="34" height="34" viewBox="0 0 22 22" fill="none">
+            <circle cx="8" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5"/>
+            <circle cx="15" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5"/>
+            <path d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19" stroke="#C8C5BF" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M15 14C18.31 14 21 16.24 21 19" stroke="#C8C5BF" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="empty-title">Aucun groupe ici</div>
+        <div class="empty-sub">Crée un groupe ou rejoins-en un via QR code</div>
+        <button class="empty-cta" @click="goToNewGroup">+ Nouveau groupe</button>
       </div>
     </div>
 
     <!-- Bottom nav -->
-    <nav class="bottom-nav">
-      <div class="nav-item active">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <path d="M3 10L11 3L19 10V19H14V14H8V19H3V10Z" fill="#F6B221"/>
-        </svg>
-        <span>Accueil</span>
-      </div>
-      <div class="nav-item">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <circle cx="8" cy="8.5" r="3" stroke="#A09890" stroke-width="1.5"/>
-          <circle cx="15" cy="8.5" r="3" stroke="#A09890" stroke-width="1.5"/>
-          <path d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19" stroke="#A09890" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M15 14C18.31 14 21 16.24 21 19" stroke="#A09890" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        <span>Groupes</span>
-      </div>
-      <div class="nav-item">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <rect x="3" y="5" width="16" height="14" rx="2" stroke="#A09890" stroke-width="1.5"/>
-          <path d="M7 10H15M7 13H12" stroke="#A09890" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M7 3V7M15 3V7" stroke="#A09890" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        <span>Historique</span>
-      </div>
-      <div class="nav-item" @click="goToScanner">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <rect x="2" y="2" width="6" height="6" rx="1" stroke="#A09890" stroke-width="1.5"/>
-          <rect x="2" y="14" width="6" height="6" rx="1" stroke="#A09890" stroke-width="1.5"/>
-          <rect x="14" y="2" width="6" height="6" rx="1" stroke="#A09890" stroke-width="1.5"/>
-          <rect x="3.5" y="3.5" width="3" height="3" fill="#A09890"/>
-          <rect x="3.5" y="15.5" width="3" height="3" fill="#A09890"/>
-          <rect x="15.5" y="3.5" width="3" height="3" fill="#A09890"/>
-          <path d="M14 14H16M20 14V16M14 18H16M20 18V16M20 16H14" stroke="#A09890" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        <span>Scanner</span>
-      </div>
-    </nav>
+    <BottomNav active="home" />
   </div>
 </template>
 
@@ -481,96 +409,53 @@ const owedEur = '−4.60 EUR';
   overflow: hidden;
 }
 
-.group-card {
-  background: var(--bg-card);
-  border: none;
-  border-radius: 16px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-  box-shadow: var(--shadow-sm);
-  cursor: pointer;
-  text-align: left;
-  transition: transform 0.12s, box-shadow 0.12s;
-  width: 100%;
-}
-
-.group-card:hover { transform: scale(0.99); }
-.group-card:active { transform: scale(0.97); }
-
-.group-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.group-info {
+/* Empty state */
+.empty {
   flex: 1;
-  min-width: 0;
-}
-
-.group-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--dark);
-  margin-bottom: 2px;
-}
-
-.group-meta {
-  font-size: 11px;
-  color: var(--text);
-}
-
-.group-balance {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.group-amount {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.group-label {
-  font-size: 10px;
-  color: var(--text);
-  margin-top: 1px;
-}
-
-/* Bottom nav */
-.bottom-nav {
-  border-top: 1px solid var(--border);
-  background: var(--bg-card);
-  padding: 10px 4px 26px;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  min-width: 52px;
-  cursor: pointer;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  padding: 20px;
 }
 
-.nav-item span {
-  font-size: 10px;
-  color: #A09890;
-  font-weight: 500;
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-sm);
 }
 
-.nav-item.active span {
-  color: var(--accent);
+.empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.empty-sub {
+  font-size: 12px;
+  color: var(--text);
+  max-width: 220px;
+  line-height: 1.4;
+}
+
+.empty-cta {
+  margin-top: 12px;
+  background: var(--accent);
+  border: none;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-size: 13px;
   font-weight: 700;
+  color: var(--dark);
+  cursor: pointer;
+  font-family: inherit;
 }
 </style>

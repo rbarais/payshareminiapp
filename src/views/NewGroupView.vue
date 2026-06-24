@@ -1,26 +1,65 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import type { GroupIcon } from '../types';
+import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
+import { generateId } from '../utils/storage';
 
 const router = useRouter()
+const session = useSession()
+const store = useGroupsStore()
 
 const groupName = ref('');
 const selectedIcon = ref(0);
 
-const icons = [
+// Membres invités ajoutés manuellement (sans adresse pour l'instant — une vraie
+// adhésion par QR/contacts viendra plus tard). Le créateur est ajouté à part.
+const guests = ref<{ id: string; name: string }[]>([]);
+const adding = ref(false);
+const newGuestName = ref('');
+
+const icons: { bg: string; color: string; type: GroupIcon }[] = [
   { bg: '#FFF1CF', color: '#B07808', type: 'person' },
-  { bg: '#E0F5EE', color: '#0D3A5C', type: 'home' },
-  { bg: '#EAEEFF', color: '#0A4028', type: 'car' },
-  { bg: '#F0EEE9', color: '#3844B0', type: 'list' },
+  { bg: '#E0F5EE', color: '#198060', type: 'home' },
+  { bg: '#EAEEFF', color: '#3844B0', type: 'car' },
+  { bg: '#F0EEE9', color: '#6B6860', type: 'list' },
 ];
+
+const creatorName = session.user.value?.name ?? 'Toi';
 
 function goBack() {
   router.back()
 }
 
+function confirmGuest() {
+  const name = newGuestName.value.trim();
+  if (!name) { adding.value = false; return; }
+  guests.value.push({ id: generateId('guest'), name });
+  newGuestName.value = '';
+  adding.value = false;
+}
+
+function removeGuest(id: string) {
+  guests.value = guests.value.filter((g) => g.id !== id);
+}
+
 function done() {
-  if (!groupName.value.trim()) return;
-  router.push({ name: 'home' })
+  const name = groupName.value.trim();
+  if (!name) return;
+  const user = session.user.value;
+  if (!user) return;
+
+  const group = store.createGroup({
+    name,
+    icon: icons[selectedIcon.value].type,
+    creatorId: user.id,
+    creatorName: user.name,
+  });
+  for (const g of guests.value) {
+    store.addMember(group.id, { id: g.id, name: g.name });
+  }
+  router.replace({ name: 'group', params: { id: group.id } })
 }
 </script>
 
@@ -78,7 +117,6 @@ function done() {
             type="text"
             placeholder="Vacances été 2025"
           />
-          <div class="caret"/>
         </div>
       </div>
 
@@ -86,6 +124,7 @@ function done() {
       <div class="field-card">
         <div class="field-label">Membres</div>
         <div class="members-row">
+          <!-- Créateur -->
           <div class="member">
             <div class="member-av" style="overflow:hidden;">
               <svg width="36" height="36" viewBox="0 0 38 38">
@@ -98,15 +137,35 @@ function done() {
                 <polygon points="15.5,23.5 19,12.5 22.5,23.5" fill="#5F4B8B"/>
               </svg>
             </div>
-            <span class="member-name">Alex</span>
+            <span class="member-name">{{ creatorName }}</span>
             <span class="member-sub">toi</span>
           </div>
-          <button class="add-member">
+
+          <!-- Invités -->
+          <div v-for="g in guests" :key="g.id" class="member" @click="removeGuest(g.id)">
+            <div class="member-av letter">{{ g.name.charAt(0).toUpperCase() }}</div>
+            <span class="member-name">{{ g.name }}</span>
+            <span class="member-sub">retirer</span>
+          </div>
+
+          <!-- Ajout -->
+          <button class="add-member" @click="adding = true">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 2V12M2 7H12" stroke="#6B6860" stroke-width="1.6" stroke-linecap="round"/>
             </svg>
-            <span>Inviter</span>
           </button>
+        </div>
+
+        <div v-if="adding" class="guest-input-wrap">
+          <input
+            class="guest-input"
+            v-model="newGuestName"
+            type="text"
+            placeholder="Nom de l'invité"
+            @keyup.enter="confirmGuest"
+            autofocus
+          />
+          <button class="guest-add-btn" @click="confirmGuest">Ajouter</button>
         </div>
       </div>
 
@@ -229,21 +288,12 @@ function done() {
 
 .name-input::placeholder { color: var(--text); }
 
-.caret {
-  width: 1.5px;
-  height: 16px;
-  background: var(--accent);
-  border-radius: 2px;
-  animation: blink 1s step-start infinite;
-}
-
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
 /* Members */
 .members-row {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .member {
@@ -251,6 +301,7 @@ function done() {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  cursor: default;
 }
 
 .member-av {
@@ -260,6 +311,13 @@ function done() {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.member-av.letter {
+  background: #BEE0FF;
+  color: #0D3A5C;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .member-name {
@@ -275,22 +333,47 @@ function done() {
 
 .add-member {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
   border: 1.5px dashed var(--border);
   background: none;
   border-radius: 50%;
   width: 46px;
   height: 46px;
   cursor: pointer;
-  margin-top: 0;
   transition: border-color 0.15s;
 }
 
-.add-member svg { margin-top: 12px; }
-.add-member span { display: none; }
 .add-member:hover { border-color: var(--dark); }
+
+.guest-input-wrap {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.guest-input {
+  flex: 1;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  background: #FAFAF8;
+  font-family: inherit;
+}
+
+.guest-add-btn {
+  border: none;
+  border-radius: 12px;
+  background: var(--dark);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 16px;
+  cursor: pointer;
+  font-family: inherit;
+}
 
 .spacer { flex: 1; }
 
