@@ -1,5 +1,6 @@
 import { reactive, computed } from 'vue';
-import { getCurrentUser, formatAddressShort } from '../utils/nimiq';
+import { getHostLanguage } from '@nimiq/mini-app-sdk';
+import { getCurrentUser, formatAddressShort, detectNimiqApp } from '../utils/nimiq';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Store session — identité de l'utilisateur courant (Phase 1).
@@ -20,13 +21,16 @@ interface SessionState {
   language: string;
   connecting: boolean;
   error: string;
+  // null = pas encore vérifié · true/false = résultat de la détection provider
+  isNimiqApp: boolean | null;
 }
 
 const SESSION_KEY = 'payshare_session';
 
 function detectLanguage(): string {
-  const fromPay = window.nimiqPay?.language;
-  if (typeof fromPay === 'string' && fromPay.length === 2) return fromPay;
+  // Langue exposée par Nimiq Pay (seedée avant l'exécution du script de page).
+  const fromHost = getHostLanguage();
+  if (typeof fromHost === 'string' && fromHost.length === 2) return fromHost;
   return (navigator.language || 'fr').slice(0, 2);
 }
 
@@ -44,6 +48,7 @@ const state = reactive<SessionState>({
   language: detectLanguage(),
   connecting: false,
   error: '',
+  isNimiqApp: null,
 });
 
 export function useSession() {
@@ -53,14 +58,34 @@ export function useSession() {
     connecting: computed(() => state.connecting),
     error: computed(() => state.error),
     isLoggedIn: computed(() => state.user !== null),
+    isNimiqApp: computed(() => state.isNimiqApp),
+
+    /**
+     * Vérifie via le provider Nimiq qu'on tourne bien dans Nimiq Pay.
+     * Mémorise le résultat et le renvoie (true = app Nimiq).
+     */
+    async checkEnvironment(): Promise<boolean> {
+      const ok = await detectNimiqApp();
+      state.isNimiqApp = ok;
+      return ok;
+    },
     // Adresse tronquée prête pour l'affichage du wallet-badge.
     walletShort: computed(() => (state.user ? formatAddressShort(state.user.id) : '')),
 
-    /** Déclenche la connexion wallet (dialogue natif d'accès aux comptes). */
+    /**
+     * Déclenche la connexion wallet. N'aboutit que si l'init du provider Nimiq
+     * réussit : hors Nimiq Pay (init en erreur), on reste sur l'écran de login.
+     */
     async connect(): Promise<boolean> {
       state.connecting = true;
       state.error = '';
       try {
+        const inNimiq = await detectNimiqApp();
+        state.isNimiqApp = inNimiq;
+        if (!inNimiq) {
+          state.error = 'Ouvre PayShare dans Nimiq Pay pour te connecter';
+          return false;
+        }
         const user = await getCurrentUser();
         state.user = user;
         localStorage.setItem(SESSION_KEY, JSON.stringify(user));

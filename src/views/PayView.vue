@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import type { ShareableRoom } from '../types';
-import { getCurrentUser, requestPayment, isNimiqEnvironment } from '../utils/nimiq';
+import { getCurrentUser, requestPayment } from '../utils/nimiq';
 import { amountPerPerson, paymentData } from '../utils/room';
 import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
@@ -207,7 +207,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
         <span>Sécurisé via Nimiq Pay · clés jamais exposées</span>
       </div>
 
-      <div v-if="!isNimiqEnvironment()" class="dev-notice">
+      <div v-if="session.isNimiqApp.value === false" class="dev-notice">
         Mode développement — le vrai paiement se fait dans Nimiq Pay
       </div>
     </div>

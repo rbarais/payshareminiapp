@@ -1,19 +1,28 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router';
-import { onMounted, watch } from 'vue';
+import { onMounted, watch, computed } from 'vue';
 import { decodeRoomFromUrl, decodeRoomFromText } from './utils/room';
 import { useSession } from './stores/session';
+import { useToast } from './stores/toast';
 import LoginView from './views/LoginView.vue';
+import ToastHost from './components/ToastHost.vue';
 
 const router = useRouter()
 const route = useRoute()
 const session = useSession()
+const toast = useToast()
 
-// Appelé après une connexion réussie : rejoue le décodage d'un éventuel
-// lien profond (?r=…) ouvert avant connexion.
-function onConnected() {
-  checkUrlForRoom()
-}
+// L'app n'est accessible que si le provider Nimiq s'est initialisé (on est
+// bien dans Nimiq Pay) ET que l'utilisateur est connecté. Si init() échoue,
+// on reste sur l'écran de login, même avec une session en cache.
+const showApp = computed(
+  () => session.isLoggedIn.value && session.isNimiqApp.value === true,
+)
+
+// Rejoue un éventuel lien profond (?r=…) dès qu'on entre dans l'app.
+watch(showApp, (visible) => {
+  if (visible) checkUrlForRoom()
+})
 
 // Gérer le décodage de l'URL au montage et lors des changements de route
 function checkUrlForRoom() {
@@ -26,8 +35,15 @@ function checkUrlForRoom() {
   }
 }
 
-onMounted(() => {
-  checkUrlForRoom()
+onMounted(async () => {
+  // Lance l'init du provider Nimiq au démarrage (cf. tutoriel mini-app).
+  // Si init() échoue, on n'entre pas dans l'app : simple toast pour l'instant,
+  // un écran dédié viendra plus tard.
+  const inNimiq = await session.checkEnvironment()
+  if (!inNimiq) {
+    toast.show('Ouvre PayShare depuis Nimiq Pay pour les paiements réels.', 'error')
+  }
+  if (showApp.value) checkUrlForRoom()
 })
 
 // Surveiller les changements de route pour réagir aux retours
@@ -58,7 +74,7 @@ function handlePaySuccess(amount: number, recipient: string) {
 </script>
 
 <template>
-  <LoginView v-if="!session.isLoggedIn.value" @connected="onConnected" />
+  <LoginView v-if="!showApp" />
   <router-view
     v-else
     @new-group="router.push({ name: 'newGroup' })"
@@ -70,4 +86,5 @@ function handlePaySuccess(amount: number, recipient: string) {
     @scanned="handleScanned"
     @success="handlePaySuccess"
   />
+  <ToastHost />
 </template>
