@@ -119,7 +119,10 @@ function selectDebtor(exp: Expense, memberId: string, shareAmount: number) {
   inviteLabel.value = `${memberName(memberId)} · ${shareAmount.toFixed(2)} NIM`;
 }
 
-// Partage l'URL https (cliquable). Web Share natif si dispo, sinon copie.
+// Partage le lien d'invitation. Le WebView de Nimiq Pay n'expose PAS la Web
+// Share API (pas de liste WhatsApp/Messenger/…), donc on copie le lien (le
+// presse-papier marche en contexte sécurisé) ; l'utilisateur le colle où il
+// veut. Si jamais navigator.share existe (navigateur mobile), on l'utilise.
 async function shareInvite() {
   if (navigator.share) {
     try {
@@ -134,12 +137,12 @@ async function shareInvite() {
     return;
   }
   if (!navigator.clipboard?.writeText) {
-    toast.show('Partage indisponible (contexte non sécurisé)', 'error');
+    toast.show('Copie indisponible (contexte non sécurisé)', 'error');
     return;
   }
   try {
     await navigator.clipboard.writeText(inviteHttps.value);
-    toast.show('Lien copié', 'success');
+    toast.show('Lien copié — colle-le dans ta messagerie', 'success');
   } catch {
     toast.show('Impossible de copier le lien', 'error');
   }
@@ -312,7 +315,7 @@ function settle() {
           <div class="sheet-note">
             En présentiel : fais scanner ce QR avec l'appareil photo → Nimiq Pay s'ouvre sur la part à régler.
           </div>
-          <button class="sheet-copy" @click="shareInvite">Partager le lien</button>
+          <button class="sheet-copy" @click="shareInvite">Copier le lien</button>
           <button class="sheet-back" @click="backToDebtors">← Choisir un autre membre</button>
         </template>
       </div>
