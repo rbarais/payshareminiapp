@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useSession } from '../stores/session';
+import { buildInviteDeeplink } from '../utils/room';
 
 const session = useSession();
 const emit = defineEmits<{ connected: [] }>();
+
+// Relaie l'URL courante (avec un éventuel ?r= d'invitation) vers Nimiq Pay via
+// le deeplink. Déclenché par un tap (geste utilisateur) → ouverture fiable.
+function openInNimiqPay() {
+  window.location.href = buildInviteDeeplink(window.location.href);
+}
 
 // 'idle' → écran d'accueil · 'connecting' → recherche pairs · 'connected' → succès
 const phase = ref<'idle' | 'connecting' | 'connected'>('idle');
@@ -57,6 +64,13 @@ async function connect() {
           <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221"/>
         </svg>
         <span>Me connecter via Nimiq Pay</span>
+      </button>
+      <button
+        v-if="session.isNimiqApp.value === false"
+        class="cta-secondary"
+        @click="openInNimiqPay"
+      >
+        Ouvrir dans Nimiq Pay
       </button>
       <p v-if="session.error.value" class="err">{{ session.error.value }}</p>
       <p class="privacy">Aucune donnée personnelle n'est collectée. Tes clés restent dans Nimiq Pay.</p>
@@ -187,6 +201,22 @@ async function connect() {
 }
 
 .cta:active { opacity: 0.85; }
+
+.cta-secondary {
+  width: 100%;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  padding: 15px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.cta-secondary:active { opacity: 0.85; }
 
 .err {
   margin-top: 12px;

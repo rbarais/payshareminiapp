@@ -1,22 +1,15 @@
-import type { Room, ShareableRoom } from '../types';
-
-export function encodeRoomToUrl(room: Room): string {
-  const shareable: ShareableRoom = {
-    id: room.id,
-    creatorId: room.creatorId,
-    creatorName: room.creatorName,
-    amount: room.amount,
-    currency: room.currency,
-    reason: room.reason,
-    maxParticipants: room.maxParticipants,
-  };
-  const encoded = encodeURIComponent(btoa(JSON.stringify(shareable)));
-  const base = `${window.location.origin}${window.location.pathname}`;
-  return `${base}?r=${encoded}`;
-}
+import type { ShareableRoom } from '../types';
 
 export function decodeRoomFromUrl(): ShareableRoom | null {
   return decodeRoomFromText(window.location.href);
+}
+
+// Encode un payload de paiement partageable dans une URL (?r=base64).
+// Décodé au démarrage par App.vue → route vers l'écran de paiement.
+export function encodeShareUrl(shareable: ShareableRoom): string {
+  const encoded = encodeURIComponent(btoa(JSON.stringify(shareable)));
+  const base = `${window.location.origin}${window.location.pathname}`;
+  return `${base}?r=${encoded}`;
 }
 
 // Construit un lien d'invitation qui OUVRE la mini-app dans Nimiq Pay (deeplink),

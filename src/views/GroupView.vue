@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import type { Expense, ShareableRoom } from '../types';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
+import { encodeShareUrl, buildInviteDeeplink } from '../utils/room';
+import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 
 const props = defineProps<{ id: string }>();
 
@@ -55,13 +58,99 @@ function shortDate(d: Date): string {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
+// ── Invitation à payer (version A — sans backend) ──────────────────────────
+// Deux canaux : le QR encode le deeplink nimiqpay:// (la caméra résout le
+// schéma → ouvre Nimiq Pay, fiable en présentiel) ; le bouton partage l'URL
+// https cliquable (à envoyer à distance → ouvre l'app, pont depuis le
+// navigateur système). Les navigateurs intégrés (Messenger) bloquent le
+// schéma custom : c'est une limite plateforme assumée.
+const inviteExpense = ref<Expense | null>(null);
+const inviteHttps = ref('');     // URL https cliquable (à partager)
+const inviteDeeplink = ref('');  // deeplink nimiqpay:// (encodé dans le QR)
+const inviteLabel = ref('');
+
+// Membres qui doivent leur part pour cette dépense (hors payeur).
+function debtorsOf(exp: Expense) {
+  return exp.shares.filter((s) => s.memberId !== exp.paidBy && s.amount > 0.005);
+}
+
+function openInvite(exp: Expense) {
+  inviteExpense.value = exp;
+  inviteHttps.value = '';
+  inviteDeeplink.value = '';
+  inviteLabel.value = '';
+}
+
+function closeInvite() {
+  inviteExpense.value = null;
+  inviteHttps.value = '';
+  inviteDeeplink.value = '';
+  inviteLabel.value = '';
+}
+
+function backToDebtors() {
+  inviteHttps.value = '';
+  inviteDeeplink.value = '';
+  inviteLabel.value = '';
+}
+
+// Génère l'URL https (partage) + le deeplink (QR) pour régler la part.
+function selectDebtor(exp: Expense, memberId: string, shareAmount: number) {
+  const payee = group.value?.members.find((m) => m.id === exp.paidBy);
+  if (!payee || !payee.id.startsWith('NQ')) {
+    toast.show('Le payeur doit avoir une adresse Nimiq pour être remboursé', 'error');
+    return;
+  }
+  if (exp.currency !== 'NIM') {
+    toast.show("Lien de paiement disponible en NIM pour l'instant", 'error');
+    return;
+  }
+  const payload: ShareableRoom = {
+    id: exp.id,
+    creatorId: payee.id,
+    creatorName: payee.name,
+    amount: shareAmount,
+    currency: exp.currency,
+    reason: exp.description,
+    maxParticipants: 1,
+  };
+  inviteHttps.value = encodeShareUrl(payload);
+  inviteDeeplink.value = buildInviteDeeplink(inviteHttps.value);
+  inviteLabel.value = `${memberName(memberId)} · ${shareAmount.toFixed(2)} NIM`;
+}
+
+// Partage l'URL https (cliquable). Web Share natif si dispo, sinon copie.
+async function shareInvite() {
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'PayShare',
+        text: `Règle ta part « ${inviteExpense.value?.description ?? ''} » sur PayShare`,
+        url: inviteHttps.value,
+      });
+    } catch {
+      /* partage annulé */
+    }
+    return;
+  }
+  if (!navigator.clipboard?.writeText) {
+    toast.show('Partage indisponible (contexte non sécurisé)', 'error');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(inviteHttps.value);
+    toast.show('Lien copié', 'success');
+  } catch {
+    toast.show('Impossible de copier le lien', 'error');
+  }
+}
+
 function goBack() {
   router.back();
 }
 
 function goToAddExpense() {
-  // L'ajout de dépense (et sa répartition) arrive en Phase 3.
-  toast.show('Ajout de dépense — bientôt disponible', 'info');
+  router.push({ name: 'addExpense', query: { groupId: props.id } });
 }
 
 function invite() {
@@ -150,7 +239,7 @@ function settle() {
 
     <!-- Expense list -->
     <div v-if="expenses.length" class="expense-list">
-      <div v-for="exp in expenses" :key="exp.id" class="expense-card">
+      <div v-for="exp in expenses" :key="exp.id" class="expense-card" @click="openInvite(exp)">
         <div class="expense-top">
           <div class="expense-left">
             <div class="expense-title">{{ exp.description }}</div>
@@ -182,6 +271,51 @@ function settle() {
     <div v-else class="expense-empty">
       <div class="expense-empty-text">Aucune dépense pour l'instant</div>
       <button class="expense-empty-cta" @click="goToAddExpense">+ Ajouter une dépense</button>
+    </div>
+
+    <!-- Feuille : inviter à payer une part (QR deeplink) -->
+    <div v-if="inviteExpense" class="sheet-overlay" @click="closeInvite">
+      <div class="sheet" @click.stop>
+        <div class="sheet-handle" />
+
+        <!-- Étape 1 : choisir le débiteur -->
+        <template v-if="!inviteDeeplink">
+          <div class="sheet-title">Inviter à payer</div>
+          <div class="sheet-sub">{{ inviteExpense.description }} · payé par {{ memberName(inviteExpense.paidBy) }}</div>
+
+          <div v-if="debtorsOf(inviteExpense).length" class="debtor-list">
+            <button
+              v-for="s in debtorsOf(inviteExpense)"
+              :key="s.memberId"
+              class="debtor-row"
+              @click="selectDebtor(inviteExpense, s.memberId, s.amount)"
+            >
+              <div class="debtor-info">
+                <div class="debtor-name">{{ memberName(s.memberId) }}</div>
+                <div class="debtor-amount">{{ s.amount.toFixed(2) }} {{ inviteExpense.currency }}</div>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M6 3L11 8L6 13" stroke="#8B8880" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div v-else class="sheet-empty">Personne ne doit de part sur cette dépense.</div>
+        </template>
+
+        <!-- Étape 2 : QR (présentiel) + partage du lien https (à distance) -->
+        <template v-else>
+          <div class="sheet-title">Régler la part</div>
+          <div class="sheet-sub">{{ inviteLabel }}</div>
+          <div class="qr-box">
+            <QRCodeGenerator :url="inviteDeeplink" :size="200" />
+          </div>
+          <div class="sheet-note">
+            En présentiel : fais scanner ce QR avec l'appareil photo → Nimiq Pay s'ouvre sur la part à régler.
+          </div>
+          <button class="sheet-copy" @click="shareInvite">Partager le lien</button>
+          <button class="sheet-back" @click="backToDebtors">← Choisir un autre membre</button>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -376,7 +510,11 @@ function settle() {
   padding: 13px 15px;
   flex-shrink: 0;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  cursor: pointer;
+  transition: transform 0.12s;
 }
+
+.expense-card:active { transform: scale(0.99); }
 
 .expense-top {
   display: flex;
@@ -416,6 +554,105 @@ function settle() {
   font-size: 13px;
   font-weight: 700;
   color: var(--dark);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Invite sheet */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: flex-end;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border-radius: 24px 24px 0 0;
+  padding: 10px 20px 30px;
+  animation: sheet-up 0.22s ease;
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  margin: 0 auto 14px;
+}
+
+.sheet-title { font-size: 17px; font-weight: 700; color: var(--dark); }
+.sheet-sub { font-size: 12px; color: var(--text); margin-top: 2px; margin-bottom: 14px; }
+
+.debtor-list { display: flex; flex-direction: column; gap: 8px; }
+
+.debtor-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg);
+  border: none;
+  border-radius: 14px;
+  padding: 12px 14px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.debtor-row:active { opacity: 0.7; }
+
+.debtor-name { font-size: 14px; font-weight: 600; color: var(--dark); }
+.debtor-amount { font-size: 12px; color: var(--text); margin-top: 1px; }
+
+.sheet-empty { font-size: 13px; color: var(--text); padding: 12px 0; text-align: center; }
+
+.sheet-note {
+  font-size: 11px;
+  color: var(--text);
+  text-align: center;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+.qr-box {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0 4px;
+}
+
+.sheet-copy {
+  width: 100%;
+  margin-top: 14px;
+  background: var(--accent);
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dark);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sheet-back {
+  width: 100%;
+  margin-top: 8px;
+  background: none;
+  border: none;
+  padding: 10px;
+  font-size: 13px;
+  color: var(--text-mid);
   cursor: pointer;
   font-family: inherit;
 }

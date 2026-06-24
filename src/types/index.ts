@@ -55,36 +55,11 @@ export interface Group {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Legacy — modèle « Room = dépense unique » encore utilisé par
-// AddExpenseView / PayView / utils/room.ts. À retirer une fois ces vues
-// migrées vers Group/Expense (Phases 2–3).
+// Données encodées dans le QR / lien de paiement — sous-ensemble partageable
+// d'une dépense. Utilisé par PayView / QRScanner pour le règlement on-chain.
+// Sera relié au modèle Expense lors du flux d'invitation (Phase 4).
 // ─────────────────────────────────────────────────────────────────────────
 
-/** @deprecated remplacé par Member — voir Phases 2–3. */
-export interface Participant {
-  id: string;
-  name: string;
-  amountPaid: number;
-  joinedAt: Date;
-  status: 'pending' | 'paid';
-}
-
-/** @deprecated remplacé par Group + Expense — voir Phases 2–3. */
-export interface Room {
-  id: string;
-  creatorId: string;
-  creatorName: string;
-  amount: number;
-  currency: string;
-  reason: string;
-  maxParticipants: number;
-  participants: Participant[];
-  createdAt: Date;
-  status: 'open' | 'closed';
-}
-
-// Données encodées dans le QR code — sous-ensemble partageable de Room.
-// Sera remplacé par une invitation par groupId en Phase 4.
 export interface ShareableRoom {
   id: string;
   creatorId: string;
