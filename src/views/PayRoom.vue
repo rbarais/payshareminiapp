@@ -6,8 +6,15 @@ import { amountPerPerson, paymentData } from '../utils/room';
 import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 
+import { useRouter } from 'vue-router';
+
 const props = defineProps<{ room: ShareableRoom }>();
-const emit = defineEmits<{ (e: 'back'): void }>();
+
+const router = useRouter()
+
+function goBack() {
+  router.back()
+}
 
 const currentUser = ref<{ id: string; name: string } | null>(null);
 const isPaying = ref(false);
@@ -110,7 +117,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   <div v-else class="screen">
     <!-- Header -->
     <div class="top-bar">
-      <button class="icon-btn" @click="emit('back')">
+      <button class="icon-btn" @click="goBack">
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
           <path d="M10.5 4L6 8.5L10.5 13" stroke="#1A1916" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>

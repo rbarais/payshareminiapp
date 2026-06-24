@@ -6,12 +6,22 @@ import { amountPerPerson, paymentData } from '../utils/room';
 import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 
+import { useRouter } from 'vue-router';
+
 const props = defineProps<{ room: ShareableRoom | null }>();
 
-const emit = defineEmits<{
-  (e: 'back'): void;
-  (e: 'success', amount: number, recipient: string): void;
-}>();
+const router = useRouter()
+
+function goBack() {
+  router.back()
+}
+
+function handleSuccess(amount: number, recipient: string) {
+  router.push({
+    name: 'success',
+    query: { amount: amount.toString(), recipient }
+  })
+}
 
 const currentUser = ref<{ id: string; name: string } | null>(null);
 const isPaying = ref(false);
@@ -69,7 +79,7 @@ async function pay() {
   error.value = '';
   try {
     await requestPayment(perPerson.value, props.room.creatorId, paymentData(props.room));
-    emit('success', perPerson.value, props.room.creatorName);
+    handleSuccess(perPerson.value, props.room.creatorName);
     setTimeout(loadPayments, 5000);
     setTimeout(loadPayments, 15000);
   } catch {
@@ -115,7 +125,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   <!-- Pay screen -->
   <div v-else class="screen">
     <div class="top-bar">
-      <button class="icon-btn" @click="emit('back')">
+      <button class="icon-btn" @click="goBack">
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
           <path d="M10.5 4L6 8.5L10.5 13" stroke="#1A1916" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>

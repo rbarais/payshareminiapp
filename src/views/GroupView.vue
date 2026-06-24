@@ -1,14 +1,26 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-const emit = defineEmits<{
-  (e: 'back'): void;
-  (e: 'add-expense'): void;
-  (e: 'pay'): void;
-  (e: 'open-scanner'): void;
-}>();
+const router = useRouter()
 
 const paid = ref(false);
+
+function goBack() {
+  router.back()
+}
+
+function goToAddExpense() {
+  router.push({ name: 'addExpense' })
+}
+
+function goToPay() {
+  router.push({ name: 'pay' })
+}
+
+function goToScanner() {
+  router.push({ name: 'scan' })
+}
 
 const expenses = [
   { id: 1, title: 'Restaurant El Born', paidBy: 'Marie', date: '12 jan', total: '84 NIM', share: '−21 NIM', shareColor: '#CC3C3C', pct: 25, barColor: '#F6B221' },
@@ -21,7 +33,7 @@ const expenses = [
   <div class="screen">
     <!-- Header -->
     <div class="header">
-      <button class="icon-btn" @click="emit('back')">
+      <button class="icon-btn" @click="goBack">
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
           <path d="M10.5 4L6 8.5L10.5 13" stroke="#1A1916" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -56,7 +68,7 @@ const expenses = [
       <div class="avatar" style="background:#C6F0DC; color:#0A4028;">L</div>
       <div class="avatar" style="background:#F0D4E8; color:#4A1040;">J</div>
       <div class="avatar" style="background:var(--border); color:var(--text-mid); font-size:11px;">+2</div>
-      <button class="qr-btn" @click="emit('open-scanner')">
+      <button class="qr-btn" @click="goToScanner">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <rect x="2" y="2" width="5" height="5" rx="1" stroke="#F6B221" stroke-width="1.4"/>
           <rect x="2" y="11" width="5" height="5" rx="1" stroke="#F6B221" stroke-width="1.4"/>
@@ -76,7 +88,7 @@ const expenses = [
         <div class="debt-amount">42.50 NIM</div>
         <div class="debt-eur">≈ 2.91 EUR</div>
       </div>
-      <button class="settle-btn" @click="emit('pay')">Régler →</button>
+      <button class="settle-btn" @click="goToPay">Régler →</button>
     </div>
     <div v-else class="settled-card">
       <div class="settled-icon">
@@ -93,7 +105,7 @@ const expenses = [
     <!-- Expenses header -->
     <div class="expenses-header">
       <span class="expenses-title">Dépenses</span>
-      <button class="add-btn" @click="emit('add-expense')">+ Ajouter</button>
+      <button class="add-btn" @click="goToAddExpense">+ Ajouter</button>
     </div>
 
     <!-- Expense list -->

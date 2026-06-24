@@ -1,94 +1,62 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import type { ShareableRoom } from './types';
+import { useRouter, useRoute } from 'vue-router';
+import { onMounted, watch } from 'vue';
 import { decodeRoomFromUrl, decodeRoomFromText } from './utils/room';
-import HomeView from './views/HomeView.vue';
-import GroupView from './views/GroupView.vue';
-import AddExpenseView from './views/AddExpenseView.vue';
-import PayView from './views/PayView.vue';
-import SuccessView from './views/SuccessView.vue';
-import NewGroupView from './views/NewGroupView.vue';
-import QRScanner from './components/QRScanner.vue';
 
-type View = 'home' | 'group' | 'add' | 'pay' | 'success' | 'newGroup' | 'scan';
+const router = useRouter()
+const route = useRoute()
 
-const view = ref<View>('home');
-const incomingRoom = ref<ShareableRoom | null>(null);
-const paymentAmount = ref(0);
-const paymentRecipient = ref('');
+// Gérer le décodage de l'URL au montage et lors des changements de route
+function checkUrlForRoom() {
+  const room = decodeRoomFromUrl()
+  if (room && route.name !== 'pay') {
+    router.push({
+      name: 'pay',
+      query: { room: encodeURIComponent(JSON.stringify(room)) }
+    })
+  }
+}
 
 onMounted(() => {
-  const room = decodeRoomFromUrl();
-  if (room) {
-    incomingRoom.value = room;
-    view.value = 'pay';
+  checkUrlForRoom()
+})
+
+// Surveiller les changements de route pour réagir aux retours
+watch(() => route.name, (newName) => {
+  if (newName === 'home' || newName === 'group') {
+    checkUrlForRoom()
   }
-});
+})
 
 function handleScanned(text: string) {
-  const room = decodeRoomFromText(text);
+  const room = decodeRoomFromText(text)
   if (room) {
-    incomingRoom.value = room;
-    view.value = 'pay';
+    router.push({
+      name: 'pay',
+      query: { room: encodeURIComponent(JSON.stringify(room)) }
+    })
   } else {
-    view.value = 'home';
+    router.push({ name: 'home' })
   }
 }
 
 function handlePaySuccess(amount: number, recipient: string) {
-  paymentAmount.value = amount;
-  paymentRecipient.value = recipient;
-  view.value = 'success';
+  router.push({
+    name: 'success',
+    query: { amount: amount.toString(), recipient }
+  })
 }
 </script>
 
 <template>
-  <QRScanner v-if="view === 'scan'" @scanned="handleScanned" @cancel="view = 'home'" />
-
-  <HomeView
-    v-else-if="view === 'home'"
-    @new-group="view = 'newGroup'"
-    @open-group="view = 'group'"
-    @open-scanner="view = 'scan'"
-  />
-
-  <GroupView
-    v-else-if="view === 'group'"
-    @back="view = 'home'"
-    @add-expense="view = 'add'"
-    @pay="view = 'pay'"
-    @open-scanner="view = 'scan'"
-  />
-
-  <AddExpenseView
-    v-else-if="view === 'add'"
-    @back="view = 'group'"
-    @done="view = 'group'"
-  />
-
-  <PayView
-    v-else-if="view === 'pay' && incomingRoom"
-    :room="incomingRoom"
-    @back="view = 'home'"
-    @success="(a, r) => handlePaySuccess(a, r)"
-  />
-  <PayView
-    v-else-if="view === 'pay' && !incomingRoom"
-    :room="null"
-    @back="view = 'group'"
-    @success="(a, r) => handlePaySuccess(a, r)"
-  />
-
-  <SuccessView
-    v-else-if="view === 'success'"
-    :amount="paymentAmount"
-    :recipient="paymentRecipient"
-    @back="view = 'home'"
-  />
-
-  <NewGroupView
-    v-else-if="view === 'newGroup'"
-    @back="view = 'home'"
-    @done="view = 'home'"
+  <router-view
+    @new-group="router.push({ name: 'newGroup' })"
+    @open-group="router.push({ name: 'group' })"
+    @open-scanner="router.push({ name: 'scan' })"
+    @back="router.back()"
+    @add-expense="router.push({ name: 'addExpense' })"
+    @pay="router.push({ name: 'pay' })"
+    @scanned="handleScanned"
+    @success="handlePaySuccess"
   />
 </template>

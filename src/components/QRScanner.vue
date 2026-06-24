@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import jsQR from 'jsqr';
+import { decodeRoomFromText } from '../utils/room';
 
 declare const BarcodeDetector: {
   new(options: { formats: string[] }): {
@@ -8,10 +10,7 @@ declare const BarcodeDetector: {
   };
 };
 
-const emit = defineEmits<{
-  (e: 'scanned', text: string): void;
-  (e: 'cancel'): void;
-}>();
+const router = useRouter()
 
 const videoEl = ref<HTMLVideoElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
@@ -21,8 +20,24 @@ const manualLink = ref('');
 
 function submitManual() {
   if (manualLink.value.trim()) {
-    emit('scanned', manualLink.value.trim());
+    handleScanned(manualLink.value.trim())
   }
+}
+
+function handleScanned(text: string) {
+  const room = decodeRoomFromText(text)
+  if (room) {
+    router.push({
+      name: 'pay',
+      query: { room: encodeURIComponent(JSON.stringify(room)) }
+    })
+  } else {
+    router.push({ name: 'home' })
+  }
+}
+
+function cancel() {
+  router.back()
 }
 
 let stream: MediaStream | null = null;
@@ -85,7 +100,7 @@ function startNativeDetector() {
       const barcodes = await detector.detect(video);
       if (barcodes.length > 0) {
         stop();
-        emit('scanned', barcodes[0].rawValue);
+        handleScanned(barcodes[0].rawValue);
       }
     } catch {
       // ignore per-frame errors
@@ -117,7 +132,7 @@ function tick() {
 
   if (result?.data) {
     stop();
-    emit('scanned', result.data);
+    handleScanned(result.data);
     return;
   }
 
@@ -155,7 +170,7 @@ onUnmounted(stop);
         </button>
       </div>
 
-      <button class="btn-cancel" @click="emit('cancel')">Retour</button>
+      <button class="btn-cancel" @click="cancel">Retour</button>
     </div>
 
     <div v-else class="camera-view">
@@ -172,7 +187,7 @@ onUnmounted(stop);
 
       <p class="hint">Pointe la caméra vers le QR code</p>
 
-      <button class="btn-cancel" @click="() => { stop(); emit('cancel'); }">
+      <button class="btn-cancel" @click="() => { stop(); cancel(); }">
         Annuler
       </button>
     </div>

@@ -1,6 +1,13 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
+
 defineProps<{ amount: number; recipient: string }>();
-const emit = defineEmits<{ (e: 'back'): void }>();
+
+const router = useRouter()
+
+function goBack() {
+  router.push({ name: 'home' })
+}
 </script>
 
 <template>
@@ -43,7 +50,7 @@ const emit = defineEmits<{ (e: 'back'): void }>();
 
     <!-- Back button -->
     <div class="back-area">
-      <button class="btn-back" @click="emit('back')">← Retour à l'accueil</button>
+      <button class="btn-back" @click="goBack">← Retour à l'accueil</button>
     </div>
   </div>
 </template>

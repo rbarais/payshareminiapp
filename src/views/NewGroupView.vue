@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-const emit = defineEmits<{
-  (e: 'back'): void;
-  (e: 'done'): void;
-}>();
+const router = useRouter()
 
 const groupName = ref('');
 const selectedIcon = ref(0);
@@ -16,16 +14,20 @@ const icons = [
   { bg: '#F0EEE9', color: '#3844B0', type: 'list' },
 ];
 
+function goBack() {
+  router.back()
+}
+
 function done() {
   if (!groupName.value.trim()) return;
-  emit('done');
+  router.push({ name: 'home' })
 }
 </script>
 
 <template>
   <div class="screen">
     <div class="top-bar">
-      <button class="icon-btn" @click="emit('back')">
+      <button class="icon-btn" @click="goBack">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M2 2L12 12M12 2L2 12" stroke="#3D3B35" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
