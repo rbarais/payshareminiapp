@@ -5,12 +5,14 @@ import { getCurrentUser, requestPayment, isNimiqEnvironment } from '../utils/nim
 import { amountPerPerson, paymentData } from '../utils/room';
 import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
+import { useSession } from '../stores/session';
 
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{ room: ShareableRoom | null }>();
 
 const router = useRouter()
+const session = useSession()
 
 function goBack() {
   router.back()
@@ -90,7 +92,8 @@ async function pay() {
 }
 
 onMounted(async () => {
-  currentUser.value = await getCurrentUser();
+  // Réutilise l'utilisateur déjà connecté (évite de redéclencher le dialogue natif).
+  currentUser.value = session.user.value ?? (await getCurrentUser());
   loadPayments();
   if (trackingAvailable.value) {
     pollId = setInterval(loadPayments, 20000);

@@ -39,25 +39,36 @@ export async function getNimiqUserName(): Promise<string> {
 }
 
 /**
- * Récupère à la fois l'adresse et le nom de l'utilisateur
+ * Récupère à la fois l'adresse et le nom de l'utilisateur.
+ *
+ * Hors environnement Nimiq (navigateur de dev), renvoie un utilisateur factice
+ * pour permettre les tests. DANS Nimiq Pay, propage les erreurs (ex. dialogue
+ * d'accès refusé) au lieu de les masquer — l'appelant doit pouvoir réagir.
  */
 export async function getCurrentUser(): Promise<{ id: string; name: string }> {
-  try {
-    const address = await getNimiqAddress();
-    const name = await getNimiqUserName();
-    
+  if (!isNimiqEnvironment()) {
     return {
-      id: address,
-      name: name || 'User ' + address.slice(0, 6)
-    };
-  } catch (err) {
-    // Si on n'est pas dans un environnement Nimiq
-    console.warn('Not in Nimiq environment, using dev user');
-    return {
-      id: 'dev_' + Math.random().toString(36).substr(2, 9),
-      name: 'Dev User'
+      id: 'dev_' + Math.random().toString(36).slice(2, 11),
+      name: 'Dev User',
     };
   }
+
+  const address = await getNimiqAddress();
+  const name = await getNimiqUserName();
+  return {
+    id: address,
+    name: name || 'User ' + address.slice(0, 6),
+  };
+}
+
+/**
+ * Tronque une adresse Nimiq pour l'affichage : "NQ48 8CKH…BA76".
+ */
+export function formatAddressShort(address: string): string {
+  if (!address) return '';
+  const clean = address.trim();
+  if (clean.length <= 13) return clean;
+  return `${clean.slice(0, 9)}…${clean.slice(-4)}`;
 }
 
 /**

@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useSession } from '../stores/session';
 
 const router = useRouter()
+const session = useSession()
 
 const showEur = ref(false);
+const showMenu = ref(false);
+
+function disconnect() {
+  showMenu.value = false;
+  session.disconnect();
+  router.replace({ name: 'home' });
+}
 
 function goToNewGroup() {
   router.push({ name: 'newGroup' })
@@ -17,8 +26,6 @@ function goToGroup() {
 function goToScanner() {
   router.push({ name: 'scan' })
 }
-
-const walletShort = 'NQ48 8CKH…BA76';
 
 const groups = [
   {
@@ -70,9 +77,9 @@ const owedEur = '−4.60 EUR';
     <!-- Header -->
     <div class="header">
       <div class="logo">PayShare</div>
-      <div class="wallet-badge" >
+      <div class="wallet-badge" @click="showMenu = !showMenu">
         <div class="wallet-info">
-          <div class="wallet-addr">{{ walletShort }}</div>
+          <div class="wallet-addr">{{ session.walletShort.value }}</div>
           <div class="wallet-status">
             <span class="status-dot" />
             <span class="status-text">Connecté</span>
@@ -92,6 +99,14 @@ const owedEur = '−4.60 EUR';
             <svg width="6" height="5" viewBox="0 0 6 5" fill="none"><path d="M1 2.5L2.3 3.8L5 1" stroke="white" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Menu wallet (déconnexion) — version minimale, Profil complet en Phase 6bis -->
+    <div v-if="showMenu" class="menu-overlay" @click="showMenu = false">
+      <div class="wallet-menu" @click.stop>
+        <div class="menu-addr">{{ session.walletShort.value }}</div>
+        <button class="menu-item danger" @click="disconnect">Se déconnecter</button>
       </div>
     </div>
 
@@ -240,6 +255,51 @@ const owedEur = '−4.60 EUR';
   gap: 8px;
   cursor: pointer;
 }
+
+/* Menu wallet */
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+}
+
+.wallet-menu {
+  position: absolute;
+  top: 56px;
+  right: 18px;
+  background: var(--bg-card);
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+  padding: 8px;
+  min-width: 170px;
+}
+
+.menu-addr {
+  font-size: 10px;
+  color: var(--text);
+  font-family: monospace;
+  padding: 6px 10px 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.menu-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.menu-item:hover { background: var(--border-subtle); }
+.menu-item.danger { color: var(--red); }
 
 .wallet-info {
   text-align: right;

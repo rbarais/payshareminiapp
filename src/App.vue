@@ -2,9 +2,18 @@
 import { useRouter, useRoute } from 'vue-router';
 import { onMounted, watch } from 'vue';
 import { decodeRoomFromUrl, decodeRoomFromText } from './utils/room';
+import { useSession } from './stores/session';
+import LoginView from './views/LoginView.vue';
 
 const router = useRouter()
 const route = useRoute()
+const session = useSession()
+
+// Appelé après une connexion réussie : rejoue le décodage d'un éventuel
+// lien profond (?r=…) ouvert avant connexion.
+function onConnected() {
+  checkUrlForRoom()
+}
 
 // Gérer le décodage de l'URL au montage et lors des changements de route
 function checkUrlForRoom() {
@@ -49,7 +58,9 @@ function handlePaySuccess(amount: number, recipient: string) {
 </script>
 
 <template>
+  <LoginView v-if="!session.isLoggedIn.value" @connected="onConnected" />
   <router-view
+    v-else
     @new-group="router.push({ name: 'newGroup' })"
     @open-group="router.push({ name: 'group' })"
     @open-scanner="router.push({ name: 'scan' })"
