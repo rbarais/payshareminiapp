@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import GroupsView from '../views/GroupsView.vue'
 import GroupView from '../views/GroupView.vue'
 import AddExpenseView from '../views/AddExpenseView.vue'
 import PayView from '../views/PayView.vue'
@@ -13,9 +14,15 @@ const routes: RouteRecordRaw[] = [
     component: HomeView
   },
   {
-    path: '/group',
+    path: '/groups',
+    name: 'groups',
+    component: GroupsView
+  },
+  {
+    path: '/group/:id',
     name: 'group',
-    component: GroupView
+    component: GroupView,
+    props: true
   },
   {
     path: '/add-expense',

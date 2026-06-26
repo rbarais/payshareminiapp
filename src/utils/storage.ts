@@ -1,81 +1,48 @@
-import type { Room } from '../types';
+import type { Group, Expense } from '../types';
 
-const STORAGE_KEY = 'payshare_rooms';
+// ─────────────────────────────────────────────────────────────────────────
+// Persistance locale (localStorage).
+//
+// En Option B, localStorage sert de cache offline : la source de vérité du
+// métier collaboratif sera le backend (Phase 1bis), et celle des paiements
+// la blockchain. Pour la Phase 0, c'est le stockage principal du store.
+// ─────────────────────────────────────────────────────────────────────────
 
-/**
- * Récupère toutes les rooms depuis localStorage
- */
-export function getRooms(): Room[] {
-  const stored = localStorage.getItem(STORAGE_KEY);
+const GROUPS_KEY = 'payshare_groups';
+const EXPENSES_KEY = 'payshare_expenses';
+
+// Recharge un tableau JSON typé, en re-hydratant les dates depuis leurs strings.
+function load<T>(key: string, reviveDates: (raw: any) => T): T[] {
+  const stored = localStorage.getItem(key);
   if (!stored) return [];
-  
   try {
-    const rooms = JSON.parse(stored) as Room[];
-    // Convertir les dates depuis des strings
-    return rooms.map(room => ({
-      ...room,
-      createdAt: new Date(room.createdAt),
-      participants: room.participants.map(p => ({
-        ...p,
-        joinedAt: new Date(p.joinedAt)
-      }))
-    }));
+    return (JSON.parse(stored) as any[]).map(reviveDates);
   } catch {
     return [];
   }
 }
 
-/**
- * Sauvegarde toutes les rooms dans localStorage
- */
-export function saveRooms(rooms: Room[]): void {
-  // Convertir les dates en strings pour le stockage
-  const serializableRooms = rooms.map(room => ({
-    ...room,
-    createdAt: room.createdAt.toISOString(),
-    participants: room.participants.map(p => ({
-      ...p,
-      joinedAt: p.joinedAt.toISOString()
-    }))
+export function loadGroups(): Group[] {
+  return load<Group>(GROUPS_KEY, (g) => ({
+    ...g,
+    createdAt: new Date(g.createdAt),
+    members: (g.members ?? []).map((m: any) => ({ ...m, joinedAt: new Date(m.joinedAt) })),
   }));
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableRooms));
 }
 
-/**
- * Ajoute une nouvelle room
- */
-export function addRoom(room: Room): Room {
-  const rooms = getRooms();
-  rooms.push(room);
-  saveRooms(rooms);
-  return room;
+export function saveGroups(groups: Group[]): void {
+  localStorage.setItem(GROUPS_KEY, JSON.stringify(groups));
 }
 
-/**
- * Met à jour une room existante
- */
-export function updateRoom(updatedRoom: Room): Room | null {
-  const rooms = getRooms();
-  const index = rooms.findIndex(r => r.id === updatedRoom.id);
-  
-  if (index === -1) return null;
-  
-  rooms[index] = updatedRoom;
-  saveRooms(rooms);
-  return updatedRoom;
+export function loadExpenses(): Expense[] {
+  return load<Expense>(EXPENSES_KEY, (e) => ({ ...e, createdAt: new Date(e.createdAt) }));
 }
 
-/**
- * Récupère une room par son ID
- */
-export function getRoomById(id: string): Room | null {
-  const rooms = getRooms();
-  return rooms.find(r => r.id === id) || null;
+export function saveExpenses(expenses: Expense[]): void {
+  localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
 }
 
-/**
- * Génère un ID unique pour une room
- */
-export function generateRoomId(): string {
-  return 'room_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+// Génère un id unique préfixé (ex. generateId('group') → 'group_…').
+export function generateId(prefix = 'id'): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }

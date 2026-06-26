@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import type { ShareableRoom } from '../types';
-import { getCurrentUser, requestPayment, isNimiqEnvironment } from '../utils/nimiq';
+import { getCurrentUser, requestPayment } from '../utils/nimiq';
 import { amountPerPerson, paymentData } from '../utils/room';
 import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
+import { useSession } from '../stores/session';
 
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{ room: ShareableRoom | null }>();
 
 const router = useRouter()
+const session = useSession()
 
 function goBack() {
   router.back()
@@ -90,7 +92,8 @@ async function pay() {
 }
 
 onMounted(async () => {
-  currentUser.value = await getCurrentUser();
+  // Réutilise l'utilisateur déjà connecté (évite de redéclencher le dialogue natif).
+  currentUser.value = session.user.value ?? (await getCurrentUser());
   loadPayments();
   if (trackingAvailable.value) {
     pollId = setInterval(loadPayments, 20000);
@@ -204,7 +207,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
         <span>Sécurisé via Nimiq Pay · clés jamais exposées</span>
       </div>
 
-      <div v-if="!isNimiqEnvironment()" class="dev-notice">
+      <div v-if="session.isNimiqApp.value === false" class="dev-notice">
         Mode développement — le vrai paiement se fait dans Nimiq Pay
       </div>
     </div>
