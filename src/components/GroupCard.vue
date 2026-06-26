@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import type { Group } from '../types';
 import { GROUP_ICON_STYLE, balanceView } from '../utils/groupUi';
+import GroupIcon from './GroupIcon.vue';
 
 const props = defineProps<{
   group: Group;
@@ -16,21 +17,7 @@ const bal = computed(() => balanceView(props.balance));
 <template>
   <button class="group-card">
     <div class="group-icon" :style="{ background: iconStyle.bg }">
-      <svg v-if="group.icon === 'person'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <path d="M4 18C4 15 7.13 12.5 11 12.5C14.87 12.5 18 15 18 18" :stroke="iconStyle.color" stroke-width="1.5" stroke-linecap="round"/>
-        <circle cx="11" cy="8" r="3.5" :stroke="iconStyle.color" stroke-width="1.5"/>
-      </svg>
-      <svg v-else-if="group.icon === 'home'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <path d="M3 10L11 3L19 10V19H14V14H8V19H3V10Z" :stroke="iconStyle.color" stroke-width="1.5" stroke-linejoin="round"/>
-      </svg>
-      <svg v-else-if="group.icon === 'car'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <circle cx="6.5" cy="15.5" r="2.5" :stroke="iconStyle.color" stroke-width="1.5"/>
-        <circle cx="15.5" cy="15.5" r="2.5" :stroke="iconStyle.color" stroke-width="1.5"/>
-        <path d="M2 15.5H4M9 15.5H13M18 15.5H20M4 15.5V9L7 5H15L18 9V15.5" :stroke="iconStyle.color" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <svg v-else width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <path d="M4 6H18M4 11H18M4 16H12" :stroke="iconStyle.color" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
+      <GroupIcon :type="group.icon" :color="iconStyle.color" />
     </div>
     <div class="group-info">
       <div class="group-name">{{ group.name }}</div>

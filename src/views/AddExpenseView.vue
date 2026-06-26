@@ -5,6 +5,7 @@ import type { SplitMode } from '../types';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
+import InitialAvatar from '../components/InitialAvatar.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -45,15 +46,6 @@ watch(
   },
   { immediate: true },
 );
-
-const AVATAR_COLORS = [
-  { bg: '#BEE0FF', color: '#0D3A5C' },
-  { bg: '#C6F0DC', color: '#0A4028' },
-  { bg: '#F0D4E8', color: '#4A1040' },
-  { bg: '#FFE3C2', color: '#7A3E00' },
-  { bg: '#E0DCF5', color: '#3A2A6B' },
-];
-const avatarStyle = (i: number) => AVATAR_COLORS[i % AVATAR_COLORS.length];
 
 const memberName = (id: string) =>
   id === userId.value ? `${members.value.find((m) => m.id === id)?.name ?? 'Toi'} (toi)`
@@ -238,9 +230,7 @@ function goBack() {
             :class="{ off: !split[m.id]?.included }"
             @click="split[m.id].included = !split[m.id].included"
           >
-            <div class="chip-av" :style="{ background: avatarStyle(i).bg, color: avatarStyle(i).color }">
-              {{ m.name.charAt(0).toUpperCase() }}
-            </div>
+            <InitialAvatar :name="m.name" :index="i" :size="40" />
             <span class="chip-name">{{ m.name }}</span>
           </button>
         </div>
@@ -251,9 +241,7 @@ function goBack() {
         <!-- % / Montants -->
         <div v-else-if="mode !== 'equal'" class="split-list">
           <div v-for="(m, i) in members" :key="m.id" class="split-row">
-            <div class="chip-av sm" :style="{ background: avatarStyle(i).bg, color: avatarStyle(i).color }">
-              {{ m.name.charAt(0).toUpperCase() }}
-            </div>
+            <InitialAvatar :name="m.name" :index="i" :size="30" />
             <span class="split-name">{{ m.name }}</span>
             <div class="split-input-wrap">
               <input
@@ -455,19 +443,6 @@ function goBack() {
 }
 
 .member-chip.off { opacity: 0.3; }
-
-.chip-av {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.chip-av.sm { width: 30px; height: 30px; font-size: 12px; }
 
 .chip-name { font-size: 9px; font-weight: 600; color: var(--dark); }
 

@@ -5,6 +5,7 @@ import { getCurrentUser, requestPayment } from '../utils/nimiq';
 import { amountPerPerson, paymentData } from '../utils/room';
 import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
+import InitialAvatar from '../components/InitialAvatar.vue';
 import { useSession } from '../stores/session';
 
 import { useRouter } from 'vue-router';
@@ -140,7 +141,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
     <div class="scroll">
       <!-- Recipient -->
       <div class="recipient-card">
-        <div class="avatar">{{ room?.creatorName?.charAt(0).toUpperCase() ?? 'M' }}</div>
+        <InitialAvatar :name="room?.creatorName || 'M'" :size="56" class="recipient-avatar" />
         <div class="recipient-name">{{ room?.creatorName ?? 'Marie' }}</div>
         <div class="recipient-desc">{{ room?.reason ?? '' }}</div>
       </div>
@@ -301,19 +302,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   box-shadow: var(--shadow-md);
 }
 
-.avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #BEE0FF;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  font-weight: 700;
-  color: #0D3A5C;
-  margin: 0 auto 10px;
-}
+.recipient-avatar { margin: 0 auto 10px; }
 
 .recipient-name {
   font-size: 16px;

@@ -5,26 +5,22 @@ import type { GroupIcon } from '../types';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { generateId } from '../utils/storage';
+import GroupIconPicker from '../components/GroupIconPicker.vue';
+import NimiqIdenticon from '../components/NimiqIdenticon.vue';
+import InitialAvatar from '../components/InitialAvatar.vue';
 
 const router = useRouter()
 const session = useSession()
 const store = useGroupsStore()
 
 const groupName = ref('');
-const selectedIcon = ref(0);
+const selectedIcon = ref<GroupIcon>('person');
 
 // Membres invités ajoutés manuellement (sans adresse pour l'instant — une vraie
 // adhésion par QR/contacts viendra plus tard). Le créateur est ajouté à part.
 const guests = ref<{ id: string; name: string }[]>([]);
 const adding = ref(false);
 const newGuestName = ref('');
-
-const icons: { bg: string; color: string; type: GroupIcon }[] = [
-  { bg: '#FFF1CF', color: '#B07808', type: 'person' },
-  { bg: '#E0F5EE', color: '#198060', type: 'home' },
-  { bg: '#EAEEFF', color: '#3844B0', type: 'car' },
-  { bg: '#F0EEE9', color: '#6B6860', type: 'list' },
-];
 
 const creatorName = session.user.value?.name ?? 'Toi';
 
@@ -52,7 +48,7 @@ function done() {
 
   const group = store.createGroup({
     name,
-    icon: icons[selectedIcon.value].type,
+    icon: selectedIcon.value,
     creatorId: user.id,
     creatorName: user.name,
   });
@@ -79,32 +75,7 @@ function done() {
       <!-- Icon + Name card -->
       <div class="field-card">
         <div class="field-label">Icône du groupe</div>
-        <div class="icon-picker">
-          <button
-            v-for="(icon, i) in icons"
-            :key="i"
-            class="icon-option"
-            :class="{ selected: selectedIcon === i }"
-            :style="{ background: icon.bg }"
-            @click="selectedIcon = i"
-          >
-            <svg v-if="icon.type === 'person'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M4 18C4 15 7.13 12.5 11 12.5C14.87 12.5 18 15 18 18" :stroke="icon.color" stroke-width="1.5" stroke-linecap="round"/>
-              <circle cx="11" cy="8" r="3.5" :stroke="icon.color" stroke-width="1.5"/>
-            </svg>
-            <svg v-else-if="icon.type === 'home'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M3 10L11 3L19 10V19H14V14H8V19H3V10Z" :stroke="icon.color" stroke-width="1.5" stroke-linejoin="round"/>
-            </svg>
-            <svg v-else-if="icon.type === 'car'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <circle cx="6.5" cy="15.5" r="2.5" :stroke="icon.color" stroke-width="1.5"/>
-              <circle cx="15.5" cy="15.5" r="2.5" :stroke="icon.color" stroke-width="1.5"/>
-              <path d="M2 15.5H4M9 15.5H13M18 15.5H20M4 15.5V9L7 5H15L18 9V15.5" :stroke="icon.color" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg v-else width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M4 6H18M4 11H18M4 16H12" :stroke="icon.color" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
+        <GroupIconPicker v-model="selectedIcon" />
 
         <div class="field-label" style="margin-top:18px;">Nom</div>
         <div class="name-input-wrap">
@@ -127,15 +98,7 @@ function done() {
           <!-- Créateur -->
           <div class="member">
             <div class="member-av" style="overflow:hidden;">
-              <svg width="36" height="36" viewBox="0 0 38 38">
-                <rect width="38" height="38" fill="#5F4B8B"/>
-                <polygon points="0,0 19,19 38,0" fill="#7B6BA5"/>
-                <polygon points="38,0 19,19 38,38" fill="#4E3D7A"/>
-                <polygon points="38,38 19,19 0,38" fill="#6B5A98"/>
-                <polygon points="0,38 19,19 0,0" fill="#533F85"/>
-                <circle cx="19" cy="19" r="6" fill="#F6B221"/>
-                <polygon points="15.5,23.5 19,12.5 22.5,23.5" fill="#5F4B8B"/>
-              </svg>
+              <NimiqIdenticon :size="36" />
             </div>
             <span class="member-name">{{ creatorName }}</span>
             <span class="member-sub">toi</span>
@@ -143,7 +106,7 @@ function done() {
 
           <!-- Invités -->
           <div v-for="g in guests" :key="g.id" class="member" @click="removeGuest(g.id)">
-            <div class="member-av letter">{{ g.name.charAt(0).toUpperCase() }}</div>
+            <InitialAvatar :name="g.name" :size="46" />
             <span class="member-name">{{ g.name }}</span>
             <span class="member-sub">retirer</span>
           </div>
@@ -240,30 +203,6 @@ function done() {
   margin-bottom: 12px;
 }
 
-/* Icon picker */
-.icon-picker {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-.icon-option {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  border: 2px solid transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: border-color 0.15s, transform 0.1s;
-}
-
-.icon-option.selected {
-  border-color: var(--dark);
-  transform: scale(1.05);
-}
-
 /* Name input */
 .name-input-wrap {
   border: 1.5px solid var(--border-subtle);
@@ -311,13 +250,6 @@ function done() {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.member-av.letter {
-  background: #BEE0FF;
-  color: #0D3A5C;
-  font-size: 16px;
-  font-weight: 700;
 }
 
 .member-name {

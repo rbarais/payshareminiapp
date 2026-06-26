@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import type { Expense, GroupIcon, ShareableRoom } from '../types';
+import type { Expense, GroupIcon } from '../types';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
-import { encodeShareUrl, buildInviteDeeplink } from '../utils/room';
-import QRCodeGenerator from '../components/QRCodeGenerator.vue';
+import InitialAvatar from '../components/InitialAvatar.vue';
+import ExpenseCard from '../components/ExpenseCard.vue';
+import InviteSheet from '../components/InviteSheet.vue';
+import BaseSheet from '../components/BaseSheet.vue';
+import GroupIconPicker from '../components/GroupIconPicker.vue';
 
 const props = defineProps<{ id: string }>();
 
@@ -31,19 +34,6 @@ const monthLabel = computed(() =>
     : '',
 );
 
-// Palette d'avatars (par initiale).
-const AVATAR_COLORS = [
-  { bg: '#BEE0FF', color: '#0D3A5C' },
-  { bg: '#C6F0DC', color: '#0A4028' },
-  { bg: '#F0D4E8', color: '#4A1040' },
-  { bg: '#FFE3C2', color: '#7A3E00' },
-  { bg: '#E0DCF5', color: '#3A2A6B' },
-];
-
-function avatarStyle(index: number) {
-  return AVATAR_COLORS[index % AVATAR_COLORS.length];
-}
-
 function memberName(id: string): string {
   if (id === userId.value) return 'toi';
   return group.value?.members.find((m) => m.id === id)?.name ?? 'Inconnu';
@@ -54,108 +44,10 @@ function userShare(expenseId: string): number {
   return exp?.shares.find((s) => s.memberId === userId.value)?.amount ?? 0;
 }
 
-function shortDate(d: Date): string {
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-}
-
-// ── Invitation à payer (version A — sans backend) ──────────────────────────
-// Deux canaux : le QR encode le deeplink nimiqpay:// (la caméra résout le
-// schéma → ouvre Nimiq Pay, fiable en présentiel) ; le bouton partage l'URL
-// https cliquable (à envoyer à distance → ouvre l'app, pont depuis le
-// navigateur système). Les navigateurs intégrés (Messenger) bloquent le
-// schéma custom : c'est une limite plateforme assumée.
+// ── Invitation à payer (feuille dédiée) ─────────────────────────────────────
 const inviteExpense = ref<Expense | null>(null);
-const inviteHttps = ref('');     // URL https cliquable (à partager)
-const inviteDeeplink = ref('');  // deeplink nimiqpay:// (encodé dans le QR)
-const inviteLabel = ref('');
 
-// Membres qui doivent leur part pour cette dépense (hors payeur).
-function debtorsOf(exp: Expense) {
-  return exp.shares.filter((s) => s.memberId !== exp.paidBy && s.amount > 0.005);
-}
-
-function openInvite(exp: Expense) {
-  inviteExpense.value = exp;
-  inviteHttps.value = '';
-  inviteDeeplink.value = '';
-  inviteLabel.value = '';
-}
-
-function closeInvite() {
-  inviteExpense.value = null;
-  inviteHttps.value = '';
-  inviteDeeplink.value = '';
-  inviteLabel.value = '';
-}
-
-function backToDebtors() {
-  inviteHttps.value = '';
-  inviteDeeplink.value = '';
-  inviteLabel.value = '';
-}
-
-// Génère l'URL https (partage) + le deeplink (QR) pour régler la part.
-function selectDebtor(exp: Expense, memberId: string, shareAmount: number) {
-  const payee = group.value?.members.find((m) => m.id === exp.paidBy);
-  if (!payee || !payee.id.startsWith('NQ')) {
-    toast.show('Le payeur doit avoir une adresse Nimiq pour être remboursé', 'error');
-    return;
-  }
-  if (exp.currency !== 'NIM') {
-    toast.show("Lien de paiement disponible en NIM pour l'instant", 'error');
-    return;
-  }
-  const payload: ShareableRoom = {
-    id: exp.id,
-    creatorId: payee.id,
-    creatorName: payee.name,
-    amount: shareAmount,
-    currency: exp.currency,
-    reason: exp.description,
-    maxParticipants: 1,
-  };
-  inviteHttps.value = encodeShareUrl(payload);
-  inviteDeeplink.value = buildInviteDeeplink(inviteHttps.value);
-  inviteLabel.value = `${memberName(memberId)} · ${shareAmount.toFixed(2)} NIM`;
-}
-
-// Partage le lien d'invitation. Le WebView de Nimiq Pay n'expose PAS la Web
-// Share API (pas de liste WhatsApp/Messenger/…), donc on copie le lien (le
-// presse-papier marche en contexte sécurisé) ; l'utilisateur le colle où il
-// veut. Si jamais navigator.share existe (navigateur mobile), on l'utilise.
-async function shareInvite() {
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: 'PayShare',
-        text: `Règle ta part « ${inviteExpense.value?.description ?? ''} » sur PayShare`,
-        url: inviteHttps.value,
-      });
-    } catch {
-      /* partage annulé */
-    }
-    return;
-  }
-  if (!navigator.clipboard?.writeText) {
-    toast.show('Copie indisponible (contexte non sécurisé)', 'error');
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(inviteHttps.value);
-    toast.show('Lien copié — colle-le dans ta messagerie', 'success');
-  } catch {
-    toast.show('Impossible de copier le lien', 'error');
-  }
-}
-
-// ── Édition du groupe (nom + icône) ────────────────────────────────────────
-const ICONS: { bg: string; color: string; type: GroupIcon }[] = [
-  { bg: '#FFF1CF', color: '#B07808', type: 'person' },
-  { bg: '#E0F5EE', color: '#198060', type: 'home' },
-  { bg: '#EAEEFF', color: '#3844B0', type: 'car' },
-  { bg: '#F0EEE9', color: '#6B6860', type: 'list' },
-];
-
+// ── Édition du groupe (nom + icône) ─────────────────────────────────────────
 const editGroupOpen = ref(false);
 const editGroupName = ref('');
 const editGroupIcon = ref<GroupIcon>('person');
@@ -165,10 +57,6 @@ function openEditGroup() {
   editGroupName.value = group.value.name;
   editGroupIcon.value = group.value.icon;
   editGroupOpen.value = true;
-}
-
-function closeEditGroup() {
-  editGroupOpen.value = false;
 }
 
 function saveGroup() {
@@ -242,14 +130,14 @@ function settle() {
 
     <!-- Members + invite -->
     <div class="members-row">
-      <div
+      <InitialAvatar
         v-for="(m, i) in group.members"
         :key="m.id"
-        class="avatar"
-        :style="{ background: avatarStyle(i).bg, color: avatarStyle(i).color }"
-      >
-        {{ m.name.charAt(0).toUpperCase() }}
-      </div>
+        :name="m.name"
+        :index="i"
+        :size="36"
+        ring
+      />
       <button class="qr-btn" @click="invite">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <rect x="2" y="2" width="5" height="5" rx="1" stroke="#F6B221" stroke-width="1.4"/>
@@ -295,37 +183,16 @@ function settle() {
 
     <!-- Expense list -->
     <div v-if="expenses.length" class="expense-list">
-      <div v-for="exp in expenses" :key="exp.id" class="expense-card" @click="openInvite(exp)">
-        <div class="expense-top">
-          <div class="expense-left">
-            <div class="expense-title">{{ exp.description }}</div>
-            <div class="expense-meta">Payé par {{ memberName(exp.paidBy) }} · {{ shortDate(exp.createdAt) }}</div>
-          </div>
-          <button class="exp-edit-btn" @click.stop="openEditExpense(exp)" aria-label="Modifier la dépense">
-            <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
-              <path d="M2 13L5 10M9 2L13 6L6.5 12.5L2.5 12.5L2.5 8.5L9 2Z" stroke="#8B8880" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <div class="expense-right">
-            <div class="expense-total">{{ exp.amount.toFixed(2) }} {{ exp.currency }}</div>
-            <div
-              class="expense-share"
-              :style="{ color: exp.paidBy === userId ? '#198060' : '#CC3C3C' }"
-            >
-              {{ exp.paidBy === userId ? 'tu as payé' : `−${userShare(exp.id).toFixed(2)} ${exp.currency}` }}
-            </div>
-          </div>
-        </div>
-        <div class="bar-bg">
-          <div
-            class="bar-fill"
-            :style="{
-              width: Math.min(100, (userShare(exp.id) / exp.amount) * 100) + '%',
-              background: exp.paidBy === userId ? '#198060' : '#F6B221',
-            }"
-          />
-        </div>
-      </div>
+      <ExpenseCard
+        v-for="exp in expenses"
+        :key="exp.id"
+        :expense="exp"
+        :user-share="userShare(exp.id)"
+        :paid-by-name="memberName(exp.paidBy)"
+        :is-mine="exp.paidBy === userId"
+        @select="inviteExpense = exp"
+        @edit="openEditExpense(exp)"
+      />
     </div>
 
     <!-- Empty expenses -->
@@ -334,120 +201,53 @@ function settle() {
       <button class="expense-empty-cta" @click="goToAddExpense">+ Ajouter une dépense</button>
     </div>
 
-    <!-- Feuille : inviter à payer une part (QR deeplink) -->
-    <div v-if="inviteExpense" class="sheet-overlay" @click="closeInvite">
-      <div class="sheet" @click.stop>
-        <div class="sheet-handle" />
-
-        <!-- Étape 1 : choisir le débiteur -->
-        <template v-if="!inviteDeeplink">
-          <div class="sheet-title">Inviter à payer</div>
-          <div class="sheet-sub">{{ inviteExpense.description }} · payé par {{ memberName(inviteExpense.paidBy) }}</div>
-
-          <div v-if="debtorsOf(inviteExpense).length" class="debtor-list">
-            <button
-              v-for="s in debtorsOf(inviteExpense)"
-              :key="s.memberId"
-              class="debtor-row"
-              @click="selectDebtor(inviteExpense, s.memberId, s.amount)"
-            >
-              <div class="debtor-info">
-                <div class="debtor-name">{{ memberName(s.memberId) }}</div>
-                <div class="debtor-amount">{{ s.amount.toFixed(2) }} {{ inviteExpense.currency }}</div>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 3L11 8L6 13" stroke="#8B8880" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-          <div v-else class="sheet-empty">Personne ne doit de part sur cette dépense.</div>
-        </template>
-
-        <!-- Étape 2 : QR (présentiel) + partage du lien https (à distance) -->
-        <template v-else>
-          <div class="sheet-title">Régler la part</div>
-          <div class="sheet-sub">{{ inviteLabel }}</div>
-          <div class="qr-box">
-            <QRCodeGenerator :url="inviteDeeplink" :size="200" />
-          </div>
-          <div class="sheet-note">
-            En présentiel : fais scanner ce QR avec l'appareil photo → Nimiq Pay s'ouvre sur la part à régler.
-          </div>
-          <button class="sheet-copy" @click="shareInvite">Copier le lien</button>
-          <button class="sheet-back" @click="backToDebtors">← Choisir un autre membre</button>
-        </template>
-      </div>
-    </div>
+    <!-- Feuille : inviter à payer une part -->
+    <InviteSheet
+      v-if="inviteExpense"
+      :expense="inviteExpense"
+      :group="group"
+      :user-id="userId"
+      @close="inviteExpense = null"
+    />
 
     <!-- Feuille : modifier le groupe (nom + icône) -->
-    <div v-if="editGroupOpen" class="sheet-overlay" @click="closeEditGroup">
-      <div class="sheet" @click.stop>
-        <div class="sheet-handle" />
-        <div class="sheet-title">Modifier le groupe</div>
-        <div class="sheet-sub">Nom et icône du groupe</div>
+    <BaseSheet v-if="editGroupOpen" @close="editGroupOpen = false">
+      <div class="sheet-title">Modifier le groupe</div>
+      <div class="sheet-sub">Nom et icône du groupe</div>
 
-        <div class="edit-label">Icône</div>
-        <div class="icon-picker">
-          <button
-            v-for="icon in ICONS"
-            :key="icon.type"
-            class="icon-option"
-            :class="{ selected: editGroupIcon === icon.type }"
-            :style="{ background: icon.bg }"
-            @click="editGroupIcon = icon.type"
-          >
-            <svg v-if="icon.type === 'person'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M4 18C4 15 7.13 12.5 11 12.5C14.87 12.5 18 15 18 18" :stroke="icon.color" stroke-width="1.5" stroke-linecap="round"/>
-              <circle cx="11" cy="8" r="3.5" :stroke="icon.color" stroke-width="1.5"/>
-            </svg>
-            <svg v-else-if="icon.type === 'home'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M3 10L11 3L19 10V19H14V14H8V19H3V10Z" :stroke="icon.color" stroke-width="1.5" stroke-linejoin="round"/>
-            </svg>
-            <svg v-else-if="icon.type === 'car'" width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <circle cx="6.5" cy="15.5" r="2.5" :stroke="icon.color" stroke-width="1.5"/>
-              <circle cx="15.5" cy="15.5" r="2.5" :stroke="icon.color" stroke-width="1.5"/>
-              <path d="M2 15.5H4M9 15.5H13M18 15.5H20M4 15.5V9L7 5H15L18 9V15.5" :stroke="icon.color" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg v-else width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M4 6H18M4 11H18M4 16H12" :stroke="icon.color" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
+      <div class="edit-label">Icône</div>
+      <GroupIconPicker v-model="editGroupIcon" />
 
-        <div class="edit-label">Nom</div>
-        <input
-          class="edit-input"
-          v-model="editGroupName"
-          type="text"
-          placeholder="Nom du groupe"
-          @keyup.enter="saveGroup"
-        />
+      <div class="edit-label">Nom</div>
+      <input
+        class="edit-input"
+        v-model="editGroupName"
+        type="text"
+        placeholder="Nom du groupe"
+        @keyup.enter="saveGroup"
+      />
 
-        <button class="sheet-copy" :disabled="!editGroupName.trim()" @click="saveGroup">Enregistrer</button>
-        <button class="sheet-back" @click="closeEditGroup">Annuler</button>
-      </div>
-    </div>
+      <button class="sheet-copy" :disabled="!editGroupName.trim()" @click="saveGroup">Enregistrer</button>
+      <button class="sheet-back" @click="editGroupOpen = false">Annuler</button>
+    </BaseSheet>
 
     <!-- Feuille : modifier la description d'une dépense -->
-    <div v-if="editExpense" class="sheet-overlay" @click="closeEditExpense">
-      <div class="sheet" @click.stop>
-        <div class="sheet-handle" />
-        <div class="sheet-title">Modifier la dépense</div>
-        <div class="sheet-sub">{{ editExpense.amount.toFixed(2) }} {{ editExpense.currency }} · payé par {{ memberName(editExpense.paidBy) }}</div>
+    <BaseSheet v-if="editExpense" @close="closeEditExpense">
+      <div class="sheet-title">Modifier la dépense</div>
+      <div class="sheet-sub">{{ editExpense.amount.toFixed(2) }} {{ editExpense.currency }} · payé par {{ memberName(editExpense.paidBy) }}</div>
 
-        <div class="edit-label">Description</div>
-        <input
-          class="edit-input"
-          v-model="editExpenseDesc"
-          type="text"
-          placeholder="Description de la dépense"
-          @keyup.enter="saveExpense"
-        />
+      <div class="edit-label">Description</div>
+      <input
+        class="edit-input"
+        v-model="editExpenseDesc"
+        type="text"
+        placeholder="Description de la dépense"
+        @keyup.enter="saveExpense"
+      />
 
-        <button class="sheet-copy" :disabled="!editExpenseDesc.trim()" @click="saveExpense">Enregistrer</button>
-        <button class="sheet-back" @click="closeEditExpense">Annuler</button>
-      </div>
-    </div>
+      <button class="sheet-copy" :disabled="!editExpenseDesc.trim()" @click="saveExpense">Enregistrer</button>
+      <button class="sheet-back" @click="closeEditExpense">Annuler</button>
+    </BaseSheet>
   </div>
 </template>
 
@@ -501,19 +301,6 @@ function settle() {
   gap: 8px;
   flex-shrink: 0;
   flex-wrap: wrap;
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  border: 2.5px solid var(--bg);
-  flex-shrink: 0;
 }
 
 .qr-btn {
@@ -635,52 +422,6 @@ function settle() {
   overflow-y: auto;
 }
 
-.expense-card {
-  background: var(--bg-card);
-  border-radius: 14px;
-  padding: 13px 15px;
-  flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  cursor: pointer;
-  transition: transform 0.12s;
-}
-
-.expense-card:active { transform: scale(0.99); }
-
-.expense-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 9px;
-}
-
-.expense-left { flex: 1; min-width: 0; }
-.expense-title { font-size: 13px; font-weight: 600; color: var(--dark); }
-.expense-meta { font-size: 11px; color: var(--text); margin-top: 2px; }
-.exp-edit-btn {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  border: none;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: -2px 4px 0;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.exp-edit-btn:active { opacity: 0.6; }
-
-.expense-right { text-align: right; flex-shrink: 0; margin-left: 8px; }
-.expense-total { font-size: 13px; font-weight: 600; color: var(--dark); }
-.expense-share { font-size: 10px; margin-top: 1px; }
-
-.bar-bg { height: 3px; background: var(--border-subtle); border-radius: 2px; }
-.bar-fill { height: 100%; border-radius: 2px; }
-
 /* Empty expenses */
 .expense-empty {
   flex: 1;
@@ -706,108 +447,10 @@ function settle() {
   font-family: inherit;
 }
 
-/* Invite sheet */
-.sheet-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  align-items: flex-end;
-}
-
-.sheet {
-  width: 100%;
-  max-width: 430px;
-  margin: 0 auto;
-  background: var(--bg-card);
-  border-radius: 24px 24px 0 0;
-  padding: 10px 20px 30px;
-  animation: sheet-up 0.22s ease;
-}
-
-@keyframes sheet-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-.sheet-handle {
-  width: 40px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border);
-  margin: 0 auto 14px;
-}
-
+/* Edit sheets (contenu dans BaseSheet) */
 .sheet-title { font-size: 17px; font-weight: 700; color: var(--dark); }
 .sheet-sub { font-size: 12px; color: var(--text); margin-top: 2px; margin-bottom: 14px; }
 
-.debtor-list { display: flex; flex-direction: column; gap: 8px; }
-
-.debtor-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--bg);
-  border: none;
-  border-radius: 14px;
-  padding: 12px 14px;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.debtor-row:active { opacity: 0.7; }
-
-.debtor-name { font-size: 14px; font-weight: 600; color: var(--dark); }
-.debtor-amount { font-size: 12px; color: var(--text); margin-top: 1px; }
-
-.sheet-empty { font-size: 13px; color: var(--text); padding: 12px 0; text-align: center; }
-
-.sheet-note {
-  font-size: 11px;
-  color: var(--text);
-  text-align: center;
-  margin-top: 14px;
-  line-height: 1.5;
-}
-
-.qr-box {
-  display: flex;
-  justify-content: center;
-  margin: 16px 0 4px;
-}
-
-.sheet-copy {
-  width: 100%;
-  margin-top: 14px;
-  background: var(--accent);
-  border: none;
-  border-radius: 14px;
-  padding: 14px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--dark);
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.sheet-back {
-  width: 100%;
-  margin-top: 8px;
-  background: none;
-  border: none;
-  padding: 10px;
-  font-size: 13px;
-  color: var(--text-mid);
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.sheet-copy:disabled { opacity: 0.4; cursor: not-allowed; }
-
-/* Champs d'édition (feuilles modifier groupe / dépense) */
 .edit-label {
   font-size: 10px;
   color: var(--text);
@@ -816,22 +459,6 @@ function settle() {
   font-weight: 700;
   margin: 14px 0 10px;
 }
-
-.icon-picker { display: flex; gap: 10px; }
-
-.icon-option {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  border: 2px solid transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: border-color 0.15s, transform 0.1s;
-}
-
-.icon-option.selected { border-color: var(--dark); transform: scale(1.05); }
 
 .edit-input {
   width: 100%;
@@ -848,4 +475,32 @@ function settle() {
 }
 
 .edit-input::placeholder { color: var(--text); }
+
+.sheet-copy {
+  width: 100%;
+  margin-top: 14px;
+  background: var(--accent);
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dark);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sheet-copy:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.sheet-back {
+  width: 100%;
+  margin-top: 8px;
+  background: none;
+  border: none;
+  padding: 10px;
+  font-size: 13px;
+  color: var(--text-mid);
+  cursor: pointer;
+  font-family: inherit;
+}
 </style>
