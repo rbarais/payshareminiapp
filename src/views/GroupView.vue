@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import type { Expense, ShareableRoom } from '../types';
+import type { Expense, GroupIcon, ShareableRoom } from '../types';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
@@ -148,6 +148,59 @@ async function shareInvite() {
   }
 }
 
+// ── Édition du groupe (nom + icône) ────────────────────────────────────────
+const ICONS: { bg: string; color: string; type: GroupIcon }[] = [
+  { bg: '#FFF1CF', color: '#B07808', type: 'person' },
+  { bg: '#E0F5EE', color: '#198060', type: 'home' },
+  { bg: '#EAEEFF', color: '#3844B0', type: 'car' },
+  { bg: '#F0EEE9', color: '#6B6860', type: 'list' },
+];
+
+const editGroupOpen = ref(false);
+const editGroupName = ref('');
+const editGroupIcon = ref<GroupIcon>('person');
+
+function openEditGroup() {
+  if (!group.value) return;
+  editGroupName.value = group.value.name;
+  editGroupIcon.value = group.value.icon;
+  editGroupOpen.value = true;
+}
+
+function closeEditGroup() {
+  editGroupOpen.value = false;
+}
+
+function saveGroup() {
+  const name = editGroupName.value.trim();
+  if (!name) return;
+  store.updateGroup(props.id, { name, icon: editGroupIcon.value });
+  editGroupOpen.value = false;
+  toast.show('Groupe mis à jour', 'success');
+}
+
+// ── Édition d'une dépense (description) ─────────────────────────────────────
+const editExpense = ref<Expense | null>(null);
+const editExpenseDesc = ref('');
+
+function openEditExpense(exp: Expense) {
+  editExpense.value = exp;
+  editExpenseDesc.value = exp.description;
+}
+
+function closeEditExpense() {
+  editExpense.value = null;
+  editExpenseDesc.value = '';
+}
+
+function saveExpense() {
+  const description = editExpenseDesc.value.trim();
+  if (!description || !editExpense.value) return;
+  store.updateExpense(editExpense.value.id, { description });
+  closeEditExpense();
+  toast.show('Dépense mise à jour', 'success');
+}
+
 function goBack() {
   router.back();
 }
@@ -178,7 +231,7 @@ function settle() {
         <div class="header-title">{{ group.name }}</div>
         <div class="header-sub">{{ group.members.length }} membres · {{ monthLabel }}</div>
       </div>
-      <button class="icon-btn">
+      <button class="icon-btn" @click="openEditGroup">
         <svg width="16" height="16" viewBox="0 0 16 16">
           <circle cx="8" cy="3.5" r="1.3" fill="#3D3B35"/>
           <circle cx="8" cy="8" r="1.3" fill="#3D3B35"/>
@@ -248,6 +301,11 @@ function settle() {
             <div class="expense-title">{{ exp.description }}</div>
             <div class="expense-meta">Payé par {{ memberName(exp.paidBy) }} · {{ shortDate(exp.createdAt) }}</div>
           </div>
+          <button class="exp-edit-btn" @click.stop="openEditExpense(exp)" aria-label="Modifier la dépense">
+            <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
+              <path d="M2 13L5 10M9 2L13 6L6.5 12.5L2.5 12.5L2.5 8.5L9 2Z" stroke="#8B8880" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
           <div class="expense-right">
             <div class="expense-total">{{ exp.amount.toFixed(2) }} {{ exp.currency }}</div>
             <div
@@ -318,6 +376,76 @@ function settle() {
           <button class="sheet-copy" @click="shareInvite">Copier le lien</button>
           <button class="sheet-back" @click="backToDebtors">← Choisir un autre membre</button>
         </template>
+      </div>
+    </div>
+
+    <!-- Feuille : modifier le groupe (nom + icône) -->
+    <div v-if="editGroupOpen" class="sheet-overlay" @click="closeEditGroup">
+      <div class="sheet" @click.stop>
+        <div class="sheet-handle" />
+        <div class="sheet-title">Modifier le groupe</div>
+        <div class="sheet-sub">Nom et icône du groupe</div>
+
+        <div class="edit-label">Icône</div>
+        <div class="icon-picker">
+          <button
+            v-for="icon in ICONS"
+            :key="icon.type"
+            class="icon-option"
+            :class="{ selected: editGroupIcon === icon.type }"
+            :style="{ background: icon.bg }"
+            @click="editGroupIcon = icon.type"
+          >
+            <svg v-if="icon.type === 'person'" width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M4 18C4 15 7.13 12.5 11 12.5C14.87 12.5 18 15 18 18" :stroke="icon.color" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="11" cy="8" r="3.5" :stroke="icon.color" stroke-width="1.5"/>
+            </svg>
+            <svg v-else-if="icon.type === 'home'" width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M3 10L11 3L19 10V19H14V14H8V19H3V10Z" :stroke="icon.color" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+            <svg v-else-if="icon.type === 'car'" width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <circle cx="6.5" cy="15.5" r="2.5" :stroke="icon.color" stroke-width="1.5"/>
+              <circle cx="15.5" cy="15.5" r="2.5" :stroke="icon.color" stroke-width="1.5"/>
+              <path d="M2 15.5H4M9 15.5H13M18 15.5H20M4 15.5V9L7 5H15L18 9V15.5" :stroke="icon.color" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg v-else width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M4 6H18M4 11H18M4 16H12" :stroke="icon.color" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="edit-label">Nom</div>
+        <input
+          class="edit-input"
+          v-model="editGroupName"
+          type="text"
+          placeholder="Nom du groupe"
+          @keyup.enter="saveGroup"
+        />
+
+        <button class="sheet-copy" :disabled="!editGroupName.trim()" @click="saveGroup">Enregistrer</button>
+        <button class="sheet-back" @click="closeEditGroup">Annuler</button>
+      </div>
+    </div>
+
+    <!-- Feuille : modifier la description d'une dépense -->
+    <div v-if="editExpense" class="sheet-overlay" @click="closeEditExpense">
+      <div class="sheet" @click.stop>
+        <div class="sheet-handle" />
+        <div class="sheet-title">Modifier la dépense</div>
+        <div class="sheet-sub">{{ editExpense.amount.toFixed(2) }} {{ editExpense.currency }} · payé par {{ memberName(editExpense.paidBy) }}</div>
+
+        <div class="edit-label">Description</div>
+        <input
+          class="edit-input"
+          v-model="editExpenseDesc"
+          type="text"
+          placeholder="Description de la dépense"
+          @keyup.enter="saveExpense"
+        />
+
+        <button class="sheet-copy" :disabled="!editExpenseDesc.trim()" @click="saveExpense">Enregistrer</button>
+        <button class="sheet-back" @click="closeEditExpense">Annuler</button>
       </div>
     </div>
   </div>
@@ -529,6 +657,23 @@ function settle() {
 .expense-left { flex: 1; min-width: 0; }
 .expense-title { font-size: 13px; font-weight: 600; color: var(--dark); }
 .expense-meta { font-size: 11px; color: var(--text); margin-top: 2px; }
+.exp-edit-btn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -2px 4px 0;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.exp-edit-btn:active { opacity: 0.6; }
+
 .expense-right { text-align: right; flex-shrink: 0; margin-left: 8px; }
 .expense-total { font-size: 13px; font-weight: 600; color: var(--dark); }
 .expense-share { font-size: 10px; margin-top: 1px; }
@@ -659,4 +804,48 @@ function settle() {
   cursor: pointer;
   font-family: inherit;
 }
+
+.sheet-copy:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Champs d'édition (feuilles modifier groupe / dépense) */
+.edit-label {
+  font-size: 10px;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin: 14px 0 10px;
+}
+
+.icon-picker { display: flex; gap: 10px; }
+
+.icon-option {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.icon-option.selected { border-color: var(--dark); transform: scale(1.05); }
+
+.edit-input {
+  width: 100%;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  background: #FAFAF8;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.edit-input::placeholder { color: var(--text); }
 </style>

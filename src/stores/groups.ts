@@ -177,6 +177,19 @@ export function useGroupsStore() {
       return expense;
     },
 
+    // Met à jour une dépense existante. La description est librement éditable ;
+    // les autres champs (montant/répartition) restent figés pour préserver les
+    // parts déjà calculées (une refonte des parts passe par une nouvelle dépense).
+    updateExpense(
+      id: string,
+      patch: Partial<Pick<Expense, 'description'>>,
+    ): Expense | null {
+      const expense = state.expenses.find((e) => e.id === id);
+      if (!expense) return null;
+      Object.assign(expense, patch);
+      return expense;
+    },
+
     deleteExpense(id: string): void {
       const i = state.expenses.findIndex((e) => e.id === id);
       if (i !== -1) state.expenses.splice(i, 1);
