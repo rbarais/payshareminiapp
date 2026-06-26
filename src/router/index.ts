@@ -6,6 +6,7 @@ import AddExpenseView from '../views/AddExpenseView.vue'
 import PayView from '../views/PayView.vue'
 import SuccessView from '../views/SuccessView.vue'
 import NewGroupView from '../views/NewGroupView.vue'
+import JoinGroupView from '../views/JoinGroupView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -50,6 +51,12 @@ const routes: RouteRecordRaw[] = [
     path: '/new-group',
     name: 'newGroup',
     component: NewGroupView
+  },
+  {
+    path: '/join',
+    name: 'join',
+    component: JoinGroupView,
+    props: (route) => ({ g: route.query.g ?? '', t: route.query.t ?? '' })
   },
   {
     path: '/scan',

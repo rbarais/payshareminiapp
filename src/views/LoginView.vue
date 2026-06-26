@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useSession } from '../stores/session';
 import { buildInviteDeeplink } from '../utils/room';
+import { isSupabaseConfigured } from '../utils/supabase';
 
 const session = useSession();
 const emit = defineEmits<{ connected: [] }>();
@@ -73,6 +74,7 @@ async function connect() {
         Ouvrir dans Nimiq Pay
       </button>
       <p v-if="session.error.value" class="err">{{ session.error.value }}</p>
+      <p v-if="!isSupabaseConfigured" class="err">⚠ Backend non configuré (variables d'env manquantes)</p>
       <p class="privacy">Aucune donnée personnelle n'est collectée. Tes clés restent dans Nimiq Pay.</p>
     </div>
 

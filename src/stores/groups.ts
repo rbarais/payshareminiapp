@@ -5,8 +5,8 @@ import {
   saveGroups,
   loadExpenses,
   saveExpenses,
-  generateId,
 } from '../utils/storage';
+import { insertGroup, insertExpense, fetchMyGroups, fetchGroupExpenses } from '../utils/api';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Store groupes & dépenses — source de vérité côté client (Phase 0).
@@ -32,6 +32,14 @@ watch(() => state.expenses, (e) => saveExpenses(e), { deep: true });
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+// Token d'invitation hex (16 octets) — même format que le default Postgres.
+// Généré côté client pour que le créateur puisse inviter sans attendre un refresh.
+function randomInviteToken(): string {
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  return Array.from(b).map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
 // Calcule les parts figées d'une dépense selon le mode de répartition.
@@ -103,24 +111,27 @@ export function useGroupsStore() {
       ),
 
     // ── Mutations groupes ────────────────────────────────────────────────
-    createGroup(params: {
+    async createGroup(params: {
       name: string;
       icon: GroupIcon;
       creatorId: string;
       creatorName: string;
       currencies?: string[];
-    }): Group {
+    }): Promise<Group> {
       const now = new Date();
       const group: Group = {
-        id: generateId('group'),
+        // uuid : la colonne groups.id de Supabase est de type uuid.
+        id: crypto.randomUUID(),
         name: params.name,
         icon: params.icon,
         creatorId: params.creatorId,
         members: [{ id: params.creatorId, name: params.creatorName, joinedAt: now }],
         currencies: params.currencies?.length ? params.currencies : ['NIM'],
         createdAt: now,
+        inviteToken: randomInviteToken(),
       };
-      state.groups.push(group);
+      await insertGroup(group);     // backend d'abord
+      state.groups.push(group);     // puis cache
       return group;
     },
 
@@ -152,7 +163,7 @@ export function useGroupsStore() {
     },
 
     // ── Mutations dépenses ───────────────────────────────────────────────
-    addExpense(params: {
+    async addExpense(params: {
       groupId: string;
       description: string;
       amount: number;
@@ -161,9 +172,10 @@ export function useGroupsStore() {
       split: SplitMode;
       // Un membre par participant ; weight interprété selon `split`.
       participants: { memberId: string; weight?: number }[];
-    }): Expense {
+    }): Promise<Expense> {
       const expense: Expense = {
-        id: generateId('exp'),
+        // uuid : la colonne expenses.id de Supabase est de type uuid.
+        id: crypto.randomUUID(),
         groupId: params.groupId,
         description: params.description,
         amount: params.amount,
@@ -173,7 +185,8 @@ export function useGroupsStore() {
         shares: computeShares(params.amount, params.split, params.participants),
         createdAt: new Date(),
       };
-      state.expenses.push(expense);
+      await insertExpense(expense);   // backend d'abord
+      state.expenses.push(expense);   // puis cache
       return expense;
     },
 
@@ -193,6 +206,17 @@ export function useGroupsStore() {
     deleteExpense(id: string): void {
       const i = state.expenses.findIndex((e) => e.id === id);
       if (i !== -1) state.expenses.splice(i, 1);
+    },
+
+    // ── Synchronisation Supabase ──────────────────────────────────────────
+    async refreshGroups(): Promise<void> {
+      const groups = await fetchMyGroups();
+      state.groups.splice(0, state.groups.length, ...groups);
+    },
+    async refreshGroupExpenses(groupId: string): Promise<void> {
+      const expenses = await fetchGroupExpenses(groupId);
+      const others = state.expenses.filter((e) => e.groupId !== groupId);
+      state.expenses.splice(0, state.expenses.length, ...others, ...expenses);
     },
 
     // Exposé pour les écrans de saisie (prévisualisation des parts avant validation).

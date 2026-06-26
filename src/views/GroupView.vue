@@ -5,8 +5,10 @@ import type { Expense, GroupIcon } from '../types';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
+import { buildInviteUrl } from '../utils/room';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import ExpenseCard from '../components/ExpenseCard.vue';
+import { captureError } from '../utils/errors';
 import InviteSheet from '../components/InviteSheet.vue';
 import BaseSheet from '../components/BaseSheet.vue';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
@@ -24,8 +26,13 @@ const expenses = computed(() => store.groupExpenses(props.id));
 const balance = computed(() => store.groupBalanceForUser(props.id, userId.value));
 
 // Redirige si le groupe n'existe pas (id invalide / supprimé).
-onMounted(() => {
-  if (!group.value) router.replace({ name: 'home' });
+onMounted(async () => {
+  if (!group.value) {
+    router.replace({ name: 'home' });
+    return;
+  }
+  // Refresh des dépenses du groupe depuis Supabase à l'ouverture.
+  try { await store.refreshGroupExpenses(props.id); } catch (err) { captureError(err, 'GroupView.refreshGroupExpenses'); toast.show('Synchronisation impossible', 'error'); }
 });
 
 const monthLabel = computed(() =>
@@ -97,8 +104,19 @@ function goToAddExpense() {
   router.push({ name: 'addExpense', query: { groupId: props.id } });
 }
 
-function invite() {
-  toast.show('Invitation par QR — bientôt disponible', 'info'); // Phase 4
+async function invite() {
+  const g = group.value;
+  if (!g?.inviteToken) {
+    toast.show('Synchronisation requise avant de partager', 'error');
+    return;
+  }
+  const url = buildInviteUrl(g.id, g.inviteToken);
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.show('Lien d’invitation copié', 'success');
+  } catch {
+    toast.show(url, 'info');
+  }
 }
 
 function settle() {

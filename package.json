@@ -6,11 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@nimiq/core": "^2.7.0",
     "@nimiq/mini-app-sdk": "^0.1.0",
+    "@sentry/vue": "^10.62.0",
+    "@supabase/supabase-js": "^2.108.2",
     "jsqr": "^1.4.0",
     "qrcode.vue": "^3.10.0",
     "vue": "^3.5.34",
@@ -19,10 +23,13 @@
   "devDependencies": {
     "@types/node": "^24.12.3",
     "@vitejs/plugin-vue": "^6.0.6",
+    "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.9.1",
+    "jsdom": "^25.0.1",
     "typescript": "~6.0.2",
     "vite": "^8.0.12",
     "vite-plugin-mkcert": "^2.1.0",
+    "vitest": "^3.2.6",
     "vue-tsc": "^3.2.8"
   }
 }

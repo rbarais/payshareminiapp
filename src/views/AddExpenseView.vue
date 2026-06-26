@@ -6,6 +6,7 @@ import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import InitialAvatar from '../components/InitialAvatar.vue';
+import { captureError } from '../utils/errors';
 
 const route = useRoute();
 const router = useRouter();
@@ -99,7 +100,7 @@ function selectPayer(id: string) {
   showPayerMenu.value = false;
 }
 
-function create() {
+async function create() {
   if (splitError.value || !amount.value) {
     toast.show(splitError.value || 'Formulaire incomplet', 'error');
     return;
@@ -117,15 +118,21 @@ function create() {
       .map((m) => ({ memberId: m.id, weight: split[m.id].amt }));
   }
 
-  store.addExpense({
-    groupId: groupId.value,
-    description: description.value.trim(),
-    amount: amount.value,
-    currency: currency.value,
-    paidBy: paidBy.value,
-    split: mode.value,
-    participants,
-  });
+  try {
+    await store.addExpense({
+      groupId: groupId.value,
+      description: description.value.trim(),
+      amount: amount.value,
+      currency: currency.value,
+      paidBy: paidBy.value,
+      split: mode.value,
+      participants,
+    });
+  } catch (err) {
+    captureError(err, 'AddExpenseView.addExpense');
+    toast.show('Ajout de la dépense impossible', 'error');
+    return;
+  }
   toast.show('Dépense ajoutée', 'success');
   router.replace({ name: 'group', params: { id: groupId.value } });
 }

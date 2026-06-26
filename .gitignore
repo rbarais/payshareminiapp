@@ -56,3 +56,5 @@ Thumbs.db
 
 # Certificats locaux mkcert
 .certs
+
+docs/

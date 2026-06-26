@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
+import { useToast } from '../stores/toast';
 import GroupCard from '../components/GroupCard.vue';
 import BottomNav from '../components/BottomNav.vue';
 import WalletBadge from '../components/WalletBadge.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
+import { captureError } from '../utils/errors';
 
 const router = useRouter()
 const session = useSession()
 const store = useGroupsStore()
+const toast = useToast()
+
+// Refresh depuis Supabase à l'ouverture (cache write-through, pas de temps réel).
+onMounted(async () => {
+  try { await store.refreshGroups(); } catch (err) { captureError(err, 'HomeView.refreshGroups'); toast.show('Synchronisation impossible', 'error'); }
+});
 
 const userId = computed(() => session.user.value?.id ?? '');
 

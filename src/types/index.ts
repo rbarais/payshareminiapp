@@ -52,6 +52,7 @@ export interface Group {
   members: Member[];
   currencies: string[];    // devises de remboursement acceptées (NIM par défaut)
   createdAt: Date;
+  inviteToken?: string;    // token d'invitation (présent quand chargé depuis Supabase)
 }
 
 // ─────────────────────────────────────────────────────────────────────────

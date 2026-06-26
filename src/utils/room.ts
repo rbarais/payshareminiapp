@@ -32,6 +32,28 @@ export function decodeRoomFromText(text: string): ShareableRoom | null {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Invitation à rejoindre un groupe synchronisé (Supabase). Différent du ?r=
+// (paiement) : ?g=<groupId>&t=<inviteToken> → ouvre l'écran « Rejoindre ».
+// ─────────────────────────────────────────────────────────────────────────
+
+export function buildInviteUrl(groupId: string, token: string): string {
+  const base = `${window.location.origin}${window.location.pathname}`;
+  return `${base}?g=${encodeURIComponent(groupId)}&t=${encodeURIComponent(token)}`;
+}
+
+export function decodeInviteFromText(text: string): { groupId: string; token: string } | null {
+  try {
+    const u = new URL(text);
+    const groupId = u.searchParams.get('g');
+    const token = u.searchParams.get('t');
+    if (!groupId || !token) return null;
+    return { groupId, token };
+  } catch {
+    return null;
+  }
+}
+
 export function amountPerPerson(room: ShareableRoom): number {
   return room.amount / room.maxParticipants;
 }

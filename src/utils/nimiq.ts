@@ -122,6 +122,18 @@ export async function requestPayment(
   return result;
 }
 
+/** Signe un message via le provider. Renvoie publicKey + signature (hex). */
+export async function signMessage(
+  message: string,
+): Promise<{ publicKey: string; signature: string }> {
+  const provider = await initNimiq();
+  const result = await provider.sign(message);
+  if (typeof result === 'object' && 'error' in result) {
+    throw new Error(result.error.message);
+  }
+  return { publicKey: result.publicKey, signature: result.signature };
+}
+
 /**
  * Check synchrone (provider déjà injecté ?). Non fiable juste après le
  * chargement — préférer `detectNimiqApp()` / l'état `isNimiqApp` du store.
