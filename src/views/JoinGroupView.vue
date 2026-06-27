@@ -36,7 +36,7 @@ async function join() {
     // S'assurer qu'un JWT de session est présent avant l'appel RLS.
     if (!getStoredJwt()) await authenticate(user.id);
     await joinGroup(props.g, props.t, name);
-    await store.refreshGroups();
+    await store.refreshAll();
     toast.show('Groupe rejoint', 'success');
     router.replace({ name: 'group', params: { id: props.g } });
   } catch (err) {

@@ -19,14 +19,17 @@ import { insertGroup, insertExpense, fetchMyGroups, fetchGroupExpenses } from '.
 interface State {
   groups: Group[];
   expenses: Expense[];
+  syncing: boolean;
 }
 
 const state = reactive<State>({
   groups: loadGroups(),
   expenses: loadExpenses(),
+  syncing: false,
 });
 
-// Persistance automatique à chaque mutation.
+// Persistance automatique : watch sur les propriétés scalaires du state
+// pour détecter aussi bien les mutations profondes que les remplacements.
 watch(() => state.groups, (g) => saveGroups(g), { deep: true });
 watch(() => state.expenses, (e) => saveExpenses(e), { deep: true });
 
@@ -92,6 +95,7 @@ export function useGroupsStore() {
     // ── État ────────────────────────────────────────────────────────────
     groups: computed(() => state.groups),
     expenses: computed(() => state.expenses),
+    syncing: computed(() => state.syncing),
 
     // ── Lecture ─────────────────────────────────────────────────────────
     getGroup: (id: string) => state.groups.find((g) => g.id === id) ?? null,
@@ -208,15 +212,25 @@ export function useGroupsStore() {
       if (i !== -1) state.expenses.splice(i, 1);
     },
 
-    // ── Synchronisation Supabase ──────────────────────────────────────────
-    async refreshGroups(): Promise<void> {
-      const groups = await fetchMyGroups();
-      state.groups.splice(0, state.groups.length, ...groups);
+    // ── Synchronisation DB ────────────────────────────────────────────────
+    // La DB est source de vérité : on remplace intégralement l'état local.
+    // Groupes + toutes les dépenses sont fetchés en parallèle.
+    async refreshAll(): Promise<void> {
+      state.syncing = true;
+      try {
+        const groups = await fetchMyGroups();
+        const allExpenses = await Promise.all(groups.map((g) => fetchGroupExpenses(g.id)));
+        // Assignation directe → Vue détecte le changement de référence et
+        // déclenche le watch pour re-persister dans localStorage.
+        state.groups = groups;
+        state.expenses = allExpenses.flat();
+      } finally {
+        state.syncing = false;
+      }
     },
     async refreshGroupExpenses(groupId: string): Promise<void> {
       const expenses = await fetchGroupExpenses(groupId);
-      const others = state.expenses.filter((e) => e.groupId !== groupId);
-      state.expenses.splice(0, state.expenses.length, ...others, ...expenses);
+      state.expenses = [...state.expenses.filter((e) => e.groupId !== groupId), ...expenses];
     },
 
     // Exposé pour les écrans de saisie (prévisualisation des parts avant validation).

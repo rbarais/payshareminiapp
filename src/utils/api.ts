@@ -16,7 +16,9 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error('Session expirée');
   }
   if (!res.ok) throw new Error(`API ${res.status}`);
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
 }
 
 export async function fetchMyGroups(): Promise<Group[]> {
