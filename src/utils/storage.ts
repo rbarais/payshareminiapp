@@ -1,4 +1,4 @@
-import type { Group, Expense } from '../types';
+import type { Group, Expense, Settlement } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Persistance locale (localStorage).
@@ -10,6 +10,7 @@ import type { Group, Expense } from '../types';
 
 const GROUPS_KEY = 'payshare_groups';
 const EXPENSES_KEY = 'payshare_expenses';
+const SETTLEMENTS_KEY = 'payshare_settlements';
 
 // Recharge un tableau JSON typé, en re-hydratant les dates depuis leurs strings.
 function load<T>(key: string, reviveDates: (raw: any) => T): T[] {
@@ -40,6 +41,14 @@ export function loadExpenses(): Expense[] {
 
 export function saveExpenses(expenses: Expense[]): void {
   localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
+}
+
+export function loadSettlements(): Settlement[] {
+  return load<Settlement>(SETTLEMENTS_KEY, (s) => ({ ...s, settledAt: new Date(s.settledAt) }));
+}
+
+export function saveSettlements(settlements: Settlement[]): void {
+  localStorage.setItem(SETTLEMENTS_KEY, JSON.stringify(settlements));
 }
 
 // Génère un id unique préfixé (ex. generateId('group') → 'group_…').

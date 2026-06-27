@@ -1,8 +1,9 @@
 import express from 'express';
-import authRouter from './routes/auth.js';
-import groupsRouter from './routes/groups.js';
-import expensesRouter from './routes/expenses.js';
-import joinRouter from './routes/join.js';
+import authRouter from '../server/routes/auth.js';
+import groupsRouter from '../server/routes/groups.js';
+import expensesRouter from '../server/routes/expenses.js';
+import settlementsRouter from '../server/routes/settlements.js';
+import joinRouter from '../server/routes/join.js';
 
 const app = express();
 app.use(express.json());
@@ -10,6 +11,7 @@ app.use(express.json());
 app.use('/api/auth', authRouter);
 app.use('/api/groups', groupsRouter);
 app.use('/api/groups', expensesRouter);
+app.use('/api/groups', settlementsRouter);
 app.use('/api', joinRouter);
 
 app.get('/api/health', async (_req, res) => {
@@ -19,7 +21,7 @@ app.get('/api/health', async (_req, res) => {
     ALLOW_DEV_AUTH: process.env.ALLOW_DEV_AUTH ?? 'unset',
   };
   try {
-    const { default: sql } = await import('./lib/db.js');
+    const { default: sql } = await import('../server/lib/db.js');
     await sql`SELECT 1`;
     const tables = await sql<{ tablename: string }[]>`
       SELECT tablename FROM pg_tables

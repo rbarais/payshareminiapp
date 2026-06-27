@@ -35,7 +35,8 @@ const routes: RouteRecordRaw[] = [
     name: 'pay',
     component: PayView,
     props: (route) => ({
-      room: route.query.room ? JSON.parse(decodeURIComponent(route.query.room as string)) : null
+      room: route.query.room ? JSON.parse(decodeURIComponent(route.query.room as string)) : null,
+      groupId: (route.query.groupId as string) || undefined,
     })
   },
   {

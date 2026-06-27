@@ -28,6 +28,39 @@ function debtorsOf(exp: Expense) {
   return exp.shares.filter((s) => s.memberId !== exp.paidBy && s.amount > 0.005);
 }
 
+// Membres du groupe qui ont rejoint après la création de la dépense (pas dans les parts).
+function lateJoiners(exp: Expense) {
+  const inShares = new Set(exp.shares.map((s) => s.memberId));
+  return props.group.members.filter((m) => !inShares.has(m.id) && m.id !== exp.paidBy);
+}
+
+function selectLateJoiner(memberId: string) {
+  const exp = props.expense;
+  const payee = props.group.members.find((m) => m.id === exp.paidBy);
+  if (!payee || !payee.id.startsWith('NQ')) {
+    toast.show('Le payeur doit avoir une adresse Nimiq pour être remboursé', 'error');
+    return;
+  }
+  if (exp.currency !== 'NIM') {
+    toast.show("Lien de paiement disponible en NIM pour l'instant", 'error');
+    return;
+  }
+  // Montant suggéré : part égale parmi tous les membres du groupe
+  const suggestedAmount = exp.amount / props.group.members.length;
+  const payload: ShareableRoom = {
+    id: exp.id + '_' + memberId.slice(-6),
+    creatorId: payee.id,
+    creatorName: payee.name,
+    amount: suggestedAmount,
+    currency: exp.currency,
+    reason: exp.description,
+    maxParticipants: 1,
+  };
+  inviteHttps.value = encodeShareUrl(payload);
+  inviteDeeplink.value = buildInviteDeeplink(inviteHttps.value);
+  inviteLabel.value = `${memberName(memberId)} · ${suggestedAmount.toFixed(2)} NIM`;
+}
+
 function backToDebtors() {
   inviteHttps.value = '';
   inviteDeeplink.value = '';
@@ -95,7 +128,7 @@ async function shareInvite() {
       <div class="sheet-title">Inviter à payer</div>
       <div class="sheet-sub">{{ expense.description }} · payé par {{ memberName(expense.paidBy) }}</div>
 
-      <div v-if="debtorsOf(expense).length" class="debtor-list">
+      <div v-if="debtorsOf(expense).length || lateJoiners(expense).length" class="debtor-list">
         <button
           v-for="s in debtorsOf(expense)"
           :key="s.memberId"
@@ -110,6 +143,23 @@ async function shareInvite() {
             <path d="M6 3L11 8L6 13" stroke="#8B8880" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
+        <template v-if="lateJoiners(expense).length">
+          <div class="late-sep">Ont rejoint après cette dépense</div>
+          <button
+            v-for="m in lateJoiners(expense)"
+            :key="m.id"
+            class="debtor-row late"
+            @click="selectLateJoiner(m.id)"
+          >
+            <div class="debtor-info">
+              <div class="debtor-name">{{ memberName(m.id) }}</div>
+              <div class="debtor-amount">{{ (expense.amount / group.members.length).toFixed(2) }} {{ expense.currency }} (part suggérée)</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6 3L11 8L6 13" stroke="#8B8880" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </template>
       </div>
       <div v-else class="sheet-empty">Personne ne doit de part sur cette dépense.</div>
     </template>
@@ -156,6 +206,17 @@ async function shareInvite() {
 .debtor-amount { font-size: 12px; color: var(--text); margin-top: 1px; }
 
 .sheet-empty { font-size: 13px; color: var(--text); padding: 12px 0; text-align: center; }
+
+.late-sep {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text);
+  padding: 10px 0 4px;
+}
+
+.debtor-row.late { opacity: 0.75; }
 
 .sheet-note {
   font-size: 11px;

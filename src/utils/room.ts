@@ -37,16 +37,21 @@ export function decodeRoomFromText(text: string): ShareableRoom | null {
 // (paiement) : ?g=<groupId>&t=<inviteToken> → ouvre l'écran « Rejoindre ».
 // ─────────────────────────────────────────────────────────────────────────
 
+// Les params d'invitation sont dans le hash (#/join?g=&t=) et non en query string
+// pour que Nimiq Pay identifie toujours l'app via l'origine seule → une seule
+// entrée "PayShare" dans la liste des mini-apps, quel que soit le groupe.
 export function buildInviteUrl(groupId: string, token: string): string {
   const base = `${window.location.origin}${window.location.pathname}`;
-  return `${base}?g=${encodeURIComponent(groupId)}&t=${encodeURIComponent(token)}`;
+  return `${base}#/join?g=${encodeURIComponent(groupId)}&t=${encodeURIComponent(token)}`;
 }
 
 export function decodeInviteFromText(text: string): { groupId: string; token: string } | null {
   try {
     const u = new URL(text);
-    const groupId = u.searchParams.get('g');
-    const token = u.searchParams.get('t');
+    // Format hash : https://payshare.app/#/join?g=...&t=...
+    const hashSearch = u.hash.includes('?') ? new URLSearchParams(u.hash.split('?')[1]) : null;
+    const groupId = hashSearch?.get('g') ?? u.searchParams.get('g');
+    const token   = hashSearch?.get('t') ?? u.searchParams.get('t');
     if (!groupId || !token) return null;
     return { groupId, token };
   } catch {

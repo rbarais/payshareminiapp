@@ -1,5 +1,5 @@
 import { getStoredJwt, setStoredJwt } from './auth';
-import type { Group, Expense } from '../types';
+import type { Group, Expense, Settlement } from '../types';
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const jwt = getStoredJwt();
@@ -57,5 +57,24 @@ export async function joinGroup(
   return apiFetch<{ name: string; icon: string }>('/api/join', {
     method: 'POST',
     body: JSON.stringify({ groupId, token, name }),
+  });
+}
+
+export async function fetchGroupSettlements(groupId: string): Promise<Settlement[]> {
+  const rows = await apiFetch<any[]>(`/api/groups/${groupId}/settlements`);
+  return rows.map((r) => ({ ...r, settledAt: new Date(r.settledAt) }));
+}
+
+export async function insertSettlement(s: Settlement): Promise<void> {
+  await apiFetch<void>(`/api/groups/${s.groupId}/settlements`, {
+    method: 'POST',
+    body: JSON.stringify({
+      fromId: s.fromId,
+      toId: s.toId,
+      amount: s.amount,
+      currency: s.currency,
+      txHash: s.id,
+      settledAt: s.settledAt.toISOString(),
+    }),
   });
 }

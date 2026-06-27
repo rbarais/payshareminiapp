@@ -61,6 +61,17 @@ export interface Group {
 // Sera relié au modèle Expense lors du flux d'invitation (Phase 4).
 // ─────────────────────────────────────────────────────────────────────────
 
+// Règlement on-chain d'un solde net dans un groupe.
+export interface Settlement {
+  id: string;       // hash de la transaction on-chain
+  groupId: string;
+  fromId: string;   // adresse du débiteur (celui qui a payé)
+  toId: string;     // adresse du créditeur (celui qui a reçu)
+  amount: number;
+  currency: string;
+  settledAt: Date;
+}
+
 export interface ShareableRoom {
   id: string;
   creatorId: string;

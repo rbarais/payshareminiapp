@@ -36,15 +36,24 @@ async function join() {
     // S'assurer qu'un JWT de session est présent avant l'appel RLS.
     if (!getStoredJwt()) await authenticate(user.id);
     await joinGroup(props.g, props.t, name);
-    await store.refreshAll();
-    toast.show('Groupe rejoint', 'success');
-    router.replace({ name: 'group', params: { id: props.g } });
   } catch (err) {
     captureError(err, 'JoinGroupView.joinGroup');
     toast.show('Invitation invalide', 'error');
-  } finally {
     joining.value = false;
+    return;
   }
+
+  // Join enregistré — la sync peut échouer sans bloquer la navigation.
+  try {
+    await store.refreshAll();
+  } catch (err) {
+    captureError(err, 'JoinGroupView.refreshAll');
+  }
+
+  const groupName = store.getGroup(props.g)?.name ?? 'le groupe';
+  toast.show(`Tu as rejoint « ${groupName} »`, 'success');
+  router.replace({ name: 'home' });
+  joining.value = false;
 }
 </script>
 

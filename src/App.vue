@@ -62,15 +62,20 @@ watch(() => route.name, (newName) => {
 })
 
 function handleScanned(text: string) {
-  const room = decodeRoomFromText(text)
-  if (room) {
-    router.push({
-      name: 'pay',
-      query: { room: encodeURIComponent(JSON.stringify(room)) }
-    })
-  } else {
-    router.push({ name: 'home' })
+  // Un deeplink nimiqpay:// embarque l'URL https → on l'extrait d'abord.
+  const decoded = text.startsWith('nimiqpay://') ? decodeURIComponent(new URL(text).searchParams.get('url') ?? '') : text;
+
+  const invite = decodeInviteFromText(decoded);
+  if (invite) {
+    router.push({ name: 'join', query: { g: invite.groupId, t: invite.token } });
+    return;
   }
+  const room = decodeRoomFromText(decoded);
+  if (room) {
+    router.push({ name: 'pay', query: { room: encodeURIComponent(JSON.stringify(room)) } });
+    return;
+  }
+  router.push({ name: 'home' });
 }
 
 function handlePaySuccess(amount: number, recipient: string) {

@@ -1,12 +1,14 @@
 import { reactive, computed, watch } from 'vue';
-import type { Group, Expense, Member, SplitMode, ExpenseShare, GroupIcon } from '../types';
+import type { Group, Expense, Member, Settlement, SplitMode, ExpenseShare, GroupIcon } from '../types';
 import {
   loadGroups,
   saveGroups,
   loadExpenses,
   saveExpenses,
+  loadSettlements,
+  saveSettlements,
 } from '../utils/storage';
-import { insertGroup, insertExpense, fetchMyGroups, fetchGroupExpenses } from '../utils/api';
+import { insertGroup, insertExpense, insertSettlement, fetchMyGroups, fetchGroupExpenses, fetchGroupSettlements } from '../utils/api';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Store groupes & dépenses — source de vérité côté client (Phase 0).
@@ -19,12 +21,14 @@ import { insertGroup, insertExpense, fetchMyGroups, fetchGroupExpenses } from '.
 interface State {
   groups: Group[];
   expenses: Expense[];
+  settlements: Settlement[];
   syncing: boolean;
 }
 
 const state = reactive<State>({
   groups: loadGroups(),
   expenses: loadExpenses(),
+  settlements: loadSettlements(),
   syncing: false,
 });
 
@@ -32,6 +36,7 @@ const state = reactive<State>({
 // pour détecter aussi bien les mutations profondes que les remplacements.
 watch(() => state.groups, (g) => saveGroups(g), { deep: true });
 watch(() => state.expenses, (e) => saveExpenses(e), { deep: true });
+watch(() => state.settlements, (s) => saveSettlements(s), { deep: true });
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -79,6 +84,7 @@ function computeShares(
 
 // Solde net d'un membre dans un groupe.
 // > 0 : on lui doit (créditeur) · < 0 : il doit (débiteur).
+// Les règlements on-chain (settlements) réduisent la dette du débiteur.
 function memberBalance(groupId: string, memberId: string): number {
   let net = 0;
   for (const exp of state.expenses) {
@@ -86,6 +92,11 @@ function memberBalance(groupId: string, memberId: string): number {
     if (exp.paidBy === memberId) net += exp.amount;
     const share = exp.shares.find((s) => s.memberId === memberId);
     if (share) net -= share.amount;
+  }
+  for (const s of state.settlements) {
+    if (s.groupId !== groupId) continue;
+    if (s.fromId === memberId) net += s.amount;  // a payé → réduit sa dette
+    if (s.toId === memberId) net -= s.amount;    // a reçu → réduit ce qu'on lui doit
   }
   return round2(net);
 }
@@ -212,6 +223,15 @@ export function useGroupsStore() {
       if (i !== -1) state.expenses.splice(i, 1);
     },
 
+    // ── Règlements on-chain ───────────────────────────────────────────────
+    // Idempotent : le hash de tx sert d'id unique — un double appel est ignoré.
+    // Enregistre localement ET dans le backend (fire-and-forget pour ne pas bloquer l'UI).
+    addSettlement(s: Settlement): void {
+      if (state.settlements.some((existing) => existing.id === s.id)) return;
+      state.settlements.push(s);
+      insertSettlement(s).catch((err) => console.warn('settlement backend sync failed:', err));
+    },
+
     // ── Synchronisation DB ────────────────────────────────────────────────
     // La DB est source de vérité : on remplace intégralement l'état local.
     // Groupes + toutes les dépenses sont fetchés en parallèle.
@@ -219,18 +239,24 @@ export function useGroupsStore() {
       state.syncing = true;
       try {
         const groups = await fetchMyGroups();
-        const allExpenses = await Promise.all(groups.map((g) => fetchGroupExpenses(g.id)));
-        // Assignation directe → Vue détecte le changement de référence et
-        // déclenche le watch pour re-persister dans localStorage.
+        const [allExpenses, allSettlements] = await Promise.all([
+          Promise.all(groups.map((g) => fetchGroupExpenses(g.id))),
+          Promise.all(groups.map((g) => fetchGroupSettlements(g.id))),
+        ]);
         state.groups = groups;
         state.expenses = allExpenses.flat();
+        state.settlements = allSettlements.flat();
       } finally {
         state.syncing = false;
       }
     },
     async refreshGroupExpenses(groupId: string): Promise<void> {
-      const expenses = await fetchGroupExpenses(groupId);
+      const [expenses, settlements] = await Promise.all([
+        fetchGroupExpenses(groupId),
+        fetchGroupSettlements(groupId),
+      ]);
       state.expenses = [...state.expenses.filter((e) => e.groupId !== groupId), ...expenses];
+      state.settlements = [...state.settlements.filter((s) => s.groupId !== groupId), ...settlements];
     },
 
     // Exposé pour les écrans de saisie (prévisualisation des parts avant validation).

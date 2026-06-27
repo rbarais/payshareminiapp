@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import type { ShareableRoom } from '../types';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import type { ShareableRoom, Settlement } from '../types';
 import { getCurrentUser, requestPayment } from '../utils/nimiq';
 import { amountPerPerson, paymentData } from '../utils/room';
 import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
 
 import { useRouter } from 'vue-router';
 
-const props = defineProps<{ room: ShareableRoom | null }>();
+const props = defineProps<{ room: ShareableRoom | null; groupId?: string }>();
 
 const router = useRouter()
 const session = useSession()
+const store = useGroupsStore()
 
 function goBack() {
   router.back()
@@ -28,6 +30,7 @@ function handleSuccess(amount: number, recipient: string) {
 
 const currentUser = ref<{ id: string; name: string } | null>(null);
 const isPaying = ref(false);
+const awaitingOnChain = ref(false);
 const error = ref('');
 const showQR = ref(false);
 
@@ -82,15 +85,58 @@ async function pay() {
   error.value = '';
   try {
     await requestPayment(perPerson.value, props.room.creatorId, paymentData(props.room));
-    handleSuccess(perPerson.value, props.room.creatorName);
-    setTimeout(loadPayments, 5000);
-    setTimeout(loadPayments, 15000);
+
+    if (!trackingAvailable.value) {
+      // Hors Nimiq Pay ou adresse non-NQ : pas de vérification on-chain possible.
+      handleSuccess(perPerson.value, props.room.creatorName);
+      return;
+    }
+
+    // On-chain disponible : on attend que webclient.ts confirme la tx avant de naviguer.
+    awaitingOnChain.value = true;
+    if (pollId !== null) clearInterval(pollId);
+    pollId = setInterval(loadPayments, 3000); // polling agressif pendant l'attente
+    loadPayments();
+
+    // Sécurité : si la confirmation tarde trop (réseau lent), on navigue quand même.
+    setTimeout(() => {
+      if (!awaitingOnChain.value) return;
+      awaitingOnChain.value = false;
+      handleSuccess(perPerson.value, props.room!.creatorName);
+    }, 90_000);
   } catch {
     error.value = 'Paiement annulé ou échoué';
   } finally {
     isPaying.value = false;
   }
 }
+
+// Dès que webclient.ts détecte la tx on-chain : enregistre le settlement (avec le
+// vrai hash blockchain) et navigue vers SuccessView si on attendait la confirmation.
+watch(hasPaidOnChain, (confirmed) => {
+  if (!confirmed || !props.room || !currentUser.value) return;
+  const me = norm(currentUser.value.id);
+  const myPayment = payments.value.find((p) => norm(p.from) === me);
+  if (!myPayment) return;
+
+  if (props.groupId) {
+    const settlement: Settlement = {
+      id: myPayment.hash,
+      groupId: props.groupId,
+      fromId: currentUser.value.id,
+      toId: props.room.creatorId,
+      amount: props.room.amount,
+      currency: props.room.currency,
+      settledAt: new Date(myPayment.timestamp * 1000),
+    };
+    store.addSettlement(settlement);
+  }
+
+  if (awaitingOnChain.value) {
+    awaitingOnChain.value = false;
+    handleSuccess(perPerson.value, props.room.creatorName);
+  }
+});
 
 onMounted(async () => {
   // Réutilise l'utilisateur déjà connecté (évite de redéclencher le dialogue natif).
@@ -215,8 +261,14 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
 
     <!-- Buttons -->
     <div class="actions">
+      <!-- En attente de confirmation on-chain après paiement -->
+      <div v-if="awaitingOnChain" class="confirming-banner">
+        <span class="spin-dot"/>
+        <span>Confirmation on-chain en cours…</span>
+      </div>
+
       <button
-        v-if="!hasPaidOnChain && !isCreator"
+        v-else-if="!hasPaidOnChain && !isCreator"
         class="btn-pay"
         :disabled="isPaying"
         @click="pay"
@@ -228,7 +280,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
         <span>{{ isPaying ? 'Traitement…' : `Payer ${perPerson.toFixed(2)} NIM` }}</span>
       </button>
 
-      <button class="btn-qr" @click="showQR = true">
+      <button class="btn-qr" :disabled="awaitingOnChain" @click="showQR = true">
         <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
           <rect x="2" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4"/>
           <rect x="2" y="11" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4"/>
@@ -526,6 +578,19 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
 
 .btn-pay:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-pay:hover:not(:disabled) { opacity: 0.9; }
+
+.confirming-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--accent-dim);
+  border-radius: 16px;
+  padding: 16px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dark);
+}
 
 .btn-qr {
   border: 1.5px solid var(--border);
