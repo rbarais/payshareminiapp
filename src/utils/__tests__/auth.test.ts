@@ -16,7 +16,7 @@ describe('authenticate', () => {
     const { authenticate } = await import('../auth');
     await authenticate('NQ_ALICE');
 
-    const { getStoredJwt } = await import('../supabase');
+    const { getStoredJwt } = await import('../auth');
     expect(getStoredJwt()).toBe('ey.jwt');
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });

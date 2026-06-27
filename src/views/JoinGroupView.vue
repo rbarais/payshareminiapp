@@ -6,7 +6,7 @@ import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import { joinGroup } from '../utils/api';
 import { authenticate } from '../utils/auth';
-import { getStoredJwt } from '../utils/supabase';
+import { getStoredJwt } from '../utils/auth';
 import { captureError } from '../utils/errors';
 
 const props = defineProps<{ g: string; t: string }>();

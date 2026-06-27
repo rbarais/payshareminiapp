@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getStoredJwt, setStoredJwt } from '../supabase';
+import { getStoredJwt, setStoredJwt } from '../auth';
 
 describe('jwt store', () => {
   beforeEach(() => localStorage.clear());

@@ -1,13 +1,20 @@
 import { signMessage, detectNimiqApp } from './nimiq';
-import { setStoredJwt } from './supabase';
 
-const FN = `${import.meta.env.VITE_PUBLIC_SUPABASE_URL}/functions/v1`;
-const ANON = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
+const JWT_KEY = 'payshare_jwt';
+
+export function getStoredJwt(): string | null {
+  return localStorage.getItem(JWT_KEY);
+}
+
+export function setStoredJwt(token: string | null): void {
+  if (token) localStorage.setItem(JWT_KEY, token);
+  else localStorage.removeItem(JWT_KEY);
+}
 
 async function post(path: string, body: unknown): Promise<any> {
-  const res = await fetch(`${FN}/${path}`, {
+  const res = await fetch(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', apikey: ANON, Authorization: `Bearer ${ANON}` },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
@@ -17,13 +24,12 @@ async function post(path: string, body: unknown): Promise<any> {
 export async function authenticate(address: string): Promise<void> {
   const inNimiq = await detectNimiqApp();
   if (!inNimiq) {
-    // Mode dev : JWT sans signature (l'Edge Function reconnaît l'absence de provider).
-    const { token } = await post('auth-verify', { address, dev: true });
+    const { token } = await post('/api/auth/verify', { address, dev: true });
     setStoredJwt(token);
     return;
   }
-  const { challenge } = await post('auth-challenge', { address });
+  const { challenge } = await post('/api/auth/challenge', { address });
   const { publicKey, signature } = await signMessage(challenge);
-  const { token } = await post('auth-verify', { address, publicKey, signature });
+  const { token } = await post('/api/auth/verify', { address, publicKey, signature });
   setStoredJwt(token);
 }

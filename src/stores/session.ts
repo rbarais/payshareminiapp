@@ -2,7 +2,7 @@ import { reactive, computed } from 'vue';
 import { getHostLanguage } from '@nimiq/mini-app-sdk';
 import { getCurrentUser, formatAddressShort, detectNimiqApp } from '../utils/nimiq';
 import { authenticate } from '../utils/auth';
-import { getStoredJwt, setStoredJwt } from '../utils/supabase';
+import { getStoredJwt, setStoredJwt } from '../utils/auth';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Store session — identité de l'utilisateur courant (Phase 1).

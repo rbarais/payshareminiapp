@@ -1,49 +1,55 @@
-import { supabase, isSupabaseConfigured } from './supabase';
-
-function assertConfigured() {
-  if (!isSupabaseConfigured) throw new Error('Supabase non configuré (variables manquantes)');
-}
-import { rowToGroup, rowToExpense, groupToRow, expenseToRow } from './mappers';
+import { getStoredJwt } from './auth';
 import type { Group, Expense } from '../types';
 
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const jwt = getStoredJwt();
+  const res = await fetch(path, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
 export async function fetchMyGroups(): Promise<Group[]> {
-  assertConfigured();
-  const { data: groups, error } = await supabase.from('groups').select('*');
-  if (error) throw error;
-  const out: Group[] = [];
-  for (const g of groups ?? []) {
-    const { data: members } = await supabase.from('members').select('*').eq('group_id', g.id);
-    out.push(rowToGroup(g, members ?? []));
-  }
-  return out;
+  const groups = await apiFetch<any[]>('/api/groups');
+  return groups.map((g) => ({
+    ...g,
+    createdAt: new Date(g.createdAt),
+    members: (g.members as any[]).map((m) => ({ ...m, joinedAt: new Date(m.joinedAt) })),
+  }));
 }
 
 export async function fetchGroupExpenses(groupId: string): Promise<Expense[]> {
-  assertConfigured();
-  const { data, error } = await supabase.from('expenses').select('*').eq('group_id', groupId);
-  if (error) throw error;
-  return (data ?? []).map(rowToExpense);
+  const expenses = await apiFetch<any[]>(`/api/groups/${groupId}/expenses`);
+  return expenses.map((e) => ({ ...e, createdAt: new Date(e.createdAt) }));
 }
 
 export async function insertGroup(g: Group): Promise<void> {
-  assertConfigured();
-  const { error: gErr } = await supabase.from('groups').insert(groupToRow(g));
-  if (gErr) throw gErr;
-  const { error: mErr } = await supabase.from('members').insert(
-    g.members.map((m) => ({ group_id: g.id, address: m.id, name: m.name })),
-  );
-  if (mErr) throw mErr;
+  await apiFetch<void>('/api/groups', {
+    method: 'POST',
+    body: JSON.stringify(g),
+  });
 }
 
 export async function insertExpense(e: Expense): Promise<void> {
-  assertConfigured();
-  const { error } = await supabase.from('expenses').insert(expenseToRow(e));
-  if (error) throw error;
+  await apiFetch<void>(`/api/groups/${e.groupId}/expenses`, {
+    method: 'POST',
+    body: JSON.stringify(e),
+  });
 }
 
-export async function joinGroup(groupId: string, token: string, name: string): Promise<{ name: string; icon: string }> {
-  assertConfigured();
-  const { data, error } = await supabase.rpc('join_group', { p_group_id: groupId, p_token: token, p_name: name });
-  if (error) throw error;
-  return data as { name: string; icon: string };
+export async function joinGroup(
+  groupId: string,
+  token: string,
+  name: string,
+): Promise<{ name: string; icon: string }> {
+  return apiFetch<{ name: string; icon: string }>('/api/join', {
+    method: 'POST',
+    body: JSON.stringify({ groupId, token, name }),
+  });
 }
