@@ -1,6 +1,8 @@
 import { reactive, computed } from 'vue';
 import { getHostLanguage } from '@nimiq/mini-app-sdk';
 import { getCurrentUser, formatAddressShort, detectNimiqApp } from '../utils/nimiq';
+import { authenticate } from '../utils/auth';
+import { getStoredJwt, setStoredJwt } from '../utils/auth';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Store session — identité de l'utilisateur courant (Phase 1).
@@ -26,6 +28,20 @@ interface SessionState {
 }
 
 const SESSION_KEY = 'payshare_session';
+
+function isJwtExpired(): boolean {
+  const jwt = getStoredJwt();
+  if (!jwt) return true;
+  try {
+    // JWT utilise base64url (- et _ au lieu de + et /) — convertir avant atob()
+    const b64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(b64));
+    // 30s buffer pour éviter les races en fin de validité
+    return Date.now() / 1000 > payload.exp - 30;
+  } catch {
+    return true;
+  }
+}
 
 function detectLanguage(): string {
   // Langue exposée par Nimiq Pay (seedée avant l'exécution du script de page).
@@ -67,6 +83,17 @@ export function useSession() {
     async checkEnvironment(): Promise<boolean> {
       const ok = await detectNimiqApp();
       state.isNimiqApp = ok;
+      // JWT expiré ou absent : on tente un refresh silencieux via le provider.
+      // Si ça échoue (hors Nimiq Pay ou signature refusée), on déconnecte.
+      if (state.user && isJwtExpired()) {
+        try {
+          await authenticate(state.user.id);
+        } catch {
+          state.user = null;
+          localStorage.removeItem(SESSION_KEY);
+          setStoredJwt(null);
+        }
+      }
       return ok;
     },
     // Adresse tronquée prête pour l'affichage du wallet-badge.
@@ -75,6 +102,10 @@ export function useSession() {
     /**
      * Déclenche la connexion wallet. N'aboutit que si l'init du provider Nimiq
      * réussit : hors Nimiq Pay (init en erreur), on reste sur l'écran de login.
+     *
+     * authenticate() est appelé avant de mettre à jour state.user pour éviter
+     * que showApp passe à true (HomeView monte) avant que le JWT soit stocké.
+     * Sans ça, HomeView déclenche GET /api/groups sans token → 401.
      */
     async connect(): Promise<boolean> {
       state.connecting = true;
@@ -87,11 +118,12 @@ export function useSession() {
           return false;
         }
         const user = await getCurrentUser();
+        await authenticate(user.id);
         state.user = user;
         localStorage.setItem(SESSION_KEY, JSON.stringify(user));
         return true;
-      } catch {
-        state.error = 'Connexion impossible ou refusée';
+      } catch (e) {
+        state.error = e instanceof Error ? e.message : 'Connexion impossible ou refusée';
         return false;
       } finally {
         state.connecting = false;
@@ -102,6 +134,7 @@ export function useSession() {
     disconnect(): void {
       state.user = null;
       localStorage.removeItem(SESSION_KEY);
+      setStoredJwt(null);
     },
   };
 }

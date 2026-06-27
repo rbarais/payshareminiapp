@@ -73,6 +73,7 @@ async function connect() {
         Ouvrir dans Nimiq Pay
       </button>
       <p v-if="session.error.value" class="err">{{ session.error.value }}</p>
+
       <p class="privacy">Aucune donnée personnelle n'est collectée. Tes clés restent dans Nimiq Pay.</p>
     </div>
 

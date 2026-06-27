@@ -4,14 +4,17 @@ import { useRouter } from 'vue-router';
 import type { GroupIcon } from '../types';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
+import { useToast } from '../stores/toast';
 import { generateId } from '../utils/storage';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import NimiqIdenticon from '../components/NimiqIdenticon.vue';
+import { captureError } from '../utils/errors';
 import InitialAvatar from '../components/InitialAvatar.vue';
 
 const router = useRouter()
 const session = useSession()
 const store = useGroupsStore()
+const toast = useToast()
 
 const groupName = ref('');
 const selectedIcon = ref<GroupIcon>('person');
@@ -40,22 +43,27 @@ function removeGuest(id: string) {
   guests.value = guests.value.filter((g) => g.id !== id);
 }
 
-function done() {
+async function done() {
   const name = groupName.value.trim();
   if (!name) return;
   const user = session.user.value;
   if (!user) return;
 
-  const group = store.createGroup({
-    name,
-    icon: selectedIcon.value,
-    creatorId: user.id,
-    creatorName: user.name,
-  });
-  for (const g of guests.value) {
-    store.addMember(group.id, { id: g.id, name: g.name });
+  try {
+    const group = await store.createGroup({
+      name,
+      icon: selectedIcon.value,
+      creatorId: user.id,
+      creatorName: user.name,
+    });
+    for (const g of guests.value) {
+      store.addMember(group.id, { id: g.id, name: g.name });
+    }
+    router.replace({ name: 'group', params: { id: group.id } })
+  } catch (err) {
+    captureError(err, 'NewGroupView.createGroup');
+    toast.show('Création du groupe impossible', 'error');
   }
-  router.replace({ name: 'group', params: { id: group.id } })
 }
 </script>
 

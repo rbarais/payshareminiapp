@@ -1,18 +1,27 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
+import { useToast } from '../stores/toast';
 import GroupCard from '../components/GroupCard.vue';
 import BottomNav from '../components/BottomNav.vue';
 import WalletBadge from '../components/WalletBadge.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
+import { captureError } from '../utils/errors';
 
 const router = useRouter()
 const session = useSession()
 const store = useGroupsStore()
+const toast = useToast()
+
+// Hydrate groupes + dépenses depuis la DB à l'ouverture (stale-while-revalidate).
+onMounted(async () => {
+  try { await store.refreshAll(); } catch (err) { captureError(err, 'HomeView.refreshAll'); toast.show('Synchronisation impossible', 'error'); }
+});
 
 const userId = computed(() => session.user.value?.id ?? '');
+const syncing = computed(() => store.syncing.value);
 
 // Groupes réels + nb de dépenses + solde net de l'utilisateur dans chacun.
 const groups = computed(() =>
@@ -60,6 +69,7 @@ function goToGroup(id: string) {
       <!-- Groups header -->
       <div class="section-row">
         <span class="section-title">Mes groupes</span>
+        <span v-if="syncing" class="syncing-dot" />
         <button class="new-btn" @click="goToNewGroup">
           <span class="new-plus">+</span>
           <span>Nouveau</span>
@@ -164,6 +174,20 @@ function goToGroup(id: string) {
 }
 
 .new-btn:hover { opacity: 0.8; }
+
+.syncing-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.7;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50% { opacity: 0.9; transform: scale(1.1); }
+}
 
 .new-plus {
   font-size: 15px;

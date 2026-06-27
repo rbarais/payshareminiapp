@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router';
 import { onMounted, watch, computed } from 'vue';
-import { decodeRoomFromUrl, decodeRoomFromText } from './utils/room';
+import { decodeRoomFromUrl, decodeRoomFromText, decodeInviteFromText } from './utils/room';
 import { useSession } from './stores/session';
 import { useToast } from './stores/toast';
 import LoginView from './views/LoginView.vue';
@@ -19,13 +19,21 @@ const showApp = computed(
   () => session.isLoggedIn.value && session.isNimiqApp.value === true,
 )
 
-// Rejoue un éventuel lien profond (?r=…) dès qu'on entre dans l'app.
+// Rejoue un éventuel lien profond (?r=… paiement, ?g=&t= invitation) dès qu'on
+// entre dans l'app.
 watch(showApp, (visible) => {
-  if (visible) checkUrlForRoom()
+  if (visible) checkUrlForDeeplink()
 })
 
 // Gérer le décodage de l'URL au montage et lors des changements de route
-function checkUrlForRoom() {
+function checkUrlForDeeplink() {
+  // Invitation à rejoindre un groupe : ?g=<id>&t=<token>
+  const invite = decodeInviteFromText(window.location.href)
+  if (invite && route.name !== 'join') {
+    router.push({ name: 'join', query: { g: invite.groupId, t: invite.token } })
+    return
+  }
+  // Lien de paiement : ?r=<base64>
   const room = decodeRoomFromUrl()
   if (room && route.name !== 'pay') {
     router.push({
@@ -43,13 +51,13 @@ onMounted(async () => {
   if (!inNimiq) {
     toast.show('Ouvre PayShare depuis Nimiq Pay pour les paiements réels.', 'error')
   }
-  if (showApp.value) checkUrlForRoom()
+  if (showApp.value) checkUrlForDeeplink()
 })
 
 // Surveiller les changements de route pour réagir aux retours
 watch(() => route.name, (newName) => {
   if (newName === 'home' || newName === 'group') {
-    checkUrlForRoom()
+    checkUrlForDeeplink()
   }
 })
 

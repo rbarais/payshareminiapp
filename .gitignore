@@ -56,3 +56,7 @@ Thumbs.db
 
 # Certificats locaux mkcert
 .certs
+
+docs/
+# Sentry Config File
+.env.sentry-build-plugin
