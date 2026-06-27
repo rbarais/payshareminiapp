@@ -15,24 +15,29 @@ router.post('/join', requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const groups = await sql<{ id: string; name: string; icon: string }[]>`
-    SELECT id, name, icon FROM groups
-    WHERE id = ${groupId} AND invite_token = ${token}
-  `;
+  try {
+    const groups = await sql<{ id: string; name: string; icon: string }[]>`
+      SELECT id, name, icon FROM groups
+      WHERE id = ${groupId} AND invite_token = ${token}
+    `;
 
-  if (groups.length === 0) {
-    res.status(401).json({ error: 'invalid invite' });
-    return;
+    if (groups.length === 0) {
+      res.status(401).json({ error: 'invalid invite' });
+      return;
+    }
+
+    await sql`
+      INSERT INTO members (group_id, address, name)
+      VALUES (${groupId}, ${address}, ${name})
+      ON CONFLICT (group_id, address) DO NOTHING
+    `;
+
+    const g = groups[0];
+    res.json({ name: g.name, icon: g.icon });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'internal server error' });
   }
-
-  await sql`
-    INSERT INTO members (group_id, address, name)
-    VALUES (${groupId}, ${address}, ${name})
-    ON CONFLICT (group_id, address) DO NOTHING
-  `;
-
-  const g = groups[0];
-  res.json({ name: g.name, icon: g.icon });
 });
 
 export default router;
