@@ -8,15 +8,15 @@ import {
   loadSettlements,
   saveSettlements,
 } from '../utils/storage';
-import { insertGroup, insertExpense, insertSettlement, fetchMyGroups, fetchGroupExpenses, fetchGroupSettlements } from '../utils/api';
-
-// ─────────────────────────────────────────────────────────────────────────
-// Store groupes & dépenses — source de vérité côté client (Phase 0).
-//
-// Singleton réactif (état au niveau module) persisté dans localStorage. En
-// Phase 1bis, les actions seront doublées d'appels au backend ; l'API du
-// store reste la même pour les vues.
-// ─────────────────────────────────────────────────────────────────────────
+import {
+  insertGroup,
+  insertExpense,
+  insertSettlement,
+  fetchMyGroups,
+  fetchGroupExpenses,
+  fetchGroupSettlements,
+  addPlaceholderMember,
+} from '../utils/api';
 
 interface State {
   groups: Group[];
@@ -32,8 +32,6 @@ const state = reactive<State>({
   syncing: false,
 });
 
-// Persistance automatique : watch sur les propriétés scalaires du state
-// pour détecter aussi bien les mutations profondes que les remplacements.
 watch(() => state.groups, (g) => saveGroups(g), { deep: true });
 watch(() => state.expenses, (e) => saveExpenses(e), { deep: true });
 watch(() => state.settlements, (s) => saveSettlements(s), { deep: true });
@@ -42,19 +40,12 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-// Token d'invitation hex (16 octets) — même format que le default Postgres.
-// Généré côté client pour que le créateur puisse inviter sans attendre un refresh.
 function randomInviteToken(): string {
   const b = new Uint8Array(16);
   crypto.getRandomValues(b);
   return Array.from(b).map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-// Calcule les parts figées d'une dépense selon le mode de répartition.
-// `entries` : un membre par participant, avec un poids interprété selon le mode
-//   - 'equal'      → poids ignoré (parts égales)
-//   - 'percentage' → poids = pourcentage (0..100)
-//   - 'fixed'      → poids = montant fixe dans la devise
 function computeShares(
   amount: number,
   mode: SplitMode,
@@ -65,7 +56,6 @@ function computeShares(
   if (mode === 'equal') {
     const each = round2(amount / entries.length);
     const shares = entries.map((e) => ({ memberId: e.memberId, weight: 0, amount: each }));
-    // Réinjecte l'arrondi résiduel sur la dernière part pour que la somme = total.
     const diff = round2(amount - each * entries.length);
     if (diff !== 0) shares[shares.length - 1].amount = round2(shares[shares.length - 1].amount + diff);
     return shares;
@@ -78,14 +68,13 @@ function computeShares(
     });
   }
 
-  // 'fixed'
   return entries.map((e) => ({ memberId: e.memberId, weight: e.weight ?? 0, amount: e.weight ?? 0 }));
 }
 
 // Solde net d'un membre dans un groupe.
-// > 0 : on lui doit (créditeur) · < 0 : il doit (débiteur).
-// Les règlements on-chain (settlements) réduisent la dette du débiteur.
-function memberBalance(groupId: string, memberId: string): number {
+// memberId = UUID stable du membre (pour les dépenses).
+// memberAddress = adresse Nimiq du membre (pour les settlements qui sont vérifiés on-chain).
+function memberBalance(groupId: string, memberId: string, memberAddress?: string): number {
   let net = 0;
   for (const exp of state.expenses) {
     if (exp.groupId !== groupId) continue;
@@ -93,60 +82,78 @@ function memberBalance(groupId: string, memberId: string): number {
     const share = exp.shares.find((s) => s.memberId === memberId);
     if (share) net -= share.amount;
   }
+  // Les settlements utilisent les adresses Nimiq (vérification on-chain).
+  const addr = memberAddress ?? memberId;
   for (const s of state.settlements) {
     if (s.groupId !== groupId) continue;
-    if (s.fromId === memberId) net += s.amount;  // a payé → réduit sa dette
-    if (s.toId === memberId) net -= s.amount;    // a reçu → réduit ce qu'on lui doit
+    if (s.fromId === addr) net += s.amount;
+    if (s.toId === addr) net -= s.amount;
   }
   return round2(net);
 }
 
+// Retourne l'UUID du membre courant dans un groupe à partir de son adresse Nimiq.
+function findMemberByAddress(groupId: string, nimiqAddress: string): Member | undefined {
+  return state.groups.find((g) => g.id === groupId)?.members.find((m) => m.address === nimiqAddress);
+}
+
 export function useGroupsStore() {
   return {
-    // ── État ────────────────────────────────────────────────────────────
     groups: computed(() => state.groups),
     expenses: computed(() => state.expenses),
     syncing: computed(() => state.syncing),
 
-    // ── Lecture ─────────────────────────────────────────────────────────
     getGroup: (id: string) => state.groups.find((g) => g.id === id) ?? null,
     groupExpenses: (groupId: string) =>
       state.expenses
         .filter((e) => e.groupId === groupId)
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+
     memberBalance,
-    // Solde net de l'utilisateur courant dans un groupe.
-    groupBalanceForUser: (groupId: string, userId: string) => memberBalance(groupId, userId),
-    // Solde net agrégé sur tous les groupes où l'utilisateur est membre.
-    globalBalanceForUser: (userId: string) =>
+
+    // Solde de l'utilisateur courant dans un groupe, via son adresse Nimiq.
+    groupBalanceForUser: (groupId: string, nimiqAddress: string) => {
+      const member = findMemberByAddress(groupId, nimiqAddress);
+      if (!member) return 0;
+      return memberBalance(groupId, member.id, nimiqAddress);
+    },
+
+    // Solde global agrégé sur tous les groupes.
+    globalBalanceForUser: (nimiqAddress: string) =>
       round2(
         state.groups
-          .filter((g) => g.members.some((m) => m.id === userId))
-          .reduce((sum, g) => sum + memberBalance(g.id, userId), 0),
+          .filter((g) => g.members.some((m) => m.address === nimiqAddress))
+          .reduce((sum, g) => {
+            const member = g.members.find((m) => m.address === nimiqAddress);
+            return sum + (member ? memberBalance(g.id, member.id, nimiqAddress) : 0);
+          }, 0),
       ),
 
-    // ── Mutations groupes ────────────────────────────────────────────────
+    // UUID du membre courant dans un groupe (undefined si pas encore lié).
+    myMemberId: (groupId: string, nimiqAddress: string): string =>
+      findMemberByAddress(groupId, nimiqAddress)?.id ?? '',
+
     async createGroup(params: {
       name: string;
       icon: GroupIcon;
-      creatorId: string;
+      creatorId: string;   // adresse Nimiq du créateur
       creatorName: string;
       currencies?: string[];
     }): Promise<Group> {
       const now = new Date();
       const group: Group = {
-        // uuid : la colonne groups.id de Supabase est de type uuid.
         id: crypto.randomUUID(),
         name: params.name,
         icon: params.icon,
         creatorId: params.creatorId,
-        members: [{ id: params.creatorId, name: params.creatorName, joinedAt: now }],
+        members: [],
         currencies: params.currencies?.length ? params.currencies : ['NIM'],
         createdAt: now,
         inviteToken: randomInviteToken(),
       };
-      await insertGroup(group);     // backend d'abord
-      state.groups.push(group);     // puis cache
+      const created = await insertGroup(group, { address: params.creatorId, name: params.creatorName });
+      group.members = created.members;
+      state.groups.push(group);
       return group;
     },
 
@@ -160,7 +167,6 @@ export function useGroupsStore() {
     deleteGroup(id: string): void {
       const i = state.groups.findIndex((g) => g.id === id);
       if (i !== -1) state.groups.splice(i, 1);
-      // Supprime aussi les dépenses orphelines.
       for (let j = state.expenses.length - 1; j >= 0; j--) {
         if (state.expenses[j].groupId === id) state.expenses.splice(j, 1);
       }
@@ -177,7 +183,14 @@ export function useGroupsStore() {
       return m;
     },
 
-    // ── Mutations dépenses ───────────────────────────────────────────────
+    // Ajoute un membre placeholder (sans adresse) — créateur uniquement.
+    async addPlaceholderMember(groupId: string, name: string): Promise<Member> {
+      const member = await addPlaceholderMember(groupId, name);
+      const group = state.groups.find((g) => g.id === groupId);
+      if (group) group.members.push(member);
+      return member;
+    },
+
     async addExpense(params: {
       groupId: string;
       description: string;
@@ -185,11 +198,9 @@ export function useGroupsStore() {
       currency: string;
       paidBy: string;
       split: SplitMode;
-      // Un membre par participant ; weight interprété selon `split`.
       participants: { memberId: string; weight?: number }[];
     }): Promise<Expense> {
       const expense: Expense = {
-        // uuid : la colonne expenses.id de Supabase est de type uuid.
         id: crypto.randomUUID(),
         groupId: params.groupId,
         description: params.description,
@@ -200,14 +211,11 @@ export function useGroupsStore() {
         shares: computeShares(params.amount, params.split, params.participants),
         createdAt: new Date(),
       };
-      await insertExpense(expense);   // backend d'abord
-      state.expenses.push(expense);   // puis cache
+      await insertExpense(expense);
+      state.expenses.push(expense);
       return expense;
     },
 
-    // Met à jour une dépense existante. La description est librement éditable ;
-    // les autres champs (montant/répartition) restent figés pour préserver les
-    // parts déjà calculées (une refonte des parts passe par une nouvelle dépense).
     updateExpense(
       id: string,
       patch: Partial<Pick<Expense, 'description'>>,
@@ -223,18 +231,12 @@ export function useGroupsStore() {
       if (i !== -1) state.expenses.splice(i, 1);
     },
 
-    // ── Règlements on-chain ───────────────────────────────────────────────
-    // Idempotent : le hash de tx sert d'id unique — un double appel est ignoré.
-    // Enregistre localement ET dans le backend (fire-and-forget pour ne pas bloquer l'UI).
     addSettlement(s: Settlement): void {
       if (state.settlements.some((existing) => existing.id === s.id)) return;
       state.settlements.push(s);
       insertSettlement(s).catch((err) => console.warn('settlement backend sync failed:', err));
     },
 
-    // ── Synchronisation DB ────────────────────────────────────────────────
-    // La DB est source de vérité : on remplace intégralement l'état local.
-    // Groupes + toutes les dépenses sont fetchés en parallèle.
     async refreshAll(): Promise<void> {
       state.syncing = true;
       try {
@@ -250,6 +252,7 @@ export function useGroupsStore() {
         state.syncing = false;
       }
     },
+
     async refreshGroupExpenses(groupId: string): Promise<void> {
       const [expenses, settlements] = await Promise.all([
         fetchGroupExpenses(groupId),
@@ -259,7 +262,6 @@ export function useGroupsStore() {
       state.settlements = [...state.settlements.filter((s) => s.groupId !== groupId), ...settlements];
     },
 
-    // Exposé pour les écrans de saisie (prévisualisation des parts avant validation).
     computeShares,
   };
 }

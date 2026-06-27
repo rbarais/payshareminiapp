@@ -25,14 +25,21 @@ const userId = computed(() => session.user.value?.id ?? '');
 const group = computed(() => store.getGroup(props.id));
 const expenses = computed(() => store.groupExpenses(props.id));
 const balance = computed(() => store.groupBalanceForUser(props.id, userId.value));
-
-// Vrai si l'utilisateur est membre du groupe mais n'a aucune part dans les dépenses existantes.
-const hasNoShares = computed(() => {
+// UUID stable du membre courant dans ce groupe (undefined si non encore lié)
+const myMemberId = computed(() => store.myMemberId(props.id, userId.value));
+// Vrai si l'utilisateur est le créateur du groupe
+const isCreator = computed(() => group.value?.creatorId === userId.value);
+// Nom du membre avec le solde le plus positif (principal créancier de l'utilisateur)
+const creditorName = computed(() => {
   const g = group.value;
-  if (!g || g.creatorId === userId.value) return false;
-  const groupExpenses = store.groupExpenses(props.id);
-  if (!groupExpenses.length) return false;
-  return !groupExpenses.some((e) => e.shares.some((s) => s.memberId === userId.value));
+  if (!g) return '';
+  let max = 0;
+  let name = g.members.find((m) => m.address === g.creatorId)?.name ?? '';
+  for (const m of g.members) {
+    const bal = store.memberBalance(g.id, m.id, m.address);
+    if (bal > max) { max = bal; name = m.name; }
+  }
+  return name;
 });
 
 // Redirige si le groupe n'existe pas (id invalide / supprimé).
@@ -52,13 +59,13 @@ const monthLabel = computed(() =>
 );
 
 function memberName(id: string): string {
-  if (id === userId.value) return 'toi';
+  if (id === myMemberId.value) return 'toi';
   return group.value?.members.find((m) => m.id === id)?.name ?? 'Inconnu';
 }
 
 function userShare(expenseId: string): number {
   const exp = expenses.value.find((e) => e.id === expenseId);
-  return exp?.shares.find((s) => s.memberId === userId.value)?.amount ?? 0;
+  return exp?.shares.find((s) => s.memberId === myMemberId.value)?.amount ?? 0;
 }
 
 // ── Invitation à rejoindre le groupe (QR + lien) ────────────────────────────
@@ -144,23 +151,45 @@ function goToAddExpense() {
 }
 
 
+// ── Ajout d'un membre placeholder (créateur uniquement) ─────────────────────
+const showAddMember = ref(false);
+const addMemberName = ref('');
+const addingMember = ref(false);
+
+async function confirmAddMember() {
+  const name = addMemberName.value.trim();
+  if (!name || addingMember.value) return;
+  addingMember.value = true;
+  try {
+    await store.addPlaceholderMember(props.id, name);
+    toast.show(`${name} ajouté`, 'success');
+    showAddMember.value = false;
+    addMemberName.value = '';
+  } catch (err) {
+    captureError(err, 'GroupView.addPlaceholderMember');
+    toast.show('Impossible d\'ajouter le membre', 'error');
+  } finally {
+    addingMember.value = false;
+  }
+}
+
 function settle() {
   const g = group.value;
   if (!g) return;
 
-  const creator = g.members.find((m) => m.id === g.creatorId);
+  const creator = g.members.find((m) => m.address === g.creatorId);
   if (!creator) {
     toast.show('Créateur du groupe introuvable', 'error');
     return;
   }
-  if (!creator.id.startsWith('NQ')) {
+  if (!creator.address?.startsWith('NQ')) {
     toast.show('Le créateur doit se connecter avec Nimiq Pay pour recevoir le paiement', 'error');
     return;
   }
 
   const room: ShareableRoom = {
     id: `settle_${g.id}_${userId.value.slice(-8)}`,
-    creatorId: creator.id,
+    creatorId: creator.address,
     creatorName: creator.name,
     amount: Math.abs(balance.value),
     currency: 'NIM',
@@ -207,6 +236,14 @@ function settle() {
         :size="36"
         ring
       />
+      <div v-if="isCreator" class="add-member-wrap">
+        <button class="add-member-btn" @click="showAddMember = true">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 2V12M2 7H12" stroke="#8B8880" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <span class="add-member-label">Inviter</span>
+      </div>
       <button class="qr-btn" @click="invite">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <rect x="2" y="2" width="5" height="5" rx="1" stroke="#F6B221" stroke-width="1.4"/>
@@ -223,7 +260,7 @@ function settle() {
     <!-- Balance card -->
     <div v-if="balance < -0.005" class="debt-card">
       <div>
-        <div class="debt-who">Tu dois</div>
+        <div class="debt-who">Tu dois à {{ creditorName }}</div>
         <div class="debt-amount">{{ Math.abs(balance).toFixed(2) }} NIM</div>
       </div>
       <button class="settle-btn" @click="settle">Régler →</button>
@@ -231,18 +268,6 @@ function settle() {
     <div v-else-if="balance > 0.005" class="credit-card">
       <div class="credit-title">On te doit</div>
       <div class="credit-amount">{{ balance.toFixed(2) }} NIM</div>
-    </div>
-    <div v-else-if="hasNoShares" class="pending-card">
-      <div class="pending-icon">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <circle cx="9" cy="9" r="7" stroke="white" stroke-width="1.8"/>
-          <path d="M9 6V9.5L11 11.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <div>
-        <div class="pending-title">Parts en attente</div>
-        <div class="pending-sub">Demande au créateur de te générer un lien de paiement depuis chaque dépense</div>
-      </div>
     </div>
     <div v-else class="settled-card">
       <div class="settled-icon">
@@ -270,7 +295,7 @@ function settle() {
         :expense="exp"
         :user-share="userShare(exp.id)"
         :paid-by-name="memberName(exp.paidBy)"
-        :is-mine="exp.paidBy === userId"
+        :is-mine="exp.paidBy === myMemberId"
         @select="inviteExpense = exp"
         @edit="openEditExpense(exp)"
       />
@@ -322,6 +347,26 @@ function settle() {
 
       <button class="sheet-copy" :disabled="!editGroupName.trim()" @click="saveGroup">Enregistrer</button>
       <button class="sheet-back" @click="editGroupOpen = false">Annuler</button>
+    </BaseSheet>
+
+    <!-- Feuille : ajouter un membre placeholder (créateur uniquement) -->
+    <BaseSheet v-if="showAddMember" @close="showAddMember = false; addMemberName = ''">
+      <div class="sheet-title">Ajouter un membre</div>
+      <div class="sheet-sub">Le membre recevra un lien pour lier son wallet Nimiq</div>
+
+      <div class="edit-label">Prénom</div>
+      <input
+        class="edit-input"
+        v-model="addMemberName"
+        type="text"
+        placeholder="Ex : Alice"
+        @keyup.enter="confirmAddMember"
+      />
+
+      <button class="sheet-copy" :disabled="!addMemberName.trim() || addingMember" @click="confirmAddMember">
+        {{ addingMember ? 'Ajout…' : 'Ajouter' }}
+      </button>
+      <button class="sheet-back" @click="showAddMember = false; addMemberName = ''">Annuler</button>
     </BaseSheet>
 
     <!-- Feuille : modifier la description d'une dépense -->
@@ -394,6 +439,35 @@ function settle() {
   gap: 8px;
   flex-shrink: 0;
   flex-wrap: wrap;
+}
+
+.add-member-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.add-member-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--border);
+  border: 1.5px dashed #A09890;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.add-member-btn:hover { opacity: 0.75; }
+
+.add-member-label {
+  font-size: 9px;
+  color: var(--muted, #8B8880);
+  font-weight: 500;
 }
 
 .qr-btn {
@@ -479,32 +553,6 @@ function settle() {
 
 .settled-title { font-size: 13px; font-weight: 700; color: var(--green); }
 .settled-sub { font-size: 11px; color: var(--green); opacity: 0.75; margin-top: 2px; }
-
-.pending-card {
-  margin: 0 18px 14px;
-  background: #FFF8E6;
-  border: 1px solid #F6B221;
-  border-radius: 16px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.pending-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #E6900A;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.pending-title { font-size: 13px; font-weight: 700; color: #7A4C00; }
-.pending-sub { font-size: 11px; color: #7A4C00; opacity: 0.8; margin-top: 3px; line-height: 1.4; }
 
 /* Expenses */
 .expenses-header {

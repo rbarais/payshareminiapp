@@ -9,10 +9,11 @@
 // Icône/catégorie d'un groupe (cf. design : person / home / car / list)
 export type GroupIcon = 'person' | 'home' | 'car' | 'list';
 
-// Membre d'un groupe — identifié par son adresse Nimiq lorsqu'il est connecté.
-// Un invité pas encore connecté peut avoir un id temporaire.
+// Membre d'un groupe — identifié par son UUID stable (DB primary key).
+// Un placeholder n'a pas encore d'adresse Nimiq (il n'a pas encore rejoint).
 export interface Member {
-  id: string;        // adresse Nimiq (ou id temporaire)
+  id: string;        // UUID stable (jamais l'adresse Nimiq)
+  address?: string;  // adresse Nimiq — absent si placeholder non encore lié
   name: string;
   joinedAt: Date;
 }

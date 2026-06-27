@@ -18,6 +18,8 @@ const groupId = computed(() => String(route.query.groupId ?? ''));
 const group = computed(() => store.getGroup(groupId.value));
 const members = computed(() => group.value?.members ?? []);
 const userId = computed(() => session.user.value?.id ?? '');
+// UUID stable du membre courant dans ce groupe
+const myMemberId = computed(() => store.myMemberId(groupId.value, userId.value));
 
 onMounted(() => {
   if (!group.value) router.replace({ name: 'home' });
@@ -42,15 +44,15 @@ watch(
     for (const m of list) {
       if (!split[m.id]) split[m.id] = { included: true, pct: 0, amt: 0 };
     }
-    paidBy.value = paidBy.value || userId.value || list[0]?.id || '';
+    paidBy.value = paidBy.value || myMemberId.value || list[0]?.id || '';
     distributeEvenly();
   },
   { immediate: true },
 );
 
 const memberName = (id: string) =>
-  id === userId.value ? `${members.value.find((m) => m.id === id)?.name ?? 'Toi'} (toi)`
-                      : members.value.find((m) => m.id === id)?.name ?? '';
+  id === myMemberId.value ? `${members.value.find((m) => m.id === id)?.name ?? 'Toi'} (toi)`
+                          : members.value.find((m) => m.id === id)?.name ?? '';
 
 // Répartit pourcentages et montants à parts égales (base de départ des modes % et fixe).
 function distributeEvenly() {

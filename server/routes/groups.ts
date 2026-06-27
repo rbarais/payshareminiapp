@@ -11,12 +11,12 @@ router.get('/', requireAuth, async (req, res): Promise<void> => {
     const rows = await sql<{
       id: string; name: string; icon: string; creator_addr: string;
       currencies: string[]; invite_token: string; created_at: Date;
-      members: { address: string; name: string; joined_at: Date }[];
+      members: { id: string; address: string | null; name: string; joined_at: Date }[];
     }[]>`
       SELECT
         g.id, g.name, g.icon, g.creator_addr, g.currencies, g.invite_token, g.created_at,
         json_agg(
-          json_build_object('address', m.address, 'name', m.name, 'joined_at', m.joined_at)
+          json_build_object('id', m.id, 'address', m.address, 'name', m.name, 'joined_at', m.joined_at)
           ORDER BY m.joined_at
         ) AS members
       FROM groups g
@@ -35,7 +35,8 @@ router.get('/', requireAuth, async (req, res): Promise<void> => {
       inviteToken: g.invite_token,
       createdAt: g.created_at,
       members: g.members.map((m) => ({
-        id: m.address,
+        id: m.id,
+        address: m.address ?? undefined,
         name: m.name,
         joinedAt: m.joined_at,
       })),
@@ -68,6 +69,8 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
       ?? Array.from(crypto.getRandomValues(new Uint8Array(16)))
           .map((b) => b.toString(16).padStart(2, '0')).join('');
 
+    let createdMembers: { id: string; address: string | null; name: string; joined_at: Date }[] = [];
+
     await sql.begin(async (tx) => {
       await tx`
         INSERT INTO groups (id, name, icon, creator_addr, currencies, invite_token)
@@ -77,15 +80,26 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
         )
       `;
       for (const m of body.members) {
-        await tx`
+        // Le créateur est inséré avec son adresse Nimiq.
+        // Les placeholders (pas encore d'adresse) ont m.address = undefined/null.
+        const memberAddr = (m as any).address ?? m.id ?? null;
+        const rows = await tx<{ id: string; address: string | null; name: string; joined_at: Date }[]>`
           INSERT INTO members (group_id, address, name)
-          VALUES (${body.id}, ${m.id}, ${m.name})
-          ON CONFLICT (group_id, address) DO NOTHING
+          VALUES (${body.id}, ${memberAddr || null}, ${m.name})
+          RETURNING id, address, name, joined_at
         `;
+        createdMembers = createdMembers.concat(rows);
       }
     });
 
-    res.status(201).end();
+    res.status(201).json({
+      members: createdMembers.map((m) => ({
+        id: m.id,
+        address: m.address ?? undefined,
+        name: m.name,
+        joinedAt: m.joined_at,
+      })),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'internal server error' });

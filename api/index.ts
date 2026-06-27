@@ -4,6 +4,7 @@ import groupsRouter from '../server/routes/groups.js';
 import expensesRouter from '../server/routes/expenses.js';
 import settlementsRouter from '../server/routes/settlements.js';
 import joinRouter from '../server/routes/join.js';
+import membersRouter from '../server/routes/members.js';
 
 const app = express();
 app.use(express.json());
@@ -12,6 +13,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/groups', groupsRouter);
 app.use('/api/groups', expensesRouter);
 app.use('/api/groups', settlementsRouter);
+app.use('/api/groups', membersRouter);
 app.use('/api', joinRouter);
 
 app.get('/api/health', async (_req, res) => {

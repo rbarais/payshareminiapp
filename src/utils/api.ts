@@ -1,5 +1,5 @@
 import { getStoredJwt, setStoredJwt } from './auth';
-import type { Group, Expense, Settlement } from '../types';
+import type { Group, Expense, Settlement, Member } from '../types';
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const jwt = getStoredJwt();
@@ -21,12 +21,21 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return JSON.parse(text) as T;
 }
 
+function mapMember(m: any): Member {
+  return {
+    id: m.id,
+    address: m.address ?? undefined,
+    name: m.name,
+    joinedAt: new Date(m.joinedAt),
+  };
+}
+
 export async function fetchMyGroups(): Promise<Group[]> {
   const groups = await apiFetch<any[]>('/api/groups');
   return groups.map((g) => ({
     ...g,
     createdAt: new Date(g.createdAt),
-    members: (g.members as any[]).map((m) => ({ ...m, joinedAt: new Date(m.joinedAt) })),
+    members: (g.members as any[]).map(mapMember),
   }));
 }
 
@@ -35,11 +44,15 @@ export async function fetchGroupExpenses(groupId: string): Promise<Expense[]> {
   return expenses.map((e) => ({ ...e, createdAt: new Date(e.createdAt) }));
 }
 
-export async function insertGroup(g: Group): Promise<void> {
-  await apiFetch<void>('/api/groups', {
+export async function insertGroup(g: Group, creator: { address: string; name: string }): Promise<{ members: Member[] }> {
+  const res = await apiFetch<{ members: any[] }>('/api/groups', {
     method: 'POST',
-    body: JSON.stringify(g),
+    body: JSON.stringify({
+      ...g,
+      members: [{ address: creator.address, name: creator.name }],
+    }),
   });
+  return { members: (res?.members ?? []).map(mapMember) };
 }
 
 export async function insertExpense(e: Expense): Promise<void> {
@@ -49,14 +62,29 @@ export async function insertExpense(e: Expense): Promise<void> {
   });
 }
 
+export async function addPlaceholderMember(groupId: string, name: string): Promise<Member> {
+  const m = await apiFetch<any>(`/api/groups/${groupId}/members`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+  return mapMember(m);
+}
+
+export async function fetchJoinPreview(
+  groupId: string,
+  token: string,
+): Promise<{ placeholders: { id: string; name: string }[] }> {
+  return apiFetch(`/api/join/preview?g=${encodeURIComponent(groupId)}&t=${encodeURIComponent(token)}`);
+}
+
 export async function joinGroup(
   groupId: string,
   token: string,
-  name: string,
+  options: { placeholderId: string } | { name: string },
 ): Promise<{ name: string; icon: string }> {
   return apiFetch<{ name: string; icon: string }>('/api/join', {
     method: 'POST',
-    body: JSON.stringify({ groupId, token, name }),
+    body: JSON.stringify({ groupId, token, ...options }),
   });
 }
 
