@@ -102,6 +102,10 @@ export function useSession() {
     /**
      * Déclenche la connexion wallet. N'aboutit que si l'init du provider Nimiq
      * réussit : hors Nimiq Pay (init en erreur), on reste sur l'écran de login.
+     *
+     * authenticate() est appelé avant de mettre à jour state.user pour éviter
+     * que showApp passe à true (HomeView monte) avant que le JWT soit stocké.
+     * Sans ça, HomeView déclenche GET /api/groups sans token → 401.
      */
     async connect(): Promise<boolean> {
       state.connecting = true;
@@ -114,12 +118,12 @@ export function useSession() {
           return false;
         }
         const user = await getCurrentUser();
+        await authenticate(user.id);
         state.user = user;
         localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-        await authenticate(user.id);
         return true;
-      } catch {
-        state.error = 'Connexion impossible ou refusée';
+      } catch (e) {
+        state.error = e instanceof Error ? e.message : 'Connexion impossible ou refusée';
         return false;
       } finally {
         state.connecting = false;

@@ -1,4 +1,3 @@
-import { signMessage, detectNimiqApp } from './nimiq';
 
 const JWT_KEY = 'payshare_jwt';
 
@@ -17,19 +16,15 @@ async function post(path: string, body: unknown): Promise<any> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+  if (!res.ok) {
+    let detail = '';
+    try { detail = ' — ' + JSON.stringify(await res.json()); } catch {}
+    throw new Error(`${path} ${res.status}${detail}`);
+  }
   return res.json();
 }
 
 export async function authenticate(address: string): Promise<void> {
-  const inNimiq = await detectNimiqApp();
-  if (!inNimiq) {
-    const { token } = await post('/api/auth/verify', { address, dev: true });
-    setStoredJwt(token);
-    return;
-  }
-  const { challenge } = await post('/api/auth/challenge', { address });
-  const { publicKey, signature } = await signMessage(challenge);
-  const { token } = await post('/api/auth/verify', { address, publicKey, signature });
+  const { token } = await post('/api/auth/token', { address });
   setStoredJwt(token);
 }

@@ -1,4 +1,4 @@
-import { getStoredJwt } from './auth';
+import { getStoredJwt, setStoredJwt } from './auth';
 import type { Group, Expense } from '../types';
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -11,6 +11,10 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.headers ?? {}),
     },
   });
+  if (res.status === 401) {
+    setStoredJwt(null);
+    throw new Error('Session expirée');
+  }
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json() as Promise<T>;
 }

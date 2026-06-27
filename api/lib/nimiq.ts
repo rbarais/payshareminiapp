@@ -51,9 +51,9 @@ function pubKeyToAddress(pubKeyBytes: Uint8Array): string {
   return `NQ${checksum} ${groups.join(' ')}`;
 }
 
-export async function messagePreImage(message: string): Promise<Uint8Array> {
-  const data = new TextEncoder().encode('\x16Nimiq Signed Message:\n' + message);
-  return new Uint8Array(await crypto.subtle.digest('SHA-256', data));
+export function messagePreImage(message: string): Uint8Array {
+  // Ed25519 signs raw bytes — no external pre-hash; SHA-512 is internal to the algorithm
+  return new TextEncoder().encode('\x16Nimiq Signed Message:\n' + message);
 }
 
 export async function verifyNimiqSignature(
@@ -63,8 +63,7 @@ export async function verifyNimiqSignature(
 ): Promise<string> {
   const pubKeyBytes = hexToBytes(publicKeyHex);
   const sigBytes = hexToBytes(signatureHex);
-  const preimage = await messagePreImage(message);
-  // Use RFC8032 strict mode (zip215: false) to reject small-order / all-zero inputs
+  const preimage = messagePreImage(message);
   const valid = await ed25519Verify(sigBytes, preimage, pubKeyBytes, { zip215: false });
   if (!valid) throw new Error('invalid signature');
   return pubKeyToAddress(pubKeyBytes);
