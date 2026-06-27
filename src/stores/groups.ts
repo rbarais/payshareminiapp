@@ -71,30 +71,75 @@ function computeShares(
   return entries.map((e) => ({ memberId: e.memberId, weight: e.weight ?? 0, amount: e.weight ?? 0 }));
 }
 
-// Solde net d'un membre dans un groupe.
-// memberId = UUID stable du membre (pour les dépenses).
-// memberAddress = adresse Nimiq du membre (pour les settlements qui sont vérifiés on-chain).
-function memberBalance(groupId: string, memberId: string, memberAddress?: string): number {
-  let net = 0;
-  for (const exp of state.expenses) {
-    if (exp.groupId !== groupId) continue;
-    if (exp.paidBy === memberId) net += exp.amount;
-    const share = exp.shares.find((s) => s.memberId === memberId);
-    if (share) net -= share.amount;
-  }
-  // Les settlements utilisent les adresses Nimiq (vérification on-chain).
-  const addr = memberAddress ?? memberId;
-  for (const s of state.settlements) {
-    if (s.groupId !== groupId) continue;
-    if (s.fromId === addr) net += s.amount;
-    if (s.toId === addr) net -= s.amount;
-  }
-  return round2(net);
-}
-
 // Retourne l'UUID du membre courant dans un groupe à partir de son adresse Nimiq.
 function findMemberByAddress(groupId: string, nimiqAddress: string): Member | undefined {
   return state.groups.find((g) => g.id === groupId)?.members.find((m) => m.address === nimiqAddress);
+}
+
+// Une dette brute de l'utilisateur courant envers un créancier (le membre qui a payé).
+// owed = somme de mes parts sur les dépenses de ce créancier ; paid = règlements
+// on-chain déjà envoyés à ce créancier ; remaining = ce qui reste à régler.
+export interface CreditorDebt {
+  creditor: Member;
+  expenses: { expense: Expense; share: number }[];
+  owed: number;
+  paid: number;
+  remaining: number;
+}
+
+// Dettes brutes (sans compensation) de l'utilisateur, groupées par créancier.
+// memberId = UUID du membre courant ; nimiqAddress = son adresse (pour les settlements).
+function grossDebtsForMember(groupId: string, memberId: string, nimiqAddress?: string): CreditorDebt[] {
+  const group = state.groups.find((g) => g.id === groupId);
+  if (!group || !memberId) return [];
+  const myAddr = nimiqAddress ?? memberId;
+
+  // Regroupe mes parts par payeur (en excluant les dépenses que j'ai payées).
+  const byCreditor = new Map<string, { expense: Expense; share: number }[]>();
+  for (const exp of state.expenses) {
+    if (exp.groupId !== groupId || exp.paidBy === memberId) continue;
+    const share = exp.shares.find((s) => s.memberId === memberId)?.amount ?? 0;
+    if (share <= 0) continue;
+    const list = byCreditor.get(exp.paidBy) ?? [];
+    list.push({ expense: exp, share });
+    byCreditor.set(exp.paidBy, list);
+  }
+
+  const debts: CreditorDebt[] = [];
+  for (const [creditorId, expenses] of byCreditor) {
+    const creditor = group.members.find((m) => m.id === creditorId);
+    if (!creditor) continue;
+    const owed = round2(expenses.reduce((s, e) => s + e.share, 0));
+    // Règlements déjà envoyés à ce créancier (settlements indexés par adresse Nimiq).
+    let paid = 0;
+    if (creditor.address) {
+      for (const s of state.settlements) {
+        if (s.groupId === groupId && s.fromId === myAddr && s.toId === creditor.address) paid += s.amount;
+      }
+    }
+    const remaining = round2(Math.max(0, owed - paid));
+    if (remaining < 0.005) continue;
+    debts.push({ creditor, expenses, owed, paid: round2(paid), remaining });
+  }
+  return debts;
+}
+
+// Ce que les autres me doivent (brut) : leurs parts sur MES dépenses, moins les
+// règlements déjà reçus. Clampé à ≥ 0.
+function grossCreditForMember(groupId: string, memberId: string, nimiqAddress?: string): number {
+  if (!memberId) return 0;
+  const myAddr = nimiqAddress ?? memberId;
+  let credit = 0;
+  for (const exp of state.expenses) {
+    if (exp.groupId !== groupId || exp.paidBy !== memberId) continue;
+    for (const s of exp.shares) {
+      if (s.memberId !== memberId) credit += s.amount;
+    }
+  }
+  for (const s of state.settlements) {
+    if (s.groupId === groupId && s.toId === myAddr) credit -= s.amount;
+  }
+  return round2(Math.max(0, credit));
 }
 
 export function useGroupsStore() {
@@ -109,25 +154,28 @@ export function useGroupsStore() {
         .filter((e) => e.groupId === groupId)
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
 
-    memberBalance,
-
-    // Solde de l'utilisateur courant dans un groupe, via son adresse Nimiq.
-    groupBalanceForUser: (groupId: string, nimiqAddress: string) => {
+    // Dettes brutes de l'utilisateur (par adresse Nimiq), groupées par créancier.
+    grossDebtsForUser: (groupId: string, nimiqAddress: string): CreditorDebt[] => {
       const member = findMemberByAddress(groupId, nimiqAddress);
-      if (!member) return 0;
-      return memberBalance(groupId, member.id, nimiqAddress);
+      if (!member) return [];
+      return grossDebtsForMember(groupId, member.id, nimiqAddress);
     },
 
-    // Solde global agrégé sur tous les groupes.
-    globalBalanceForUser: (nimiqAddress: string) =>
-      round2(
-        state.groups
-          .filter((g) => g.members.some((m) => m.address === nimiqAddress))
-          .reduce((sum, g) => {
-            const member = g.members.find((m) => m.address === nimiqAddress);
-            return sum + (member ? memberBalance(g.id, member.id, nimiqAddress) : 0);
-          }, 0),
-      ),
+    // Total brut que l'utilisateur doit dans un groupe (somme des restes par créancier).
+    grossDebtTotal: (groupId: string, nimiqAddress: string): number => {
+      const member = findMemberByAddress(groupId, nimiqAddress);
+      if (!member) return 0;
+      return round2(
+        grossDebtsForMember(groupId, member.id, nimiqAddress).reduce((s, d) => s + d.remaining, 0),
+      );
+    },
+
+    // Total brut qu'on doit à l'utilisateur dans un groupe.
+    grossCreditForUser: (groupId: string, nimiqAddress: string): number => {
+      const member = findMemberByAddress(groupId, nimiqAddress);
+      if (!member) return 0;
+      return grossCreditForMember(groupId, member.id, nimiqAddress);
+    },
 
     // UUID du membre courant dans un groupe (undefined si pas encore lié).
     myMemberId: (groupId: string, nimiqAddress: string): string =>

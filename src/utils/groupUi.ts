@@ -8,10 +8,10 @@ export const GROUP_ICON_STYLE: Record<GroupIcon, { bg: string; color: string }> 
   list: { bg: '#F0EEE9', color: '#6B6860' },
 };
 
-// Représentation d'un solde net (NIM) : libellé, couleur et sous-texte.
-// > 0 : on te doit · < 0 : tu dois · ≈ 0 : soldé.
-export function balanceView(nim: number): { amount: string; color: string; label: string } {
-  if (Math.abs(nim) < 0.005) return { amount: 'Soldé ✓', color: '#8B8880', label: '' };
-  if (nim > 0) return { amount: `+${nim.toFixed(1)} NIM`, color: '#198060', label: 'on te doit' };
-  return { amount: `${nim.toFixed(1)} NIM`, color: '#CC3C3C', label: 'tu dois' };
+// Représentation brute (sans compensation) d'un groupe pour une carte compacte.
+// La dette est prioritaire (c'est l'action à mener) ; sinon le crédit ; sinon soldé.
+export function grossBalanceView(debt: number, credit: number): { amount: string; color: string; label: string } {
+  if (debt > 0.005) return { amount: `−${debt.toFixed(1)} NIM`, color: '#CC3C3C', label: 'tu dois' };
+  if (credit > 0.005) return { amount: `+${credit.toFixed(1)} NIM`, color: '#198060', label: 'on te doit' };
+  return { amount: 'Soldé ✓', color: '#8B8880', label: '' };
 }

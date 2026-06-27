@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import type { Expense, GroupIcon, ShareableRoom } from '../types';
+import type { Expense, GroupIcon } from '../types';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
@@ -10,6 +10,7 @@ import InitialAvatar from '../components/InitialAvatar.vue';
 import ExpenseCard from '../components/ExpenseCard.vue';
 import { captureError } from '../utils/errors';
 import InviteSheet from '../components/InviteSheet.vue';
+import SettleSheet from '../components/SettleSheet.vue';
 import BaseSheet from '../components/BaseSheet.vue';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
@@ -24,23 +25,15 @@ const toast = useToast();
 const userId = computed(() => session.user.value?.id ?? '');
 const group = computed(() => store.getGroup(props.id));
 const expenses = computed(() => store.groupExpenses(props.id));
-const balance = computed(() => store.groupBalanceForUser(props.id, userId.value));
 // UUID stable du membre courant dans ce groupe (undefined si non encore lié)
 const myMemberId = computed(() => store.myMemberId(props.id, userId.value));
 // Vrai si l'utilisateur est le créateur du groupe
 const isCreator = computed(() => group.value?.creatorId === userId.value);
-// Nom du membre avec le solde le plus positif (principal créancier de l'utilisateur)
-const creditorName = computed(() => {
-  const g = group.value;
-  if (!g) return '';
-  let max = 0;
-  let name = g.members.find((m) => m.address === g.creatorId)?.name ?? '';
-  for (const m of g.members) {
-    const bal = store.memberBalance(g.id, m.id, m.address);
-    if (bal > max) { max = bal; name = m.name; }
-  }
-  return name;
-});
+
+// Dettes brutes (sans compensation) groupées par créancier, et leurs agrégats.
+const debts = computed(() => store.grossDebtsForUser(props.id, userId.value));
+const grossDebt = computed(() => store.grossDebtTotal(props.id, userId.value));
+const grossCredit = computed(() => store.grossCreditForUser(props.id, userId.value));
 
 // Redirige si le groupe n'existe pas (id invalide / supprimé).
 onMounted(async () => {
@@ -173,34 +166,12 @@ async function confirmAddMember() {
   }
 }
 
-function settle() {
-  const g = group.value;
-  if (!g) return;
+// ── Règlement : feuille listant les créanciers (un paiement par personne) ────
+const showSettleSheet = ref(false);
 
-  const creator = g.members.find((m) => m.address === g.creatorId);
-  if (!creator) {
-    toast.show('Créateur du groupe introuvable', 'error');
-    return;
-  }
-  if (!creator.address?.startsWith('NQ')) {
-    toast.show('Le créateur doit se connecter avec Nimiq Pay pour recevoir le paiement', 'error');
-    return;
-  }
-
-  const room: ShareableRoom = {
-    id: `settle_${g.id}_${userId.value.slice(-8)}`,
-    creatorId: creator.address,
-    creatorName: creator.name,
-    amount: Math.abs(balance.value),
-    currency: 'NIM',
-    reason: `Règlement · ${g.name}`,
-    maxParticipants: 1,
-  };
-
-  router.push({
-    name: 'pay',
-    query: { room: encodeURIComponent(JSON.stringify(room)), groupId: g.id },
-  });
+function openSettle() {
+  if (!debts.value.length) return;
+  showSettleSheet.value = true;
 }
 </script>
 
@@ -257,19 +228,23 @@ function settle() {
       </button>
     </div>
 
-    <!-- Balance card -->
-    <div v-if="balance < -0.005" class="debt-card">
+    <!-- Dette brute : ce que tu dois (détail par créancier dans la feuille) -->
+    <div v-if="grossDebt > 0.005" class="debt-card">
       <div>
-        <div class="debt-who">Tu dois à {{ creditorName }}</div>
-        <div class="debt-amount">{{ Math.abs(balance).toFixed(2) }} NIM</div>
+        <div class="debt-who">Tu dois</div>
+        <div class="debt-amount">{{ grossDebt.toFixed(2) }} NIM</div>
       </div>
-      <button class="settle-btn" @click="settle">Régler →</button>
+      <button class="settle-btn" @click="openSettle">Régler →</button>
     </div>
-    <div v-else-if="balance > 0.005" class="credit-card">
+
+    <!-- Crédit brut : ce qu'on te doit (peut coexister avec la dette) -->
+    <div v-if="grossCredit > 0.005" class="credit-card">
       <div class="credit-title">On te doit</div>
-      <div class="credit-amount">{{ balance.toFixed(2) }} NIM</div>
+      <div class="credit-amount">{{ grossCredit.toFixed(2) }} NIM</div>
     </div>
-    <div v-else class="settled-card">
+
+    <!-- Soldé : ni dette ni crédit -->
+    <div v-if="grossDebt <= 0.005 && grossCredit <= 0.005" class="settled-card">
       <div class="settled-icon">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <path d="M4 9L7.5 12.5L14 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -318,6 +293,15 @@ function settle() {
       <button class="sheet-copy" @click="copyInviteLink">Copier le lien d'invitation</button>
       <p class="invite-qr-note">Le lien fonctionne aussi via messagerie (Messenger, etc.)</p>
     </BaseSheet>
+
+    <!-- Feuille : régler ses dettes (un paiement par créancier) -->
+    <SettleSheet
+      v-if="showSettleSheet"
+      :group="group"
+      :user-id="userId"
+      :debts="debts"
+      @close="showSettleSheet = false"
+    />
 
     <!-- Feuille : inviter à payer une part -->
     <InviteSheet

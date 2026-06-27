@@ -1,23 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../nimiq', () => ({
-  signMessage: vi.fn(async () => ({ publicKey: 'pk', signature: 'sig' })),
-  detectNimiqApp: vi.fn(async () => true),
-}));
-
 describe('authenticate', () => {
   beforeEach(() => localStorage.clear());
-  it('stores the JWT returned by auth-verify', async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ challenge: 'C' }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ token: 'ey.jwt' }) });
+
+  it('stores the JWT returned by /api/auth/token', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ token: 'ey.jwt' }),
+    });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { authenticate } = await import('../auth');
+    const { authenticate, getStoredJwt } = await import('../auth');
     await authenticate('NQ_ALICE');
 
-    const { getStoredJwt } = await import('../auth');
     expect(getStoredJwt()).toBe('ey.jwt');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [path, init] = fetchMock.mock.calls[0];
+    expect(path).toBe('/api/auth/token');
+    expect(JSON.parse(init.body)).toEqual({ address: 'NQ_ALICE' });
   });
 });

@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Group } from '../types';
-import { GROUP_ICON_STYLE, balanceView } from '../utils/groupUi';
+import { GROUP_ICON_STYLE, grossBalanceView } from '../utils/groupUi';
 import GroupIcon from './GroupIcon.vue';
 
 const props = defineProps<{
   group: Group;
   expenseCount: number;
-  balance: number;
+  grossDebt: number;
+  grossCredit: number;
 }>();
 
 const iconStyle = computed(() => GROUP_ICON_STYLE[props.group.icon]);
-const bal = computed(() => balanceView(props.balance));
+const bal = computed(() => grossBalanceView(props.grossDebt, props.grossCredit));
 </script>
 
 <template>

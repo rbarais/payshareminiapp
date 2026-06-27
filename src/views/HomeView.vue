@@ -23,21 +23,22 @@ onMounted(async () => {
 const userId = computed(() => session.user.value?.id ?? '');
 const syncing = computed(() => store.syncing.value);
 
-// Groupes réels + nb de dépenses + solde net de l'utilisateur dans chacun.
+// Groupes réels + nb de dépenses + dettes/crédits bruts de l'utilisateur.
 const groups = computed(() =>
   store.groups.value.map((g) => ({
     group: g,
     expenseCount: store.groupExpenses(g.id).length,
-    balance: store.groupBalanceForUser(g.id, userId.value),
+    grossDebt: store.grossDebtTotal(g.id, userId.value),
+    grossCredit: store.grossCreditForUser(g.id, userId.value),
   })),
 );
 
-// Solde global agrégé : ce qu'on te doit (soldes positifs) vs ce que tu dois.
+// Solde global agrégé (brut) : ce qu'on te doit vs ce que tu dois.
 const credited = computed(() =>
-  groups.value.reduce((s, g) => s + Math.max(0, g.balance), 0),
+  groups.value.reduce((s, g) => s + g.grossCredit, 0),
 );
 const owed = computed(() =>
-  groups.value.reduce((s, g) => s + Math.max(0, -g.balance), 0),
+  groups.value.reduce((s, g) => s + g.grossDebt, 0),
 );
 
 function disconnect() {
@@ -83,7 +84,8 @@ function goToGroup(id: string) {
           :key="g.group.id"
           :group="g.group"
           :expense-count="g.expenseCount"
-          :balance="g.balance"
+          :gross-debt="g.grossDebt"
+          :gross-credit="g.grossCredit"
           @click="goToGroup(g.group.id)"
         />
       </div>

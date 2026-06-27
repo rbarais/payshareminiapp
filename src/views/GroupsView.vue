@@ -16,7 +16,8 @@ const groups = computed(() =>
   store.groups.value.map((g) => ({
     group: g,
     expenseCount: store.groupExpenses(g.id).length,
-    balance: store.groupBalanceForUser(g.id, userId.value),
+    grossDebt: store.grossDebtTotal(g.id, userId.value),
+    grossCredit: store.grossCreditForUser(g.id, userId.value),
   })),
 );
 
@@ -46,7 +47,8 @@ function goToGroup(id: string) {
           :key="g.group.id"
           :group="g.group"
           :expense-count="g.expenseCount"
-          :balance="g.balance"
+          :gross-debt="g.grossDebt"
+          :gross-credit="g.grossCredit"
           @click="goToGroup(g.group.id)"
         />
       </div>
