@@ -3,12 +3,14 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
+import { useI18n } from '../stores/i18n';
 import GroupCard from '../components/GroupCard.vue';
 import BottomNav from '../components/BottomNav.vue';
 
 const router = useRouter();
 const session = useSession();
 const store = useGroupsStore();
+const { t } = useI18n();
 
 const userId = computed(() => session.user.value?.id ?? '');
 
@@ -33,10 +35,10 @@ function goToGroup(id: string) {
 <template>
   <div class="screen">
     <div class="header">
-      <div class="title">Mes groupes</div>
+      <div class="title">{{ t('groups.title') }}</div>
       <button class="new-btn" @click="goToNewGroup">
         <span class="new-plus">+</span>
-        <span>Nouveau</span>
+        <span>{{ t('groups.new') }}</span>
       </button>
     </div>
 
@@ -72,9 +74,9 @@ function goToGroup(id: string) {
             />
           </svg>
         </div>
-        <div class="empty-title">Aucun groupe ici</div>
-        <div class="empty-sub">Crée un groupe ou rejoins-en un via QR code</div>
-        <button class="empty-cta" @click="goToNewGroup">+ Nouveau groupe</button>
+        <div class="empty-title">{{ t('groups.emptyTitle') }}</div>
+        <div class="empty-sub">{{ t('groups.emptySub') }}</div>
+        <button class="empty-cta" @click="goToNewGroup">{{ t('groups.emptyCta') }}</button>
       </div>
     </div>
 
