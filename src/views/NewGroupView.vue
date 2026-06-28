@@ -60,7 +60,7 @@ async function done() {
       creatorName: user.name,
     });
     for (const guest of guests.value) {
-      store.addMember(group.id, { id: guest.id, name: guest.name });
+      await store.addPlaceholderMember(group.id, guest.name);
     }
     router.replace({ name: 'group', params: { id: group.id } });
   } catch (err) {
