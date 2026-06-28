@@ -12,6 +12,23 @@ export const fr = {
     history: 'Historique',
     scan: 'Scanner',
   },
+  home: {
+    myGroups: 'Mes groupes',
+    new: 'Nouveau',
+    emptyTitle: 'Aucun groupe ici',
+    emptySub: 'Crée un groupe ou rejoins-en un via QR code',
+    emptyCta: '+ Nouveau groupe',
+    globalBalance: 'Solde global',
+    credited: 'On te doit',
+    owed: 'Tu dois',
+  },
+  group: {
+    membersCount: '{count} membres',
+    expensesCount: '{count} dépenses',
+    owed: 'tu dois',
+    credited: 'on te doit',
+    settled: 'Soldé ✓',
+  },
   settings: {
     title: 'Réglages',
     walletConnection: 'Connexion wallet via Nimiq Pay',
@@ -25,5 +42,9 @@ export const fr = {
   },
   toast: {
     memberAdded: '{name} ajouté',
+    historyComingSoon: 'Historique — bientôt disponible',
+  },
+  error: {
+    syncFailed: 'Synchronisation impossible',
   },
 };

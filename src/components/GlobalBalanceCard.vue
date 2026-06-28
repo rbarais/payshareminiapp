@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { eurRate, fetchRate } from '../utils/rate';
+import { useI18n } from '../stores/i18n';
 
 // "Global balance" card: what others owe you vs what you owe, aggregated.
 const props = defineProps<{ credited: number; owed: number }>();
+
+const { t } = useI18n();
 
 const showEur = ref(false);
 onMounted(() => {
@@ -26,7 +29,7 @@ const owedStr = computed(() =>
 <template>
   <div class="balance-card">
     <div class="balance-top">
-      <div class="balance-title">Solde global</div>
+      <div class="balance-title">{{ t('home.globalBalance') }}</div>
       <button class="toggle-btn" @click="showEur = !showEur">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
           <path
@@ -42,11 +45,11 @@ const owedStr = computed(() =>
     </div>
     <div class="balance-row">
       <div>
-        <div class="balance-label">On te doit</div>
+        <div class="balance-label">{{ t('home.credited') }}</div>
         <div class="balance-amount">{{ creditedStr }}</div>
       </div>
       <div class="balance-right">
-        <div class="balance-label">Tu dois</div>
+        <div class="balance-label">{{ t('home.owed') }}</div>
         <div class="balance-amount">{{ owedStr }}</div>
       </div>
     </div>

@@ -10,11 +10,13 @@ import WalletBadge from '../components/WalletBadge.vue';
 import SettingsSheet from '../components/SettingsSheet.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
 import { captureError } from '../utils/errors';
+import { useI18n } from '../stores/i18n';
 
 const router = useRouter();
 const session = useSession();
 const store = useGroupsStore();
 const toast = useToast();
+const { t } = useI18n();
 
 // Hydrate groups + expenses from the DB on open (stale-while-revalidate).
 onMounted(async () => {
@@ -22,7 +24,7 @@ onMounted(async () => {
     await store.refreshAll();
   } catch (err) {
     captureError(err, 'HomeView.refreshAll');
-    toast.show('Synchronisation impossible', 'error');
+    toast.show(t('error.syncFailed'), 'error');
   }
 });
 
@@ -73,11 +75,11 @@ function goToGroup(id: string) {
 
       <!-- Groups header -->
       <div class="section-row">
-        <span class="section-title">Mes groupes</span>
+        <span class="section-title">{{ t('home.myGroups') }}</span>
         <span v-if="syncing" class="syncing-dot" />
         <button class="new-btn" @click="goToNewGroup">
           <span class="new-plus">+</span>
-          <span>Nouveau</span>
+          <span>{{ t('home.new') }}</span>
         </button>
       </div>
 
@@ -98,25 +100,25 @@ function goToGroup(id: string) {
       <div v-else class="empty">
         <div class="empty-icon">
           <svg width="34" height="34" viewBox="0 0 22 22" fill="none">
-            <circle cx="8" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5" />
-            <circle cx="15" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5" />
+            <circle cx="8" cy="8.5" r="3" stroke="currentColor" stroke-width="1.5" />
+            <circle cx="15" cy="8.5" r="3" stroke="currentColor" stroke-width="1.5" />
             <path
               d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19"
-              stroke="#C8C5BF"
+              stroke="currentColor"
               stroke-width="1.5"
               stroke-linecap="round"
             />
             <path
               d="M15 14C18.31 14 21 16.24 21 19"
-              stroke="#C8C5BF"
+              stroke="currentColor"
               stroke-width="1.5"
               stroke-linecap="round"
             />
           </svg>
         </div>
-        <div class="empty-title">Aucun groupe ici</div>
-        <div class="empty-sub">Crée un groupe ou rejoins-en un via QR code</div>
-        <button class="empty-cta" @click="goToNewGroup">+ Nouveau groupe</button>
+        <div class="empty-title">{{ t('home.emptyTitle') }}</div>
+        <div class="empty-sub">{{ t('home.emptySub') }}</div>
+        <button class="empty-cta" @click="goToNewGroup">{{ t('home.emptyCta') }}</button>
       </div>
     </div>
 
@@ -260,6 +262,7 @@ function goToGroup(id: string) {
   justify-content: center;
   margin-bottom: 8px;
   box-shadow: var(--shadow-sm);
+  color: var(--text);
 }
 
 .empty-title {

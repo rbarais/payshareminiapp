@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import type { Group } from '../types';
 import { GROUP_ICON_STYLE, grossBalanceView } from '../utils/groupUi';
 import GroupIcon from './GroupIcon.vue';
+import { useI18n } from '../stores/i18n';
 
 const props = defineProps<{
   group: Group;
@@ -11,6 +12,7 @@ const props = defineProps<{
   grossCredit: number;
 }>();
 
+const { t } = useI18n();
 const iconStyle = computed(() => GROUP_ICON_STYLE[props.group.icon]);
 const bal = computed(() => grossBalanceView(props.grossDebt, props.grossCredit));
 </script>
@@ -22,11 +24,16 @@ const bal = computed(() => grossBalanceView(props.grossDebt, props.grossCredit))
     </div>
     <div class="group-info">
       <div class="group-name">{{ group.name }}</div>
-      <div class="group-meta">{{ group.members.length }} membres · {{ expenseCount }} dépenses</div>
+      <div class="group-meta">
+        {{ t('group.membersCount', { count: group.members.length }) }} ·
+        {{ t('group.expensesCount', { count: expenseCount }) }}
+      </div>
     </div>
     <div class="group-balance">
-      <div class="group-amount" :style="{ color: bal.color }">{{ bal.amount }}</div>
-      <div v-if="bal.label" class="group-label">{{ bal.label }}</div>
+      <div class="group-amount" :style="{ color: bal.color }">
+        {{ bal.amountKey ? t(bal.amountKey) : bal.amount }}
+      </div>
+      <div v-if="bal.labelKey" class="group-label">{{ t(bal.labelKey) }}</div>
     </div>
   </button>
 </template>
