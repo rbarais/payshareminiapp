@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="header">
       <div class="logo">PayShare</div>
-      <WalletBadge :address="session.walletShort.value" @open="showSettings = true" />
+      <WalletBadge :address="userId" @open="showSettings = true" />
     </div>
 
     <!-- Content -->

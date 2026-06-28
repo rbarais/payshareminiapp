@@ -48,7 +48,7 @@
           <!-- Creator -->
           <div class="member">
             <div class="member-av" style="overflow: hidden">
-              <NimiqIdenticon :size="36" />
+              <NimiqIdenticon :size="36" :address="session.user.value?.id" />
             </div>
             <span class="member-name">{{ creatorName }}</span>
             <span class="member-sub">{{ t('group.you') }}</span>

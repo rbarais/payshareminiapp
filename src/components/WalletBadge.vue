@@ -1,7 +1,7 @@
 <template>
   <div class="wallet-badge" @click="emit('open')">
     <div class="wallet-info">
-      <div class="wallet-addr">{{ address }}</div>
+      <div class="wallet-addr">{{ formatAddressShort(address) }}</div>
       <div class="wallet-status">
         <span class="status-dot" />
         <span class="status-text">{{ t('settings.connected') }}</span>
@@ -27,6 +27,7 @@
 <script setup lang="ts">
 import NimiqIdenticon from './NimiqIdenticon.vue';
 import { useI18n } from '../stores/i18n';
+import { formatAddressShort } from '../utils/nimiq';
 
 defineProps<{ address: string }>();
 const emit = defineEmits<{ open: [] }>();

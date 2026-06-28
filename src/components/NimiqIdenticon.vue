@@ -1,20 +1,31 @@
 <template>
-  <img ref="identicon" :src="identicon" :width="size" :height="size" viewBox="0 0 38 38" />
+  <div v-html="svgContent" :style="{ width: `${size}px`, height: `${size}px` }" />
 </template>
 
 <script setup lang="ts">
-import Identicons from '@nimiq/identicons'
-import { onMounted, ref } from 'vue';
-// Nimiq identity mosaic (visual placeholder for the connected wallet).
-// Identical everywhere: extracted to avoid duplicating the SVG.
-const props = withDefaults(defineProps<{ size?: number, address?: string | null }>(), { size: 38, address: null });
-const identicon = ref('')
-onMounted(async () => {
+import Identicons from '@nimiq/identicons/dist/identicons.bundle.min.js'
+import { ref, watchEffect } from 'vue'
+
+const props = withDefaults(defineProps<{ size?: number; address?: string | null }>(), {
+  size: 38,
+  address: null,
+})
+
+const svgContent = ref(Identicons.placeholder('#bbb', 1))
+
+watchEffect(async () => {
   if (props.address) {
-    identicon.value = await Identicons.toDataUrl(props.address)
-  }
-  else {
-    identicon.value = Identicons.placeholderToDataUrl('#bbb', 1)
+    svgContent.value = await Identicons.svg(props.address)
+  } else {
+    svgContent.value = Identicons.placeholder('#bbb', 1)
   }
 })
 </script>
+
+<style scoped>
+div :deep(svg) {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+</style>
