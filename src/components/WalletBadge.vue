@@ -1,27 +1,19 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import NimiqIdenticon from './NimiqIdenticon.vue';
+import { useI18n } from '../stores/i18n';
 
-// Wallet badge (address + connected status) with a disconnect menu.
-// The full profile will come in Phase 6bis; here, a minimal version.
 defineProps<{ address: string }>();
-const emit = defineEmits<{ disconnect: [] }>();
-
-const showMenu = ref(false);
-
-function disconnect() {
-  showMenu.value = false;
-  emit('disconnect');
-}
+const emit = defineEmits<{ open: [] }>();
+const { t } = useI18n();
 </script>
 
 <template>
-  <div class="wallet-badge" @click="showMenu = !showMenu">
+  <div class="wallet-badge" @click="emit('open')">
     <div class="wallet-info">
       <div class="wallet-addr">{{ address }}</div>
       <div class="wallet-status">
         <span class="status-dot" />
-        <span class="status-text">Connecté</span>
+        <span class="status-text">{{ t('settings.connected') }}</span>
       </div>
     </div>
     <div class="identicon">
@@ -37,14 +29,6 @@ function disconnect() {
           />
         </svg>
       </div>
-    </div>
-  </div>
-
-  <!-- Wallet menu (disconnect) -->
-  <div v-if="showMenu" class="menu-overlay" @click="showMenu = false">
-    <div class="wallet-menu" @click.stop>
-      <div class="menu-addr">{{ address }}</div>
-      <button class="menu-item danger" @click="disconnect">Se déconnecter</button>
     </div>
   </div>
 </template>
@@ -112,54 +96,5 @@ function disconnect() {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* Menu */
-.menu-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-}
-
-.wallet-menu {
-  position: absolute;
-  top: 56px;
-  right: 18px;
-  background: var(--bg-card);
-  border-radius: 14px;
-  box-shadow: var(--shadow-md);
-  padding: 8px;
-  min-width: 170px;
-}
-
-.menu-addr {
-  font-size: 10px;
-  color: var(--text);
-  font-family: monospace;
-  padding: 6px 10px 8px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 4px;
-}
-
-.menu-item {
-  width: 100%;
-  text-align: left;
-  border: none;
-  background: none;
-  padding: 10px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--dark);
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.menu-item:hover {
-  background: var(--border-subtle);
-}
-.menu-item.danger {
-  color: var(--red);
 }
 </style>

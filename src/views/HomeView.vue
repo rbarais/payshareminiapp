@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
@@ -7,6 +7,7 @@ import { useToast } from '../stores/toast';
 import GroupCard from '../components/GroupCard.vue';
 import BottomNav from '../components/BottomNav.vue';
 import WalletBadge from '../components/WalletBadge.vue';
+import SettingsSheet from '../components/SettingsSheet.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
 import { captureError } from '../utils/errors';
 
@@ -42,6 +43,8 @@ const groups = computed(() =>
 const credited = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossCredit, 0));
 const owed = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossDebt, 0));
 
+const showSettings = ref(false);
+
 function disconnect() {
   session.disconnect();
   router.replace({ name: 'home' });
@@ -61,7 +64,7 @@ function goToGroup(id: string) {
     <!-- Header -->
     <div class="header">
       <div class="logo">PayShare</div>
-      <WalletBadge :address="session.walletShort.value" @disconnect="disconnect" />
+      <WalletBadge :address="session.walletShort.value" @open="showSettings = true" />
     </div>
 
     <!-- Content -->
@@ -119,6 +122,15 @@ function goToGroup(id: string) {
 
     <!-- Bottom nav -->
     <BottomNav active="home" />
+
+    <SettingsSheet
+      v-if="showSettings"
+      @close="showSettings = false"
+      @disconnect="
+        showSettings = false;
+        disconnect();
+      "
+    />
   </div>
 </template>
 
