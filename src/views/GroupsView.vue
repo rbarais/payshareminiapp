@@ -1,37 +1,3 @@
-<script setup lang="ts">
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useSession } from '../stores/session';
-import { useGroupsStore } from '../stores/groups';
-import { useI18n } from '../stores/i18n';
-import GroupCard from '../components/GroupCard.vue';
-import BottomNav from '../components/BottomNav.vue';
-
-const router = useRouter();
-const session = useSession();
-const store = useGroupsStore();
-const { t } = useI18n();
-
-const userId = computed(() => session.user.value?.id ?? '');
-
-const groups = computed(() =>
-  store.groups.value.map((group) => ({
-    group,
-    expenseCount: store.groupExpenses(group.id).length,
-    grossDebt: store.grossDebtTotal(group.id, userId.value),
-    grossCredit: store.grossCreditForUser(group.id, userId.value),
-  })),
-);
-
-function goToNewGroup() {
-  router.push({ name: 'newGroup' });
-}
-
-function goToGroup(id: string) {
-  router.push({ name: 'group', params: { id } });
-}
-</script>
-
 <template>
   <div class="screen">
     <div class="header">
@@ -83,6 +49,40 @@ function goToGroup(id: string) {
     <BottomNav active="groups" />
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
+import { useI18n } from '../stores/i18n';
+import GroupCard from '../components/GroupCard.vue';
+import BottomNav from '../components/BottomNav.vue';
+
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
+const { t } = useI18n();
+
+const userId = computed(() => session.user.value?.id ?? '');
+
+const groups = computed(() =>
+  store.groups.value.map((group) => ({
+    group,
+    expenseCount: store.groupExpenses(group.id).length,
+    grossDebt: store.grossDebtTotal(group.id, userId.value),
+    grossCredit: store.grossCreditForUser(group.id, userId.value),
+  })),
+);
+
+function goToNewGroup() {
+  router.push({ name: 'newGroup' });
+}
+
+function goToGroup(id: string) {
+  router.push({ name: 'group', params: { id } });
+}
+</script>
 
 <style scoped>
 .screen {

@@ -1,28 +1,3 @@
-<script setup lang="ts">
-import BaseSheet from './BaseSheet.vue';
-import NimiqIdenticon from './NimiqIdenticon.vue';
-import { useSession } from '../stores/session';
-import { usePrefs } from '../stores/prefs';
-import { useI18n } from '../stores/i18n';
-import type { Theme, Locale } from '../utils/prefsStorage';
-
-defineEmits<{ close: []; disconnect: [] }>();
-
-const session = useSession();
-const { theme, setTheme } = usePrefs();
-const { locale, setLocale, t } = useI18n();
-
-const themes: { key: Theme; label: string }[] = [
-  { key: 'light', label: 'settings.themeLight' },
-  { key: 'dark', label: 'settings.themeDark' },
-  { key: 'auto', label: 'settings.themeAuto' },
-];
-const locales: { key: Locale; label: string }[] = [
-  { key: 'fr', label: 'Français' },
-  { key: 'en', label: 'English' },
-];
-</script>
-
 <template>
   <BaseSheet @close="$emit('close')">
     <div class="settings-title">{{ t('settings.title') }}</div>
@@ -73,6 +48,31 @@ const locales: { key: Locale; label: string }[] = [
     </button>
   </BaseSheet>
 </template>
+
+<script setup lang="ts">
+import BaseSheet from './BaseSheet.vue';
+import NimiqIdenticon from './NimiqIdenticon.vue';
+import { useSession } from '../stores/session';
+import { usePrefs } from '../stores/prefs';
+import { useI18n } from '../stores/i18n';
+import type { Theme, Locale } from '../utils/prefsStorage';
+
+defineEmits<{ close: []; disconnect: [] }>();
+
+const session = useSession();
+const { theme, setTheme } = usePrefs();
+const { locale, setLocale, t } = useI18n();
+
+const themes: { key: Theme; label: string }[] = [
+  { key: 'light', label: 'settings.themeLight' },
+  { key: 'dark', label: 'settings.themeDark' },
+  { key: 'auto', label: 'settings.themeAuto' },
+];
+const locales: { key: Locale; label: string }[] = [
+  { key: 'fr', label: 'Français' },
+  { key: 'en', label: 'English' },
+];
+</script>
 
 <style scoped>
 .settings-title {

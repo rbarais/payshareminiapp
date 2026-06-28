@@ -1,27 +1,3 @@
-<script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { useToast } from '../stores/toast';
-import { useI18n } from '../stores/i18n';
-
-const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'scan' }>();
-
-const router = useRouter();
-const toast = useToast();
-const { t } = useI18n();
-
-// Icon color depending on the active tab.
-function iconColor(key: string): string {
-  return props.active === key ? '#F6B221' : 'currentColor';
-}
-
-function go(key: 'home' | 'groups' | 'history' | 'scan') {
-  if (key === 'home') router.push({ name: 'home' });
-  else if (key === 'groups') router.push({ name: 'groups' });
-  else if (key === 'scan') router.push({ name: 'scan' });
-  else toast.show(t('toast.historyComingSoon'), 'info'); // Phase 5
-}
-</script>
-
 <template>
   <nav class="bottom-nav">
     <div class="nav-item" :class="{ active: active === 'home' }" @click="go('home')">
@@ -121,6 +97,30 @@ function go(key: 'home' | 'groups' | 'history' | 'scan') {
     </div>
   </nav>
 </template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+import { useToast } from '../stores/toast';
+import { useI18n } from '../stores/i18n';
+
+const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'scan' }>();
+
+const router = useRouter();
+const toast = useToast();
+const { t } = useI18n();
+
+// Icon color depending on the active tab.
+function iconColor(key: string): string {
+  return props.active === key ? '#F6B221' : 'currentColor';
+}
+
+function go(key: 'home' | 'groups' | 'history' | 'scan') {
+  if (key === 'home') router.push({ name: 'home' });
+  else if (key === 'groups') router.push({ name: 'groups' });
+  else if (key === 'scan') router.push({ name: 'scan' });
+  else toast.show(t('toast.historyComingSoon'), 'info'); // Phase 5
+}
+</script>
 
 <style scoped>
 .bottom-nav {

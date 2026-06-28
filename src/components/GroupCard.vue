@@ -1,22 +1,3 @@
-<script setup lang="ts">
-import { computed } from 'vue';
-import type { Group } from '../types';
-import { GROUP_ICON_STYLE, grossBalanceView } from '../utils/groupUi';
-import GroupIcon from './GroupIcon.vue';
-import { useI18n } from '../stores/i18n';
-
-const props = defineProps<{
-  group: Group;
-  expenseCount: number;
-  grossDebt: number;
-  grossCredit: number;
-}>();
-
-const { t } = useI18n();
-const iconStyle = computed(() => GROUP_ICON_STYLE[props.group.icon]);
-const bal = computed(() => grossBalanceView(props.grossDebt, props.grossCredit));
-</script>
-
 <template>
   <button class="group-card">
     <div class="group-icon" :style="{ background: iconStyle.bg }">
@@ -37,6 +18,25 @@ const bal = computed(() => grossBalanceView(props.grossDebt, props.grossCredit))
     </div>
   </button>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { Group } from '../types';
+import { GROUP_ICON_STYLE, grossBalanceView } from '../utils/groupUi';
+import GroupIcon from './GroupIcon.vue';
+import { useI18n } from '../stores/i18n';
+
+const props = defineProps<{
+  group: Group;
+  expenseCount: number;
+  grossDebt: number;
+  grossCredit: number;
+}>();
+
+const { t } = useI18n();
+const iconStyle = computed(() => GROUP_ICON_STYLE[props.group.icon]);
+const bal = computed(() => grossBalanceView(props.grossDebt, props.grossCredit));
+</script>
 
 <style scoped>
 .group-card {

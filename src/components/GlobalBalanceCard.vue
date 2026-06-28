@@ -1,31 +1,3 @@
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { eurRate, fetchRate } from '../utils/rate';
-import { useI18n } from '../stores/i18n';
-
-// "Global balance" card: what others owe you vs what you owe, aggregated.
-const props = defineProps<{ credited: number; owed: number }>();
-
-const { t } = useI18n();
-
-const showEur = ref(false);
-onMounted(() => {
-  fetchRate();
-});
-
-function eur(nim: number): string {
-  if (eurRate.value == null) return '—';
-  return '≈ ' + (nim * eurRate.value).toFixed(2) + ' €';
-}
-
-const creditedStr = computed(() =>
-  showEur.value ? eur(props.credited) : '+' + props.credited.toFixed(1) + ' NIM',
-);
-const owedStr = computed(() =>
-  showEur.value ? eur(props.owed) : '−' + props.owed.toFixed(1) + ' NIM',
-);
-</script>
-
 <template>
   <div class="balance-card">
     <div class="balance-top">
@@ -55,6 +27,34 @@ const owedStr = computed(() =>
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { eurRate, fetchRate } from '../utils/rate';
+import { useI18n } from '../stores/i18n';
+
+// "Global balance" card: what others owe you vs what you owe, aggregated.
+const props = defineProps<{ credited: number; owed: number }>();
+
+const { t } = useI18n();
+
+const showEur = ref(false);
+onMounted(() => {
+  fetchRate();
+});
+
+function eur(nim: number): string {
+  if (eurRate.value == null) return '—';
+  return '≈ ' + (nim * eurRate.value).toFixed(2) + ' €';
+}
+
+const creditedStr = computed(() =>
+  showEur.value ? eur(props.credited) : '+' + props.credited.toFixed(1) + ' NIM',
+);
+const owedStr = computed(() =>
+  showEur.value ? eur(props.owed) : '−' + props.owed.toFixed(1) + ' NIM',
+);
+</script>
 
 <style scoped>
 .balance-card {

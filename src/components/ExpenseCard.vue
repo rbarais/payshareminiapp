@@ -1,31 +1,3 @@
-<script setup lang="ts">
-import { computed } from 'vue';
-import type { Expense } from '../types';
-import { useI18n } from '../stores/i18n';
-
-// Card for an expense within a group. Clicking opens the pay invitation;
-// the pencil emits `edit`. Derived values (share, payer) are provided by the
-// parent, which knows the group context and the current user.
-const props = defineProps<{
-  expense: Expense;
-  userShare: number;
-  paidByName: string;
-  isMine: boolean;
-}>();
-defineEmits<{ select: []; edit: [] }>();
-
-const { t, locale } = useI18n();
-
-const dateLabel = computed(() =>
-  props.expense.createdAt.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'fr-FR', {
-    day: 'numeric',
-    month: 'short',
-  }),
-);
-
-const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.amount) * 100));
-</script>
-
 <template>
   <div class="expense-card" @click="$emit('select')">
     <div class="expense-top">
@@ -59,6 +31,34 @@ const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.am
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { Expense } from '../types';
+import { useI18n } from '../stores/i18n';
+
+// Card for an expense within a group. Clicking opens the pay invitation;
+// the pencil emits `edit`. Derived values (share, payer) are provided by the
+// parent, which knows the group context and the current user.
+const props = defineProps<{
+  expense: Expense;
+  userShare: number;
+  paidByName: string;
+  isMine: boolean;
+}>();
+defineEmits<{ select: []; edit: [] }>();
+
+const { t, locale } = useI18n();
+
+const dateLabel = computed(() =>
+  props.expense.createdAt.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'fr-FR', {
+    day: 'numeric',
+    month: 'short',
+  }),
+);
+
+const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.amount) * 100));
+</script>
 
 <style scoped>
 .expense-card {

@@ -1,66 +1,3 @@
-<script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useSession } from '../stores/session';
-import { useGroupsStore } from '../stores/groups';
-import { useToast } from '../stores/toast';
-import GroupCard from '../components/GroupCard.vue';
-import BottomNav from '../components/BottomNav.vue';
-import WalletBadge from '../components/WalletBadge.vue';
-import SettingsSheet from '../components/SettingsSheet.vue';
-import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
-import { captureError } from '../utils/errors';
-import { useI18n } from '../stores/i18n';
-
-const router = useRouter();
-const session = useSession();
-const store = useGroupsStore();
-const toast = useToast();
-const { t } = useI18n();
-
-// Hydrate groups + expenses from the DB on open (stale-while-revalidate).
-onMounted(async () => {
-  try {
-    await store.refreshAll();
-  } catch (err) {
-    captureError(err, 'HomeView.refreshAll');
-    toast.show(t('error.syncFailed'), 'error');
-  }
-});
-
-const userId = computed(() => session.user.value?.id ?? '');
-const syncing = computed(() => store.syncing.value);
-
-// Real groups + expense count + the user's gross debts/credits.
-const groups = computed(() =>
-  store.groups.value.map((group) => ({
-    group,
-    expenseCount: store.groupExpenses(group.id).length,
-    grossDebt: store.grossDebtTotal(group.id, userId.value),
-    grossCredit: store.grossCreditForUser(group.id, userId.value),
-  })),
-);
-
-// Aggregated global balance (gross): what others owe you vs what you owe.
-const credited = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossCredit, 0));
-const owed = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossDebt, 0));
-
-const showSettings = ref(false);
-
-function disconnect() {
-  session.disconnect();
-  router.replace({ name: 'home' });
-}
-
-function goToNewGroup() {
-  router.push({ name: 'newGroup' });
-}
-
-function goToGroup(id: string) {
-  router.push({ name: 'group', params: { id } });
-}
-</script>
-
 <template>
   <div class="screen">
     <!-- Header -->
@@ -135,6 +72,69 @@ function goToGroup(id: string) {
     />
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
+import { useToast } from '../stores/toast';
+import GroupCard from '../components/GroupCard.vue';
+import BottomNav from '../components/BottomNav.vue';
+import WalletBadge from '../components/WalletBadge.vue';
+import SettingsSheet from '../components/SettingsSheet.vue';
+import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
+import { captureError } from '../utils/errors';
+import { useI18n } from '../stores/i18n';
+
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
+const toast = useToast();
+const { t } = useI18n();
+
+// Hydrate groups + expenses from the DB on open (stale-while-revalidate).
+onMounted(async () => {
+  try {
+    await store.refreshAll();
+  } catch (err) {
+    captureError(err, 'HomeView.refreshAll');
+    toast.show(t('error.syncFailed'), 'error');
+  }
+});
+
+const userId = computed(() => session.user.value?.id ?? '');
+const syncing = computed(() => store.syncing.value);
+
+// Real groups + expense count + the user's gross debts/credits.
+const groups = computed(() =>
+  store.groups.value.map((group) => ({
+    group,
+    expenseCount: store.groupExpenses(group.id).length,
+    grossDebt: store.grossDebtTotal(group.id, userId.value),
+    grossCredit: store.grossCreditForUser(group.id, userId.value),
+  })),
+);
+
+// Aggregated global balance (gross): what others owe you vs what you owe.
+const credited = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossCredit, 0));
+const owed = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossDebt, 0));
+
+const showSettings = ref(false);
+
+function disconnect() {
+  session.disconnect();
+  router.replace({ name: 'home' });
+}
+
+function goToNewGroup() {
+  router.push({ name: 'newGroup' });
+}
+
+function goToGroup(id: string) {
+  router.push({ name: 'group', params: { id } });
+}
+</script>
 
 <style scoped>
 .screen {

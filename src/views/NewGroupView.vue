@@ -1,77 +1,3 @@
-<script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import type { GroupIcon } from '../types';
-import { useSession } from '../stores/session';
-import { useGroupsStore } from '../stores/groups';
-import { useToast } from '../stores/toast';
-import { generateId } from '../utils/storage';
-import GroupIconPicker from '../components/GroupIconPicker.vue';
-import NimiqIdenticon from '../components/NimiqIdenticon.vue';
-import { captureError } from '../utils/errors';
-import InitialAvatar from '../components/InitialAvatar.vue';
-import { useI18n } from '../stores/i18n';
-
-const router = useRouter();
-const session = useSession();
-const store = useGroupsStore();
-const toast = useToast();
-const { t } = useI18n();
-
-const groupName = ref('');
-const selectedIcon = ref<GroupIcon>('person');
-
-// Guest members added manually (no address for now — real QR/contacts joining
-// will come later). The creator is added separately.
-const guests = ref<{ id: string; name: string }[]>([]);
-const adding = ref(false);
-const newGuestName = ref('');
-
-const creatorName = computed(() => session.user.value?.name ?? t('newGroup.you'));
-
-function goBack() {
-  router.back();
-}
-
-function confirmGuest() {
-  const name = newGuestName.value.trim();
-  if (!name) {
-    adding.value = false;
-    return;
-  }
-  guests.value.push({ id: generateId('guest'), name });
-  newGuestName.value = '';
-  adding.value = false;
-}
-
-function removeGuest(id: string) {
-  guests.value = guests.value.filter((guest) => guest.id !== id);
-}
-
-async function done() {
-  const name = groupName.value.trim();
-  if (!name) return;
-  const user = session.user.value;
-  if (!user) return;
-
-  try {
-    const group = await store.createGroup({
-      name,
-      icon: selectedIcon.value,
-      creatorId: user.id,
-      creatorName: user.name,
-    });
-    for (const guest of guests.value) {
-      await store.addPlaceholderMember(group.id, guest.name);
-    }
-    router.replace({ name: 'group', params: { id: group.id } });
-  } catch (err) {
-    captureError(err, 'NewGroupView.createGroup');
-    toast.show(t('newGroup.createFailed'), 'error');
-  }
-}
-</script>
-
 <template>
   <div class="screen">
     <div class="top-bar">
@@ -167,6 +93,80 @@ async function done() {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import type { GroupIcon } from '../types';
+import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
+import { useToast } from '../stores/toast';
+import { generateId } from '../utils/storage';
+import GroupIconPicker from '../components/GroupIconPicker.vue';
+import NimiqIdenticon from '../components/NimiqIdenticon.vue';
+import { captureError } from '../utils/errors';
+import InitialAvatar from '../components/InitialAvatar.vue';
+import { useI18n } from '../stores/i18n';
+
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
+const toast = useToast();
+const { t } = useI18n();
+
+const groupName = ref('');
+const selectedIcon = ref<GroupIcon>('person');
+
+// Guest members added manually (no address for now — real QR/contacts joining
+// will come later). The creator is added separately.
+const guests = ref<{ id: string; name: string }[]>([]);
+const adding = ref(false);
+const newGuestName = ref('');
+
+const creatorName = computed(() => session.user.value?.name ?? t('newGroup.you'));
+
+function goBack() {
+  router.back();
+}
+
+function confirmGuest() {
+  const name = newGuestName.value.trim();
+  if (!name) {
+    adding.value = false;
+    return;
+  }
+  guests.value.push({ id: generateId('guest'), name });
+  newGuestName.value = '';
+  adding.value = false;
+}
+
+function removeGuest(id: string) {
+  guests.value = guests.value.filter((guest) => guest.id !== id);
+}
+
+async function done() {
+  const name = groupName.value.trim();
+  if (!name) return;
+  const user = session.user.value;
+  if (!user) return;
+
+  try {
+    const group = await store.createGroup({
+      name,
+      icon: selectedIcon.value,
+      creatorId: user.id,
+      creatorName: user.name,
+    });
+    for (const guest of guests.value) {
+      await store.addPlaceholderMember(group.id, guest.name);
+    }
+    router.replace({ name: 'group', params: { id: group.id } });
+  } catch (err) {
+    captureError(err, 'NewGroupView.createGroup');
+    toast.show(t('newGroup.createFailed'), 'error');
+  }
+}
+</script>
 
 <style scoped>
 .screen {

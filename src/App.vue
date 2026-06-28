@@ -1,3 +1,19 @@
+<template>
+  <LoginView v-if="!showApp" />
+  <router-view
+    v-else
+    @new-group="router.push({ name: 'newGroup' })"
+    @open-group="router.push({ name: 'group' })"
+    @open-scanner="router.push({ name: 'scan' })"
+    @back="router.back()"
+    @add-expense="router.push({ name: 'addExpense' })"
+    @pay="router.push({ name: 'pay' })"
+    @scanned="handleScanned"
+    @success="handlePaySuccess"
+  />
+  <ToastHost />
+</template>
+
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router';
 import { onMounted, watch, computed } from 'vue';
@@ -88,19 +104,3 @@ function handlePaySuccess(amount: number, recipient: string) {
   });
 }
 </script>
-
-<template>
-  <LoginView v-if="!showApp" />
-  <router-view
-    v-else
-    @new-group="router.push({ name: 'newGroup' })"
-    @open-group="router.push({ name: 'group' })"
-    @open-scanner="router.push({ name: 'scan' })"
-    @back="router.back()"
-    @add-expense="router.push({ name: 'addExpense' })"
-    @pay="router.push({ name: 'pay' })"
-    @scanned="handleScanned"
-    @success="handlePaySuccess"
-  />
-  <ToastHost />
-</template>

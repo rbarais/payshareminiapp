@@ -1,9 +1,3 @@
-<script setup lang="ts">
-// Reusable bottom-sheet: dark overlay + animated sheet + handle.
-// Clicking the overlay (outside the sheet) emits `close`.
-defineEmits<{ close: [] }>();
-</script>
-
 <template>
   <div class="sheet-overlay" @click="$emit('close')">
     <div class="sheet" @click.stop>
@@ -12,6 +6,12 @@ defineEmits<{ close: [] }>();
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+// Reusable bottom-sheet: dark overlay + animated sheet + handle.
+// Clicking the overlay (outside the sheet) emits `close`.
+defineEmits<{ close: [] }>();
+</script>
 
 <style scoped>
 .sheet-overlay {

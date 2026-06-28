@@ -1,162 +1,3 @@
-<script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import type { SplitMode } from '../types';
-import { useSession } from '../stores/session';
-import { useGroupsStore } from '../stores/groups';
-import { useToast } from '../stores/toast';
-import InitialAvatar from '../components/InitialAvatar.vue';
-import { captureError } from '../utils/errors';
-import { useI18n } from '../stores/i18n';
-
-const route = useRoute();
-const router = useRouter();
-const session = useSession();
-const store = useGroupsStore();
-const toast = useToast();
-const { t } = useI18n();
-
-const groupId = computed(() => String(route.query.groupId ?? ''));
-const group = computed(() => store.getGroup(groupId.value));
-const members = computed(() => group.value?.members ?? []);
-const userId = computed(() => session.user.value?.id ?? '');
-// Stable UUID of the current member in this group
-const myMemberId = computed(() => store.myMemberId(groupId.value, userId.value));
-
-onMounted(() => {
-  if (!group.value) router.replace({ name: 'home' });
-});
-
-const CURRENCIES = ['NIM', 'ETH', 'USDT', 'EUR'];
-
-const description = ref('');
-const amount = ref<number | null>(null);
-const currency = ref('NIM');
-const paidBy = ref('');
-const showPayerMenu = ref(false);
-const mode = ref<SplitMode>('equal');
-
-// Per-member split state: inclusion (equal), percentage (%), amount (fixed).
-const split = reactive<Record<string, { included: boolean; pct: number; amt: number }>>({});
-
-// (Re)initialize the split state once the members are known.
-watch(
-  members,
-  (list) => {
-    for (const member of list) {
-      if (!split[member.id]) split[member.id] = { included: true, pct: 0, amt: 0 };
-    }
-    paidBy.value = paidBy.value || myMemberId.value || list[0]?.id || '';
-    distributeEvenly();
-  },
-  { immediate: true },
-);
-
-const memberName = (id: string) =>
-  id === myMemberId.value
-    ? `${members.value.find((member) => member.id === id)?.name ?? t('addExpense.youName')} (${t('addExpense.you')})`
-    : (members.value.find((member) => member.id === id)?.name ?? '');
-
-// Split percentages and amounts evenly (starting point for the % and fixed modes).
-function distributeEvenly() {
-  const list = members.value;
-  if (!list.length) return;
-  const pct = Math.round((100 / list.length) * 10) / 10;
-  const amt = amount.value ? Math.round((amount.value / list.length) * 100) / 100 : 0;
-  list.forEach((member) => {
-    split[member.id].pct = pct;
-    split[member.id].amt = amt;
-  });
-}
-
-// Members included in the equal split.
-const includedMembers = computed(() =>
-  members.value.filter((member) => split[member.id]?.included),
-);
-const equalShare = computed(() =>
-  amount.value && includedMembers.value.length ? amount.value / includedMembers.value.length : 0,
-);
-
-const pctTotal = computed(() =>
-  members.value.reduce((sum, member) => sum + (split[member.id]?.pct ?? 0), 0),
-);
-const amtTotal = computed(() =>
-  members.value.reduce((sum, member) => sum + (split[member.id]?.amt ?? 0), 0),
-);
-
-// Validation depending on the mode. Returns an error message or '' if OK.
-const splitError = computed(() => {
-  if (!amount.value || amount.value <= 0) return t('addExpense.errorNoAmount');
-  if (!description.value.trim()) return t('addExpense.errorNoDescription');
-  if (mode.value === 'equal') {
-    return includedMembers.value.length ? '' : t('addExpense.errorNoMember');
-  }
-  if (mode.value === 'percentage') {
-    return Math.abs(pctTotal.value - 100) < 0.5
-      ? ''
-      : t('addExpense.errorPctTotal', { current: pctTotal.value.toFixed(0) });
-  }
-  return Math.abs(amtTotal.value - amount.value) < 0.01
-    ? ''
-    : t('addExpense.errorAmtTotal', {
-        current: amtTotal.value.toFixed(2),
-        total: amount.value.toFixed(2),
-        currency: currency.value,
-      });
-});
-
-function setMode(newMode: SplitMode) {
-  mode.value = newMode;
-  if (newMode !== 'equal') distributeEvenly();
-}
-
-function selectPayer(id: string) {
-  paidBy.value = id;
-  showPayerMenu.value = false;
-}
-
-async function create() {
-  if (splitError.value || !amount.value) {
-    toast.show(splitError.value || t('addExpense.errorFormIncomplete'), 'error');
-    return;
-  }
-  let participants: { memberId: string; weight?: number }[];
-  if (mode.value === 'equal') {
-    participants = includedMembers.value.map((member) => ({ memberId: member.id }));
-  } else if (mode.value === 'percentage') {
-    participants = members.value
-      .filter((member) => split[member.id].pct > 0)
-      .map((member) => ({ memberId: member.id, weight: split[member.id].pct }));
-  } else {
-    participants = members.value
-      .filter((member) => split[member.id].amt > 0)
-      .map((member) => ({ memberId: member.id, weight: split[member.id].amt }));
-  }
-
-  try {
-    await store.addExpense({
-      groupId: groupId.value,
-      description: description.value.trim(),
-      amount: amount.value,
-      currency: currency.value,
-      paidBy: paidBy.value,
-      split: mode.value,
-      participants,
-    });
-  } catch (err) {
-    captureError(err, 'AddExpenseView.addExpense');
-    toast.show(t('addExpense.addFailed'), 'error');
-    return;
-  }
-  toast.show(t('addExpense.added'), 'success');
-  router.replace({ name: 'group', params: { id: groupId.value } });
-}
-
-function goBack() {
-  router.replace({ name: 'group', params: { id: groupId.value } });
-}
-</script>
-
 <template>
   <div v-if="group" class="screen">
     <!-- Top bar -->
@@ -339,6 +180,165 @@ function goBack() {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import type { SplitMode } from '../types';
+import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
+import { useToast } from '../stores/toast';
+import InitialAvatar from '../components/InitialAvatar.vue';
+import { captureError } from '../utils/errors';
+import { useI18n } from '../stores/i18n';
+
+const route = useRoute();
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
+const toast = useToast();
+const { t } = useI18n();
+
+const groupId = computed(() => String(route.query.groupId ?? ''));
+const group = computed(() => store.getGroup(groupId.value));
+const members = computed(() => group.value?.members ?? []);
+const userId = computed(() => session.user.value?.id ?? '');
+// Stable UUID of the current member in this group
+const myMemberId = computed(() => store.myMemberId(groupId.value, userId.value));
+
+onMounted(() => {
+  if (!group.value) router.replace({ name: 'home' });
+});
+
+const CURRENCIES = ['NIM', 'ETH', 'USDT', 'EUR'];
+
+const description = ref('');
+const amount = ref<number | null>(null);
+const currency = ref('NIM');
+const paidBy = ref('');
+const showPayerMenu = ref(false);
+const mode = ref<SplitMode>('equal');
+
+// Per-member split state: inclusion (equal), percentage (%), amount (fixed).
+const split = reactive<Record<string, { included: boolean; pct: number; amt: number }>>({});
+
+// (Re)initialize the split state once the members are known.
+watch(
+  members,
+  (list) => {
+    for (const member of list) {
+      if (!split[member.id]) split[member.id] = { included: true, pct: 0, amt: 0 };
+    }
+    paidBy.value = paidBy.value || myMemberId.value || list[0]?.id || '';
+    distributeEvenly();
+  },
+  { immediate: true },
+);
+
+const memberName = (id: string) =>
+  id === myMemberId.value
+    ? `${members.value.find((member) => member.id === id)?.name ?? t('addExpense.youName')} (${t('addExpense.you')})`
+    : (members.value.find((member) => member.id === id)?.name ?? '');
+
+// Split percentages and amounts evenly (starting point for the % and fixed modes).
+function distributeEvenly() {
+  const list = members.value;
+  if (!list.length) return;
+  const pct = Math.round((100 / list.length) * 10) / 10;
+  const amt = amount.value ? Math.round((amount.value / list.length) * 100) / 100 : 0;
+  list.forEach((member) => {
+    split[member.id].pct = pct;
+    split[member.id].amt = amt;
+  });
+}
+
+// Members included in the equal split.
+const includedMembers = computed(() =>
+  members.value.filter((member) => split[member.id]?.included),
+);
+const equalShare = computed(() =>
+  amount.value && includedMembers.value.length ? amount.value / includedMembers.value.length : 0,
+);
+
+const pctTotal = computed(() =>
+  members.value.reduce((sum, member) => sum + (split[member.id]?.pct ?? 0), 0),
+);
+const amtTotal = computed(() =>
+  members.value.reduce((sum, member) => sum + (split[member.id]?.amt ?? 0), 0),
+);
+
+// Validation depending on the mode. Returns an error message or '' if OK.
+const splitError = computed(() => {
+  if (!amount.value || amount.value <= 0) return t('addExpense.errorNoAmount');
+  if (!description.value.trim()) return t('addExpense.errorNoDescription');
+  if (mode.value === 'equal') {
+    return includedMembers.value.length ? '' : t('addExpense.errorNoMember');
+  }
+  if (mode.value === 'percentage') {
+    return Math.abs(pctTotal.value - 100) < 0.5
+      ? ''
+      : t('addExpense.errorPctTotal', { current: pctTotal.value.toFixed(0) });
+  }
+  return Math.abs(amtTotal.value - amount.value) < 0.01
+    ? ''
+    : t('addExpense.errorAmtTotal', {
+        current: amtTotal.value.toFixed(2),
+        total: amount.value.toFixed(2),
+        currency: currency.value,
+      });
+});
+
+function setMode(newMode: SplitMode) {
+  mode.value = newMode;
+  if (newMode !== 'equal') distributeEvenly();
+}
+
+function selectPayer(id: string) {
+  paidBy.value = id;
+  showPayerMenu.value = false;
+}
+
+async function create() {
+  if (splitError.value || !amount.value) {
+    toast.show(splitError.value || t('addExpense.errorFormIncomplete'), 'error');
+    return;
+  }
+  let participants: { memberId: string; weight?: number }[];
+  if (mode.value === 'equal') {
+    participants = includedMembers.value.map((member) => ({ memberId: member.id }));
+  } else if (mode.value === 'percentage') {
+    participants = members.value
+      .filter((member) => split[member.id].pct > 0)
+      .map((member) => ({ memberId: member.id, weight: split[member.id].pct }));
+  } else {
+    participants = members.value
+      .filter((member) => split[member.id].amt > 0)
+      .map((member) => ({ memberId: member.id, weight: split[member.id].amt }));
+  }
+
+  try {
+    await store.addExpense({
+      groupId: groupId.value,
+      description: description.value.trim(),
+      amount: amount.value,
+      currency: currency.value,
+      paidBy: paidBy.value,
+      split: mode.value,
+      participants,
+    });
+  } catch (err) {
+    captureError(err, 'AddExpenseView.addExpense');
+    toast.show(t('addExpense.addFailed'), 'error');
+    return;
+  }
+  toast.show(t('addExpense.added'), 'success');
+  router.replace({ name: 'group', params: { id: groupId.value } });
+}
+
+function goBack() {
+  router.replace({ name: 'group', params: { id: groupId.value } });
+}
+</script>
 
 <style scoped>
 .screen {

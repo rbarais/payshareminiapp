@@ -1,196 +1,3 @@
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import type { Expense, GroupIcon } from '../types';
-import { useSession } from '../stores/session';
-import { useGroupsStore } from '../stores/groups';
-import { useToast } from '../stores/toast';
-import { useI18n } from '../stores/i18n';
-import { buildInviteUrl, buildInviteDeeplink } from '../utils/room';
-import InitialAvatar from '../components/InitialAvatar.vue';
-import ExpenseCard from '../components/ExpenseCard.vue';
-import { captureError } from '../utils/errors';
-import { eurRate, fetchRate } from '../utils/rate';
-import InviteSheet from '../components/InviteSheet.vue';
-import SettleSheet from '../components/SettleSheet.vue';
-import BaseSheet from '../components/BaseSheet.vue';
-import GroupIconPicker from '../components/GroupIconPicker.vue';
-import QRCodeGenerator from '../components/QRCodeGenerator.vue';
-
-const props = defineProps<{ id: string }>();
-
-const router = useRouter();
-const session = useSession();
-const store = useGroupsStore();
-const toast = useToast();
-const { t, locale } = useI18n();
-
-const userId = computed(() => session.user.value?.id ?? '');
-const group = computed(() => store.getGroup(props.id));
-const expenses = computed(() => store.groupExpenses(props.id));
-// Stable UUID of the current member in this group (undefined if not linked yet)
-const myMemberId = computed(() => store.myMemberId(props.id, userId.value));
-// True if the user is the group creator
-const isCreator = computed(() => group.value?.creatorId === userId.value);
-
-// Gross debts (no netting) grouped by creditor, and their aggregates.
-const debts = computed(() => store.grossDebtsForUser(props.id, userId.value));
-const grossDebt = computed(() => store.grossDebtTotal(props.id, userId.value));
-const grossCredit = computed(() => store.grossCreditForUser(props.id, userId.value));
-
-// Redirect if the group does not exist (invalid / deleted id).
-onMounted(async () => {
-  if (!group.value) {
-    router.replace({ name: 'home' });
-    return;
-  }
-  // Refresh the group's expenses from Supabase on open.
-  try {
-    await store.refreshGroupExpenses(props.id);
-  } catch (err) {
-    captureError(err, 'GroupView.refreshGroupExpenses');
-    toast.show(t('error.syncFailed'), 'error');
-  }
-  fetchRate();
-});
-
-const monthLabel = computed(() =>
-  group.value
-    ? group.value.createdAt.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'fr-FR', {
-        month: 'short',
-        year: 'numeric',
-      })
-    : '',
-);
-
-function memberName(id: string): string {
-  if (id === myMemberId.value) return t('group.you');
-  return group.value?.members.find((member) => member.id === id)?.name ?? t('group.unknown');
-}
-
-function userShare(expenseId: string): number {
-  const expense = expenses.value.find((entry) => entry.id === expenseId);
-  return expense?.shares.find((share) => share.memberId === myMemberId.value)?.amount ?? 0;
-}
-
-function eurApprox(nim: number): string {
-  if (eurRate.value == null) return '';
-  return '≈ ' + (nim * eurRate.value).toFixed(2) + ' €';
-}
-
-// ── Invitation to join the group (QR + link) ────────────────────────────────
-const showInviteQR = ref(false);
-const inviteHttpsUrl = ref('');
-const inviteQrDeeplink = ref('');
-
-async function invite() {
-  const currentGroup = group.value;
-  if (!currentGroup?.inviteToken) {
-    toast.show(t('group.syncRequired'), 'error');
-    return;
-  }
-  inviteHttpsUrl.value = buildInviteUrl(currentGroup.id, currentGroup.inviteToken);
-  inviteQrDeeplink.value = buildInviteDeeplink(inviteHttpsUrl.value);
-  showInviteQR.value = true;
-}
-
-async function copyInviteLink() {
-  if (!navigator.clipboard?.writeText) {
-    toast.show(inviteHttpsUrl.value, 'info');
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(inviteHttpsUrl.value);
-    toast.show(t('group.inviteCopied'), 'success');
-  } catch {
-    toast.show(inviteHttpsUrl.value, 'info');
-  }
-}
-
-// ── Invitation to pay (dedicated sheet) ─────────────────────────────────────
-const inviteExpense = ref<Expense | null>(null);
-
-// ── Group editing (name + icon) ─────────────────────────────────────────────
-const editGroupOpen = ref(false);
-const editGroupName = ref('');
-const editGroupIcon = ref<GroupIcon>('person');
-
-function openEditGroup() {
-  if (!group.value) return;
-  editGroupName.value = group.value.name;
-  editGroupIcon.value = group.value.icon;
-  editGroupOpen.value = true;
-}
-
-function saveGroup() {
-  const name = editGroupName.value.trim();
-  if (!name) return;
-  store.updateGroup(props.id, { name, icon: editGroupIcon.value });
-  editGroupOpen.value = false;
-  toast.show(t('group.groupUpdated'), 'success');
-}
-
-// ── Expense editing (description) ───────────────────────────────────────────
-const editExpense = ref<Expense | null>(null);
-const editExpenseDesc = ref('');
-
-function openEditExpense(expense: Expense) {
-  editExpense.value = expense;
-  editExpenseDesc.value = expense.description;
-}
-
-function closeEditExpense() {
-  editExpense.value = null;
-  editExpenseDesc.value = '';
-}
-
-function saveExpense() {
-  const description = editExpenseDesc.value.trim();
-  if (!description || !editExpense.value) return;
-  store.updateExpense(editExpense.value.id, { description });
-  closeEditExpense();
-  toast.show(t('group.expenseUpdated'), 'success');
-}
-
-function goBack() {
-  router.back();
-}
-
-function goToAddExpense() {
-  router.push({ name: 'addExpense', query: { groupId: props.id } });
-}
-
-// ── Adding a placeholder member (creator only) ──────────────────────────────
-const showAddMember = ref(false);
-const addMemberName = ref('');
-const addingMember = ref(false);
-
-async function confirmAddMember() {
-  const name = addMemberName.value.trim();
-  if (!name || addingMember.value) return;
-  addingMember.value = true;
-  try {
-    await store.addPlaceholderMember(props.id, name);
-    toast.show(t('toast.memberAdded', { name }), 'success');
-    showAddMember.value = false;
-    addMemberName.value = '';
-  } catch (err) {
-    captureError(err, 'GroupView.addPlaceholderMember');
-    toast.show(t('group.addMemberFailed'), 'error');
-  } finally {
-    addingMember.value = false;
-  }
-}
-
-// ── Settlement: sheet listing the creditors (one payment per person) ────────
-const showSettleSheet = ref(false);
-
-function openSettle() {
-  if (!debts.value.length) return;
-  showSettleSheet.value = true;
-}
-</script>
-
 <template>
   <div v-if="group" class="screen">
     <!-- Header -->
@@ -432,6 +239,199 @@ function openSettle() {
     </BaseSheet>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import type { Expense, GroupIcon } from '../types';
+import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
+import { useToast } from '../stores/toast';
+import { useI18n } from '../stores/i18n';
+import { buildInviteUrl, buildInviteDeeplink } from '../utils/room';
+import InitialAvatar from '../components/InitialAvatar.vue';
+import ExpenseCard from '../components/ExpenseCard.vue';
+import { captureError } from '../utils/errors';
+import { eurRate, fetchRate } from '../utils/rate';
+import InviteSheet from '../components/InviteSheet.vue';
+import SettleSheet from '../components/SettleSheet.vue';
+import BaseSheet from '../components/BaseSheet.vue';
+import GroupIconPicker from '../components/GroupIconPicker.vue';
+import QRCodeGenerator from '../components/QRCodeGenerator.vue';
+
+const props = defineProps<{ id: string }>();
+
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
+const toast = useToast();
+const { t, locale } = useI18n();
+
+const userId = computed(() => session.user.value?.id ?? '');
+const group = computed(() => store.getGroup(props.id));
+const expenses = computed(() => store.groupExpenses(props.id));
+// Stable UUID of the current member in this group (undefined if not linked yet)
+const myMemberId = computed(() => store.myMemberId(props.id, userId.value));
+// True if the user is the group creator
+const isCreator = computed(() => group.value?.creatorId === userId.value);
+
+// Gross debts (no netting) grouped by creditor, and their aggregates.
+const debts = computed(() => store.grossDebtsForUser(props.id, userId.value));
+const grossDebt = computed(() => store.grossDebtTotal(props.id, userId.value));
+const grossCredit = computed(() => store.grossCreditForUser(props.id, userId.value));
+
+// Redirect if the group does not exist (invalid / deleted id).
+onMounted(async () => {
+  if (!group.value) {
+    router.replace({ name: 'home' });
+    return;
+  }
+  // Refresh the group's expenses from Supabase on open.
+  try {
+    await store.refreshGroupExpenses(props.id);
+  } catch (err) {
+    captureError(err, 'GroupView.refreshGroupExpenses');
+    toast.show(t('error.syncFailed'), 'error');
+  }
+  fetchRate();
+});
+
+const monthLabel = computed(() =>
+  group.value
+    ? group.value.createdAt.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'fr-FR', {
+        month: 'short',
+        year: 'numeric',
+      })
+    : '',
+);
+
+function memberName(id: string): string {
+  if (id === myMemberId.value) return t('group.you');
+  return group.value?.members.find((member) => member.id === id)?.name ?? t('group.unknown');
+}
+
+function userShare(expenseId: string): number {
+  const expense = expenses.value.find((entry) => entry.id === expenseId);
+  return expense?.shares.find((share) => share.memberId === myMemberId.value)?.amount ?? 0;
+}
+
+function eurApprox(nim: number): string {
+  if (eurRate.value == null) return '';
+  return '≈ ' + (nim * eurRate.value).toFixed(2) + ' €';
+}
+
+// ── Invitation to join the group (QR + link) ────────────────────────────────
+const showInviteQR = ref(false);
+const inviteHttpsUrl = ref('');
+const inviteQrDeeplink = ref('');
+
+async function invite() {
+  const currentGroup = group.value;
+  if (!currentGroup?.inviteToken) {
+    toast.show(t('group.syncRequired'), 'error');
+    return;
+  }
+  inviteHttpsUrl.value = buildInviteUrl(currentGroup.id, currentGroup.inviteToken);
+  inviteQrDeeplink.value = buildInviteDeeplink(inviteHttpsUrl.value);
+  showInviteQR.value = true;
+}
+
+async function copyInviteLink() {
+  if (!navigator.clipboard?.writeText) {
+    toast.show(inviteHttpsUrl.value, 'info');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(inviteHttpsUrl.value);
+    toast.show(t('group.inviteCopied'), 'success');
+  } catch {
+    toast.show(inviteHttpsUrl.value, 'info');
+  }
+}
+
+// ── Invitation to pay (dedicated sheet) ─────────────────────────────────────
+const inviteExpense = ref<Expense | null>(null);
+
+// ── Group editing (name + icon) ─────────────────────────────────────────────
+const editGroupOpen = ref(false);
+const editGroupName = ref('');
+const editGroupIcon = ref<GroupIcon>('person');
+
+function openEditGroup() {
+  if (!group.value) return;
+  editGroupName.value = group.value.name;
+  editGroupIcon.value = group.value.icon;
+  editGroupOpen.value = true;
+}
+
+function saveGroup() {
+  const name = editGroupName.value.trim();
+  if (!name) return;
+  store.updateGroup(props.id, { name, icon: editGroupIcon.value });
+  editGroupOpen.value = false;
+  toast.show(t('group.groupUpdated'), 'success');
+}
+
+// ── Expense editing (description) ───────────────────────────────────────────
+const editExpense = ref<Expense | null>(null);
+const editExpenseDesc = ref('');
+
+function openEditExpense(expense: Expense) {
+  editExpense.value = expense;
+  editExpenseDesc.value = expense.description;
+}
+
+function closeEditExpense() {
+  editExpense.value = null;
+  editExpenseDesc.value = '';
+}
+
+function saveExpense() {
+  const description = editExpenseDesc.value.trim();
+  if (!description || !editExpense.value) return;
+  store.updateExpense(editExpense.value.id, { description });
+  closeEditExpense();
+  toast.show(t('group.expenseUpdated'), 'success');
+}
+
+function goBack() {
+  router.back();
+}
+
+function goToAddExpense() {
+  router.push({ name: 'addExpense', query: { groupId: props.id } });
+}
+
+// ── Adding a placeholder member (creator only) ──────────────────────────────
+const showAddMember = ref(false);
+const addMemberName = ref('');
+const addingMember = ref(false);
+
+async function confirmAddMember() {
+  const name = addMemberName.value.trim();
+  if (!name || addingMember.value) return;
+  addingMember.value = true;
+  try {
+    await store.addPlaceholderMember(props.id, name);
+    toast.show(t('toast.memberAdded', { name }), 'success');
+    showAddMember.value = false;
+    addMemberName.value = '';
+  } catch (err) {
+    captureError(err, 'GroupView.addPlaceholderMember');
+    toast.show(t('group.addMemberFailed'), 'error');
+  } finally {
+    addingMember.value = false;
+  }
+}
+
+// ── Settlement: sheet listing the creditors (one payment per person) ────────
+const showSettleSheet = ref(false);
+
+function openSettle() {
+  if (!debts.value.length) return;
+  showSettleSheet.value = true;
+}
+</script>
 
 <style scoped>
 .screen {

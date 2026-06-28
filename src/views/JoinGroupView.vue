@@ -1,109 +1,3 @@
-<script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useSession } from '../stores/session';
-import { useGroupsStore } from '../stores/groups';
-import { useToast } from '../stores/toast';
-import { joinGroup, fetchJoinPreview } from '../utils/api';
-import { authenticate, getStoredJwt } from '../utils/auth';
-import { captureError } from '../utils/errors';
-import InitialAvatar from '../components/InitialAvatar.vue';
-
-const props = defineProps<{ groupId: string; token: string }>();
-
-const router = useRouter();
-const session = useSession();
-const store = useGroupsStore();
-const toast = useToast();
-
-// Available placeholders (address IS NULL) in the group
-const placeholders = ref<{ id: string; name: string }[]>([]);
-const loadingPreview = ref(true);
-
-// null = not chosen yet · string = selected placeholder UUID · 'new' = new member
-const choice = ref<string | 'new' | null>(null);
-const displayName = ref(session.user.value?.name ?? '');
-const joining = ref(false);
-
-onMounted(async () => {
-  if (!props.groupId || !props.token) {
-    loadingPreview.value = false;
-    return;
-  }
-  try {
-    const preview = await fetchJoinPreview(props.groupId, props.token);
-    placeholders.value = preview.placeholders;
-  } catch {
-    // Invalid token or network error — we'll find out at join time
-  } finally {
-    loadingPreview.value = false;
-  }
-  // Pre-fill the name if already connected
-  if (session.user.value?.name) displayName.value = session.user.value.name;
-});
-
-function goBack() {
-  router.replace({ name: 'home' });
-}
-
-function selectPlaceholder(id: string) {
-  choice.value = id;
-}
-
-function selectNew() {
-  choice.value = 'new';
-}
-
-async function join() {
-  if (joining.value) return;
-  const user = session.user.value;
-  if (!user) {
-    toast.show('Connecte-toi pour rejoindre', 'error');
-    return;
-  }
-  if (choice.value === null) {
-    toast.show('Choisis qui tu es', 'error');
-    return;
-  }
-  if (choice.value === 'new' && !displayName.value.trim()) {
-    toast.show('Entre ton prénom', 'error');
-    return;
-  }
-
-  joining.value = true;
-  try {
-    if (!getStoredJwt()) await authenticate(user.id);
-
-    const options =
-      choice.value === 'new' ? { name: displayName.value.trim() } : { placeholderId: choice.value };
-
-    await joinGroup(props.groupId, props.token, options);
-  } catch (err) {
-    captureError(err, 'JoinGroupView.joinGroup');
-    toast.show('Invitation invalide ou déjà utilisée', 'error');
-    joining.value = false;
-    return;
-  }
-
-  try {
-    await store.refreshAll();
-  } catch (err) {
-    captureError(err, 'JoinGroupView.refreshAll');
-  }
-
-  const groupName = store.getGroup(props.groupId)?.name ?? 'le groupe';
-  toast.show(`Tu as rejoint « ${groupName} »`, 'success');
-  router.replace({ name: 'home' });
-  joining.value = false;
-}
-
-const canJoin = () => {
-  if (choice.value === null) return false;
-  if (choice.value === 'new') return !!displayName.value.trim();
-  return true;
-};
-</script>
-
 <template>
   <div class="screen">
     <div class="top-bar">
@@ -209,6 +103,112 @@ const canJoin = () => {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
+import { useToast } from '../stores/toast';
+import { joinGroup, fetchJoinPreview } from '../utils/api';
+import { authenticate, getStoredJwt } from '../utils/auth';
+import { captureError } from '../utils/errors';
+import InitialAvatar from '../components/InitialAvatar.vue';
+
+const props = defineProps<{ groupId: string; token: string }>();
+
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
+const toast = useToast();
+
+// Available placeholders (address IS NULL) in the group
+const placeholders = ref<{ id: string; name: string }[]>([]);
+const loadingPreview = ref(true);
+
+// null = not chosen yet · string = selected placeholder UUID · 'new' = new member
+const choice = ref<string | 'new' | null>(null);
+const displayName = ref(session.user.value?.name ?? '');
+const joining = ref(false);
+
+onMounted(async () => {
+  if (!props.groupId || !props.token) {
+    loadingPreview.value = false;
+    return;
+  }
+  try {
+    const preview = await fetchJoinPreview(props.groupId, props.token);
+    placeholders.value = preview.placeholders;
+  } catch {
+    // Invalid token or network error — we'll find out at join time
+  } finally {
+    loadingPreview.value = false;
+  }
+  // Pre-fill the name if already connected
+  if (session.user.value?.name) displayName.value = session.user.value.name;
+});
+
+function goBack() {
+  router.replace({ name: 'home' });
+}
+
+function selectPlaceholder(id: string) {
+  choice.value = id;
+}
+
+function selectNew() {
+  choice.value = 'new';
+}
+
+async function join() {
+  if (joining.value) return;
+  const user = session.user.value;
+  if (!user) {
+    toast.show('Connecte-toi pour rejoindre', 'error');
+    return;
+  }
+  if (choice.value === null) {
+    toast.show('Choisis qui tu es', 'error');
+    return;
+  }
+  if (choice.value === 'new' && !displayName.value.trim()) {
+    toast.show('Entre ton prénom', 'error');
+    return;
+  }
+
+  joining.value = true;
+  try {
+    if (!getStoredJwt()) await authenticate(user.id);
+
+    const options =
+      choice.value === 'new' ? { name: displayName.value.trim() } : { placeholderId: choice.value };
+
+    await joinGroup(props.groupId, props.token, options);
+  } catch (err) {
+    captureError(err, 'JoinGroupView.joinGroup');
+    toast.show('Invitation invalide ou déjà utilisée', 'error');
+    joining.value = false;
+    return;
+  }
+
+  try {
+    await store.refreshAll();
+  } catch (err) {
+    captureError(err, 'JoinGroupView.refreshAll');
+  }
+
+  const groupName = store.getGroup(props.groupId)?.name ?? 'le groupe';
+  toast.show(`Tu as rejoint « ${groupName} »`, 'success');
+  router.replace({ name: 'home' });
+  joining.value = false;
+}
+
+const canJoin = () => {
+  if (choice.value === null) return false;
+  if (choice.value === 'new') return !!displayName.value.trim();
+  return true;
+};
+</script>
 
 <style scoped>
 .screen {

@@ -50,7 +50,6 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
-
   // Tests may use shorter throwaway names.
   {
     files: ['**/*.test.ts', '**/__tests__/**'],
@@ -59,6 +58,15 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
-
+  {
+    rules: {
+      'vue/block-order': [
+        'error',
+        {
+          order: ['template', 'script', 'style']
+        }
+      ]
+    }
+  },
   configPrettier,
 );

@@ -1,13 +1,3 @@
-<script setup lang="ts">
-import type { GroupIcon } from '../types';
-
-// Renders one of the 4 group icons (person / home / car / list).
-// The background is handled by the container; here we only draw the glyph.
-withDefaults(defineProps<{ type: GroupIcon; color: string; size?: number }>(), {
-  size: 22,
-});
-</script>
-
 <template>
   <svg v-if="type === 'person'" :width="size" :height="size" viewBox="0 0 22 22" fill="none">
     <path
@@ -41,3 +31,13 @@ withDefaults(defineProps<{ type: GroupIcon; color: string; size?: number }>(), {
     <path d="M4 6H18M4 11H18M4 16H12" :stroke="color" stroke-width="1.5" stroke-linecap="round" />
   </svg>
 </template>
+
+<script setup lang="ts">
+import type { GroupIcon } from '../types';
+
+// Renders one of the 4 group icons (person / home / car / list).
+// The background is handled by the container; here we only draw the glyph.
+withDefaults(defineProps<{ type: GroupIcon; color: string; size?: number }>(), {
+  size: 22,
+});
+</script>

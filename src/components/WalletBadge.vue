@@ -1,12 +1,3 @@
-<script setup lang="ts">
-import NimiqIdenticon from './NimiqIdenticon.vue';
-import { useI18n } from '../stores/i18n';
-
-defineProps<{ address: string }>();
-const emit = defineEmits<{ open: [] }>();
-const { t } = useI18n();
-</script>
-
 <template>
   <div class="wallet-badge" @click="emit('open')">
     <div class="wallet-info">
@@ -32,6 +23,15 @@ const { t } = useI18n();
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import NimiqIdenticon from './NimiqIdenticon.vue';
+import { useI18n } from '../stores/i18n';
+
+defineProps<{ address: string }>();
+const emit = defineEmits<{ open: [] }>();
+const { t } = useI18n();
+</script>
 
 <style scoped>
 .wallet-badge {
