@@ -46,7 +46,6 @@
       </div>
     </div>
 
-    <BottomNav active="groups" />
   </div>
 </template>
 
@@ -57,7 +56,6 @@ import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useI18n } from '../stores/i18n';
 import GroupCard from '../components/GroupCard.vue';
-import BottomNav from '../components/BottomNav.vue';
 
 const router = useRouter();
 const session = useSession();
@@ -86,7 +84,7 @@ function goToGroup(id: string) {
 
 <style scoped>
 .screen {
-  flex: 1;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -133,15 +131,14 @@ function goToGroup(id: string) {
   padding: 0 18px 16px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .group-list {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  flex: 1;
-  overflow-y: auto;
 }
 
 .empty {

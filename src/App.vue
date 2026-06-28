@@ -1,16 +1,19 @@
 <template>
   <LoginView v-if="!showApp" />
-  <router-view
-    v-else
-    @new-group="router.push({ name: 'newGroup' })"
-    @open-group="router.push({ name: 'group' })"
-    @open-scanner="router.push({ name: 'scan' })"
-    @back="router.back()"
-    @add-expense="router.push({ name: 'addExpense' })"
-    @pay="router.push({ name: 'pay' })"
-    @scanned="handleScanned"
-    @success="handlePaySuccess"
-  />
+  <template v-else>
+    <router-view
+      style="flex: 1; min-height: 0; overflow: hidden"
+      @new-group="router.push({ name: 'newGroup' })"
+      @open-group="router.push({ name: 'group' })"
+      @open-scanner="router.push({ name: 'scan' })"
+      @back="router.back()"
+      @add-expense="router.push({ name: 'addExpense' })"
+      @pay="router.push({ name: 'pay' })"
+      @scanned="handleScanned"
+      @success="handlePaySuccess"
+    />
+    <BottomNav v-if="showNav" :active="navActive" />
+  </template>
   <ToastHost />
 </template>
 
@@ -23,11 +26,16 @@ import { useToast } from './stores/toast';
 import { t } from './stores/i18n';
 import LoginView from './views/LoginView.vue';
 import ToastHost from './components/ToastHost.vue';
+import BottomNav from './components/BottomNav.vue';
 
 const router = useRouter();
 const route = useRoute();
 const session = useSession();
 const toast = useToast();
+
+const NAV_ROUTES = new Set(['home', 'groups']);
+const showNav = computed(() => NAV_ROUTES.has(route.name as string));
+const navActive = computed(() => (route.name as string) as 'home' | 'groups' | 'history' | 'scan');
 
 // The app is only reachable once the Nimiq provider has initialized (we are
 // indeed inside Nimiq Pay) AND the user is connected. If init() fails, we stay

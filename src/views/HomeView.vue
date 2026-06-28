@@ -59,9 +59,6 @@
       </div>
     </div>
 
-    <!-- Bottom nav -->
-    <BottomNav active="home" />
-
     <SettingsSheet
       v-if="showSettings"
       @close="showSettings = false"
@@ -80,7 +77,6 @@ import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import GroupCard from '../components/GroupCard.vue';
-import BottomNav from '../components/BottomNav.vue';
 import WalletBadge from '../components/WalletBadge.vue';
 import SettingsSheet from '../components/SettingsSheet.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
@@ -138,7 +134,7 @@ function goToGroup(id: string) {
 
 <style scoped>
 .screen {
-  flex: 1;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -168,7 +164,8 @@ function goToGroup(id: string) {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  overflow: hidden;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* Section row */
@@ -236,8 +233,6 @@ function goToGroup(id: string) {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  flex: 1;
-  overflow: hidden;
 }
 
 /* Empty state */

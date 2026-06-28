@@ -63,10 +63,11 @@ body {
 #app {
   max-width: 430px;
   margin: 0 auto;
-  min-height: 100svh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  overflow: hidden;
 }
 
 h1,
