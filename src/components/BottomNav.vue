@@ -7,8 +7,8 @@ const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'scan' }>();
 const router = useRouter();
 const toast = useToast();
 
-// Couleur d'une icône selon l'onglet actif.
-function c(key: string): string {
+// Icon color depending on the active tab.
+function iconColor(key: string): string {
   return props.active === key ? '#F6B221' : '#A09890';
 }
 
@@ -24,33 +24,96 @@ function go(key: 'home' | 'groups' | 'history' | 'scan') {
   <nav class="bottom-nav">
     <div class="nav-item" :class="{ active: active === 'home' }" @click="go('home')">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <path d="M3 10L11 3L19 10V19H14V14H8V19H3V10Z" :fill="active === 'home' ? '#F6B221' : 'none'" :stroke="c('home')" stroke-width="1.5" stroke-linejoin="round"/>
+        <path
+          d="M3 10L11 3L19 10V19H14V14H8V19H3V10Z"
+          :fill="active === 'home' ? '#F6B221' : 'none'"
+          :stroke="iconColor('home')"
+          stroke-width="1.5"
+          stroke-linejoin="round"
+        />
       </svg>
       <span>Accueil</span>
     </div>
     <div class="nav-item" :class="{ active: active === 'groups' }" @click="go('groups')">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <circle cx="8" cy="8.5" r="3" :stroke="c('groups')" stroke-width="1.5"/>
-        <circle cx="15" cy="8.5" r="3" :stroke="c('groups')" stroke-width="1.5"/>
-        <path d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19" :stroke="c('groups')" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M15 14C18.31 14 21 16.24 21 19" :stroke="c('groups')" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="8" cy="8.5" r="3" :stroke="iconColor('groups')" stroke-width="1.5" />
+        <circle cx="15" cy="8.5" r="3" :stroke="iconColor('groups')" stroke-width="1.5" />
+        <path
+          d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19"
+          :stroke="iconColor('groups')"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        />
+        <path
+          d="M15 14C18.31 14 21 16.24 21 19"
+          :stroke="iconColor('groups')"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        />
       </svg>
       <span>Groupes</span>
     </div>
     <div class="nav-item" :class="{ active: active === 'history' }" @click="go('history')">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <rect x="3" y="5" width="16" height="14" rx="2" :stroke="c('history')" stroke-width="1.5"/>
-        <path d="M7 10H15M7 13H12" :stroke="c('history')" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M7 3V7M15 3V7" :stroke="c('history')" stroke-width="1.5" stroke-linecap="round"/>
+        <rect
+          x="3"
+          y="5"
+          width="16"
+          height="14"
+          rx="2"
+          :stroke="iconColor('history')"
+          stroke-width="1.5"
+        />
+        <path
+          d="M7 10H15M7 13H12"
+          :stroke="iconColor('history')"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        />
+        <path
+          d="M7 3V7M15 3V7"
+          :stroke="iconColor('history')"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        />
       </svg>
       <span>Historique</span>
     </div>
     <div class="nav-item" :class="{ active: active === 'scan' }" @click="go('scan')">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <rect x="2" y="2" width="6" height="6" rx="1" :stroke="c('scan')" stroke-width="1.5"/>
-        <rect x="2" y="14" width="6" height="6" rx="1" :stroke="c('scan')" stroke-width="1.5"/>
-        <rect x="14" y="2" width="6" height="6" rx="1" :stroke="c('scan')" stroke-width="1.5"/>
-        <path d="M14 14H16M20 14V16M14 18H16M20 18V16M20 16H14" :stroke="c('scan')" stroke-width="1.5" stroke-linecap="round"/>
+        <rect
+          x="2"
+          y="2"
+          width="6"
+          height="6"
+          rx="1"
+          :stroke="iconColor('scan')"
+          stroke-width="1.5"
+        />
+        <rect
+          x="2"
+          y="14"
+          width="6"
+          height="6"
+          rx="1"
+          :stroke="iconColor('scan')"
+          stroke-width="1.5"
+        />
+        <rect
+          x="14"
+          y="2"
+          width="6"
+          height="6"
+          rx="1"
+          :stroke="iconColor('scan')"
+          stroke-width="1.5"
+        />
+        <path
+          d="M14 14H16M20 14V16M14 18H16M20 18V16M20 16H14"
+          :stroke="iconColor('scan')"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        />
       </svg>
       <span>Scanner</span>
     </div>
@@ -79,7 +142,7 @@ function go(key: 'home' | 'groups' | 'history' | 'scan') {
 
 .nav-item span {
   font-size: 10px;
-  color: #A09890;
+  color: #a09890;
   font-weight: 500;
 }
 

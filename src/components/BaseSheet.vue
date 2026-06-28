@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// Bottom-sheet réutilisable : overlay sombre + feuille animée + poignée.
-// Le clic sur l'overlay (hors feuille) émet `close`.
+// Reusable bottom-sheet: dark overlay + animated sheet + handle.
+// Clicking the overlay (outside the sheet) emits `close`.
 defineEmits<{ close: [] }>();
 </script>
 
@@ -34,8 +34,12 @@ defineEmits<{ close: [] }>();
 }
 
 @keyframes sheet-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .sheet-handle {

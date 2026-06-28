@@ -5,12 +5,12 @@ import jsQR from 'jsqr';
 import { decodeRoomFromText } from '../utils/room';
 
 declare const BarcodeDetector: {
-  new(options: { formats: string[] }): {
+  new (options: { formats: string[] }): {
     detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string }>>;
   };
 };
 
-const router = useRouter()
+const router = useRouter();
 
 const videoEl = ref<HTMLVideoElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
@@ -20,24 +20,24 @@ const manualLink = ref('');
 
 function submitManual() {
   if (manualLink.value.trim()) {
-    handleScanned(manualLink.value.trim())
+    handleScanned(manualLink.value.trim());
   }
 }
 
 function handleScanned(text: string) {
-  const room = decodeRoomFromText(text)
+  const room = decodeRoomFromText(text);
   if (room) {
     router.push({
       name: 'pay',
-      query: { room: encodeURIComponent(JSON.stringify(room)) }
-    })
+      query: { room: encodeURIComponent(JSON.stringify(room)) },
+    });
   } else {
-    router.push({ name: 'home' })
+    router.push({ name: 'home' });
   }
 }
 
 function cancel() {
-  router.back()
+  router.back();
 }
 
 let stream: MediaStream | null = null;
@@ -81,9 +81,9 @@ async function start() {
   } catch (err) {
     const name = (err as DOMException)?.name;
     if (name === 'NotAllowedError') {
-      error.value = "Accès caméra refusé. Autorise la caméra dans les réglages du navigateur.";
+      error.value = 'Accès caméra refusé. Autorise la caméra dans les réglages du navigateur.';
     } else if (name === 'NotFoundError') {
-      error.value = "Aucune caméra détectée sur cet appareil.";
+      error.value = 'Aucune caméra détectée sur cet appareil.';
     } else {
       error.value = "Impossible d'accéder à la caméra.";
     }
@@ -143,7 +143,7 @@ function stop() {
   scanning.value = false;
   if (rafId !== null) cancelAnimationFrame(rafId);
   if (pollId !== null) clearInterval(pollId);
-  stream?.getTracks().forEach(t => t.stop());
+  stream?.getTracks().forEach((track) => track.stop());
 }
 
 onMounted(start);
@@ -156,7 +156,7 @@ onUnmounted(stop);
       <p class="error-icon">📷</p>
       <p class="error-text">{{ error }}</p>
 
-      <!-- Fallback : coller le lien manuellement -->
+      <!-- Fallback: paste the link manually -->
       <div class="manual">
         <input
           v-model="manualLink"
@@ -177,7 +177,7 @@ onUnmounted(stop);
       <video ref="videoEl" class="video" playsinline muted autoplay />
       <canvas ref="canvasEl" class="canvas" />
 
-      <!-- Viseur -->
+      <!-- Viewfinder -->
       <div class="viewfinder">
         <div class="corner tl" />
         <div class="corner tr" />
@@ -187,7 +187,15 @@ onUnmounted(stop);
 
       <p class="hint">Pointe la caméra vers le QR code</p>
 
-      <button class="btn-cancel" @click="() => { stop(); cancel(); }">
+      <button
+        class="btn-cancel"
+        @click="
+          () => {
+            stop();
+            cancel();
+          }
+        "
+      >
         Annuler
       </button>
     </div>
@@ -228,7 +236,7 @@ onUnmounted(stop);
   display: none;
 }
 
-/* Viseur centré */
+/* Centered viewfinder */
 .viewfinder {
   position: absolute;
   top: 50%;
@@ -246,14 +254,34 @@ onUnmounted(stop);
   border-style: solid;
 }
 
-.tl { top: 0; left: 0;  border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
-.tr { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
-.bl { bottom: 0; left: 0;  border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
-.br { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+.tl {
+  top: 0;
+  left: 0;
+  border-width: 3px 0 0 3px;
+  border-radius: 4px 0 0 0;
+}
+.tr {
+  top: 0;
+  right: 0;
+  border-width: 3px 3px 0 0;
+  border-radius: 0 4px 0 0;
+}
+.bl {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 3px 3px;
+  border-radius: 0 0 0 4px;
+}
+.br {
+  bottom: 0;
+  right: 0;
+  border-width: 0 3px 3px 0;
+  border-radius: 0 0 4px 0;
+}
 
 .hint {
   position: relative;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 14px;
   margin-bottom: 20px;
   text-align: center;
@@ -262,16 +290,16 @@ onUnmounted(stop);
 .btn-cancel {
   position: relative;
   padding: 14px 40px;
-  border: 1.5px solid rgba(255,255,255,0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
   border-radius: 50px;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   color: white;
   font-size: 16px;
   cursor: pointer;
   backdrop-filter: blur(4px);
 }
 
-/* État erreur */
+/* Error state */
 .error-state {
   display: flex;
   flex-direction: column;

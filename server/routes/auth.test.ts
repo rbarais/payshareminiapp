@@ -6,10 +6,9 @@ import authRouter from './auth.js';
 
 // Mock db so tests don't need a real database
 vi.mock('../lib/db.js', () => ({
-  default: Object.assign(
-    async (_strings: TemplateStringsArray, ..._values: unknown[]) => [],
-    { unsafe: async () => [] }
-  ),
+  default: Object.assign(async (_strings: TemplateStringsArray, ..._values: unknown[]) => [], {
+    unsafe: async () => [],
+  }),
 }));
 
 beforeAll(() => {
@@ -28,9 +27,7 @@ describe('POST /api/auth/challenge', () => {
   });
 
   it('returns a challenge string containing the address', async () => {
-    const res = await request(app)
-      .post('/api/auth/challenge')
-      .send({ address: 'NQ TEST' });
+    const res = await request(app).post('/api/auth/challenge').send({ address: 'NQ TEST' });
     expect(res.status).toBe(200);
     expect(res.body.challenge).toContain('NQ TEST');
   });
@@ -38,18 +35,14 @@ describe('POST /api/auth/challenge', () => {
 
 describe('POST /api/auth/verify (dev mode)', () => {
   it('returns a JWT token in dev mode', async () => {
-    const res = await request(app)
-      .post('/api/auth/verify')
-      .send({ address: 'NQ TEST', dev: true });
+    const res = await request(app).post('/api/auth/verify').send({ address: 'NQ TEST', dev: true });
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();
     expect(res.body.token.split('.')).toHaveLength(3);
   });
 
   it('returns 400 when address is missing', async () => {
-    const res = await request(app)
-      .post('/api/auth/verify')
-      .send({ dev: true });
+    const res = await request(app).post('/api/auth/verify').send({ dev: true });
     expect(res.status).toBe(400);
   });
 });

@@ -1,15 +1,15 @@
 import { roomTag } from './room';
 
-// Le Web Client Nimiq synchronise un consensus léger directement dans le
-// navigateur (P2P, pas de RPC central, pas de rate-limit). Il sert UNIQUEMENT
-// à lire la blockchain — l'envoi des paiements passe par le provider mini-app.
+// The Nimiq Web Client syncs a light consensus directly in the browser (P2P,
+// no central RPC, no rate limit). It is used ONLY to read the blockchain —
+// sending payments goes through the mini-app provider.
 //
-// @nimiq/core est lourd (WASM) : on le charge dynamiquement à la première
-// lecture, et on réutilise une seule instance de client pour la session.
+// @nimiq/core is heavy (WASM): it is loaded dynamically on the first read, and
+// a single client instance is reused for the session.
 
 let clientPromise: Promise<NimiqClient> | null = null;
 
-// Type minimal du client dont on a besoin (évite d'importer les types lourds).
+// Minimal client type we need (avoids importing the heavy generated types).
 interface NimiqClient {
   waitForConsensusEstablished(): Promise<void>;
   getTransactionsByAddress(
@@ -26,7 +26,7 @@ interface PlainTx {
   transactionHash: string;
   sender: string;
   recipient: string;
-  value: number; // en Luna
+  value: number; // in Luna
   timestamp?: number;
   data?: { type: string; raw?: string };
 }
@@ -46,8 +46,8 @@ async function getClient(): Promise<NimiqClient> {
 }
 
 export interface RoomPayment {
-  from: string;      // adresse du payeur (format lisible)
-  valueNim: number;  // montant en NIM
+  from: string; // payer address (human-readable format)
+  valueNim: number; // amount in NIM
   timestamp: number;
   hash: string;
 }
@@ -55,7 +55,7 @@ export interface RoomPayment {
 function hexToUtf8(hex: string): string {
   if (!hex) return '';
   try {
-    const bytes = hex.match(/.{1,2}/g)?.map((b) => parseInt(b, 16)) ?? [];
+    const bytes = hex.match(/.{1,2}/g)?.map((pair) => parseInt(pair, 16)) ?? [];
     return new TextDecoder().decode(new Uint8Array(bytes));
   } catch {
     return '';
@@ -67,39 +67,39 @@ function normalizeAddress(addr: string): string {
 }
 
 /**
- * Lit les paiements reçus par le créateur pour une room donnée.
- * Filtre les transactions entrantes dont le champ `data` commence par le
- * tag unique de la room. Déduplique par payeur (une part par personne).
+ * Read the payments received by the creator for a given room.
+ * Filters incoming transactions whose `data` field starts with the room's
+ * unique tag. Deduplicates by payer (one share per person).
  */
 export async function fetchRoomPayments(
   creatorAddress: string,
   roomId: string,
 ): Promise<RoomPayment[]> {
-  // Adresses Nimiq réelles uniquement — en mode dev l'adresse est factice.
+  // Real Nimiq addresses only — in dev mode the address is a fake one.
   if (!creatorAddress.startsWith('NQ')) return [];
 
   const client = await getClient();
   const tag = roomTag(roomId);
-  const txs = await client.getTransactionsByAddress(creatorAddress, 0, null, null, 100);
+  const transactions = await client.getTransactionsByAddress(creatorAddress, 0, null, null, 100);
 
   const recipient = normalizeAddress(creatorAddress);
-  const seen = new Set<string>();
+  const seenSenders = new Set<string>();
   const payments: RoomPayment[] = [];
 
-  for (const tx of txs) {
-    if (normalizeAddress(tx.recipient) !== recipient) continue;
-    const raw = tx.data?.type === 'raw' ? (tx.data.raw ?? '') : '';
+  for (const transaction of transactions) {
+    if (normalizeAddress(transaction.recipient) !== recipient) continue;
+    const raw = transaction.data?.type === 'raw' ? (transaction.data.raw ?? '') : '';
     if (!hexToUtf8(raw).startsWith(tag)) continue;
 
-    const from = normalizeAddress(tx.sender);
-    if (seen.has(from)) continue; // garde le plus récent (txs triées descendant)
-    seen.add(from);
+    const sender = normalizeAddress(transaction.sender);
+    if (seenSenders.has(sender)) continue; // keep the most recent (txs sorted descending)
+    seenSenders.add(sender);
 
     payments.push({
-      from: tx.sender,
-      valueNim: tx.value / 1e5,
-      timestamp: tx.timestamp ?? 0,
-      hash: tx.transactionHash,
+      from: transaction.sender,
+      valueNim: transaction.value / 1e5,
+      timestamp: transaction.timestamp ?? 0,
+      hash: transaction.transactionHash,
     });
   }
 

@@ -2,9 +2,9 @@
 import { computed } from 'vue';
 import type { Expense } from '../types';
 
-// Carte d'une dépense dans un groupe. Le clic ouvre l'invitation à payer ;
-// le crayon émet `edit`. Les valeurs dérivées (part, payeur) sont fournies
-// par le parent qui connaît le contexte du groupe et l'utilisateur courant.
+// Card for an expense within a group. Clicking opens the pay invitation;
+// the pencil emits `edit`. Derived values (share, payer) are provided by the
+// parent, which knows the group context and the current user.
 const props = defineProps<{
   expense: Expense;
   userShare: number;
@@ -17,9 +17,7 @@ const dateLabel = computed(() =>
   props.expense.createdAt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
 );
 
-const fillPct = computed(() =>
-  Math.min(100, (props.userShare / props.expense.amount) * 100),
-);
+const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.amount) * 100));
 </script>
 
 <template>
@@ -29,9 +27,15 @@ const fillPct = computed(() =>
         <div class="expense-title">{{ expense.description }}</div>
         <div class="expense-meta">Payé par {{ paidByName }} · {{ dateLabel }}</div>
       </div>
-      <button class="exp-edit-btn" @click.stop="$emit('edit')" aria-label="Modifier la dépense">
+      <button class="exp-edit-btn" aria-label="Modifier la dépense" @click.stop="$emit('edit')">
         <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
-          <path d="M2 13L5 10M9 2L13 6L6.5 12.5L2.5 12.5L2.5 8.5L9 2Z" stroke="#8B8880" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M2 13L5 10M9 2L13 6L6.5 12.5L2.5 12.5L2.5 8.5L9 2Z"
+            stroke="#8B8880"
+            stroke-width="1.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </button>
       <div class="expense-right">
@@ -56,12 +60,14 @@ const fillPct = computed(() =>
   border-radius: 14px;
   padding: 13px 15px;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   cursor: pointer;
   transition: transform 0.12s;
 }
 
-.expense-card:active { transform: scale(0.99); }
+.expense-card:active {
+  transform: scale(0.99);
+}
 
 .expense-top {
   display: flex;
@@ -70,9 +76,20 @@ const fillPct = computed(() =>
   margin-bottom: 9px;
 }
 
-.expense-left { flex: 1; min-width: 0; }
-.expense-title { font-size: 13px; font-weight: 600; color: var(--dark); }
-.expense-meta { font-size: 11px; color: var(--text); margin-top: 2px; }
+.expense-left {
+  flex: 1;
+  min-width: 0;
+}
+.expense-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+}
+.expense-meta {
+  font-size: 11px;
+  color: var(--text);
+  margin-top: 2px;
+}
 
 .exp-edit-btn {
   flex-shrink: 0;
@@ -89,12 +106,32 @@ const fillPct = computed(() =>
   transition: opacity 0.15s;
 }
 
-.exp-edit-btn:active { opacity: 0.6; }
+.exp-edit-btn:active {
+  opacity: 0.6;
+}
 
-.expense-right { text-align: right; flex-shrink: 0; margin-left: 8px; }
-.expense-total { font-size: 13px; font-weight: 600; color: var(--dark); }
-.expense-share { font-size: 10px; margin-top: 1px; }
+.expense-right {
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.expense-total {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+}
+.expense-share {
+  font-size: 10px;
+  margin-top: 1px;
+}
 
-.bar-bg { height: 3px; background: var(--border-subtle); border-radius: 2px; }
-.bar-fill { height: 100%; border-radius: 2px; }
+.bar-bg {
+  height: 3px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 2px;
+}
 </style>

@@ -13,10 +13,11 @@ const store = useGroupsStore();
 const userId = computed(() => session.user.value?.id ?? '');
 
 const groups = computed(() =>
-  store.groups.value.map((g) => ({
-    group: g,
-    expenseCount: store.groupExpenses(g.id).length,
-    balance: store.groupBalanceForUser(g.id, userId.value),
+  store.groups.value.map((group) => ({
+    group,
+    expenseCount: store.groupExpenses(group.id).length,
+    grossDebt: store.grossDebtTotal(group.id, userId.value),
+    grossCredit: store.grossCreditForUser(group.id, userId.value),
   })),
 );
 
@@ -42,22 +43,33 @@ function goToGroup(id: string) {
     <div class="content">
       <div v-if="groups.length" class="group-list">
         <GroupCard
-          v-for="g in groups"
-          :key="g.group.id"
-          :group="g.group"
-          :expense-count="g.expenseCount"
-          :balance="g.balance"
-          @click="goToGroup(g.group.id)"
+          v-for="entry in groups"
+          :key="entry.group.id"
+          :group="entry.group"
+          :expense-count="entry.expenseCount"
+          :gross-debt="entry.grossDebt"
+          :gross-credit="entry.grossCredit"
+          @click="goToGroup(entry.group.id)"
         />
       </div>
 
       <div v-else class="empty">
         <div class="empty-icon">
           <svg width="34" height="34" viewBox="0 0 22 22" fill="none">
-            <circle cx="8" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5"/>
-            <circle cx="15" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5"/>
-            <path d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19" stroke="#C8C5BF" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M15 14C18.31 14 21 16.24 21 19" stroke="#C8C5BF" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="8" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5" />
+            <circle cx="15" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5" />
+            <path
+              d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19"
+              stroke="#C8C5BF"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M15 14C18.31 14 21 16.24 21 19"
+              stroke="#C8C5BF"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
         </div>
         <div class="empty-title">Aucun groupe ici</div>
@@ -108,7 +120,11 @@ function goToGroup(id: string) {
   color: var(--accent);
 }
 
-.new-plus { font-size: 15px; line-height: 1; margin-top: -1px; }
+.new-plus {
+  font-size: 15px;
+  line-height: 1;
+  margin-top: -1px;
+}
 
 .content {
   flex: 1;
@@ -149,8 +165,17 @@ function goToGroup(id: string) {
   box-shadow: var(--shadow-sm);
 }
 
-.empty-title { font-size: 15px; font-weight: 600; color: var(--dark); }
-.empty-sub { font-size: 12px; color: var(--text); max-width: 220px; line-height: 1.4; }
+.empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dark);
+}
+.empty-sub {
+  font-size: 12px;
+  color: var(--text);
+  max-width: 220px;
+  line-height: 1.4;
+}
 
 .empty-cta {
   margin-top: 12px;

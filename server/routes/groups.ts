@@ -8,11 +8,18 @@ router.get('/', requireAuth, async (req, res): Promise<void> => {
   const { address } = (req as AuthRequest).user;
 
   try {
-    const rows = await sql<{
-      id: string; name: string; icon: string; creator_addr: string;
-      currencies: string[]; invite_token: string; created_at: Date;
-      members: { id: string; address: string | null; name: string; joined_at: Date }[];
-    }[]>`
+    const rows = await sql<
+      {
+        id: string;
+        name: string;
+        icon: string;
+        creator_addr: string;
+        currencies: string[];
+        invite_token: string;
+        created_at: Date;
+        members: { id: string; address: string | null; name: string; joined_at: Date }[];
+      }[]
+    >`
       SELECT
         g.id, g.name, g.icon, g.creator_addr, g.currencies, g.invite_token, g.created_at,
         json_agg(
@@ -26,21 +33,23 @@ router.get('/', requireAuth, async (req, res): Promise<void> => {
       ORDER BY g.created_at DESC
     `;
 
-    res.json(rows.map((g) => ({
-      id: g.id,
-      name: g.name,
-      icon: g.icon,
-      creatorId: g.creator_addr,
-      currencies: g.currencies,
-      inviteToken: g.invite_token,
-      createdAt: g.created_at,
-      members: g.members.map((m) => ({
-        id: m.id,
-        address: m.address ?? undefined,
-        name: m.name,
-        joinedAt: m.joined_at,
+    res.json(
+      rows.map((group) => ({
+        id: group.id,
+        name: group.name,
+        icon: group.icon,
+        creatorId: group.creator_addr,
+        currencies: group.currencies,
+        inviteToken: group.invite_token,
+        createdAt: group.created_at,
+        members: group.members.map((member) => ({
+          id: member.id,
+          address: member.address ?? undefined,
+          name: member.name,
+          joinedAt: member.joined_at,
+        })),
       })),
-    })));
+    );
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'internal server error' });
@@ -50,9 +59,13 @@ router.get('/', requireAuth, async (req, res): Promise<void> => {
 router.post('/', requireAuth, async (req, res): Promise<void> => {
   const { address } = (req as AuthRequest).user;
   const body = req.body as {
-    id: string; name: string; icon: string; creatorId: string;
-    currencies: string[]; inviteToken?: string;
-    members: { id: string; name: string }[];
+    id: string;
+    name: string;
+    icon: string;
+    creatorId: string;
+    currencies: string[];
+    inviteToken?: string;
+    members: { id: string; name: string; address?: string }[];
   };
 
   if (!body.id || !body.name || !body.icon || !Array.isArray(body.members)) {
@@ -65,11 +78,14 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
   }
 
   try {
-    const inviteToken = body.inviteToken
-      ?? Array.from(crypto.getRandomValues(new Uint8Array(16)))
-          .map((b) => b.toString(16).padStart(2, '0')).join('');
+    const inviteToken =
+      body.inviteToken ??
+      Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('');
 
-    let createdMembers: { id: string; address: string | null; name: string; joined_at: Date }[] = [];
+    let createdMembers: { id: string; address: string | null; name: string; joined_at: Date }[] =
+      [];
 
     await sql.begin(async (tx) => {
       await tx`
@@ -79,13 +95,15 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
           ${body.currencies ?? ['NIM']}, ${inviteToken}
         )
       `;
-      for (const m of body.members) {
-        // Le créateur est inséré avec son adresse Nimiq.
-        // Les placeholders (pas encore d'adresse) ont m.address = undefined/null.
-        const memberAddr = (m as any).address ?? m.id ?? null;
-        const rows = await tx<{ id: string; address: string | null; name: string; joined_at: Date }[]>`
+      for (const member of body.members) {
+        // The creator is inserted with their Nimiq address.
+        // Placeholders (no address yet) have member.address = undefined/null.
+        const memberAddr = member.address ?? member.id ?? null;
+        const rows = await tx<
+          { id: string; address: string | null; name: string; joined_at: Date }[]
+        >`
           INSERT INTO members (group_id, address, name)
-          VALUES (${body.id}, ${memberAddr || null}, ${m.name})
+          VALUES (${body.id}, ${memberAddr || null}, ${member.name})
           RETURNING id, address, name, joined_at
         `;
         createdMembers = createdMembers.concat(rows);
@@ -93,11 +111,11 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
     });
 
     res.status(201).json({
-      members: createdMembers.map((m) => ({
-        id: m.id,
-        address: m.address ?? undefined,
-        name: m.name,
-        joinedAt: m.joined_at,
+      members: createdMembers.map((member) => ({
+        id: member.id,
+        address: member.address ?? undefined,
+        name: member.name,
+        joinedAt: member.joined_at,
       })),
     });
   } catch (err) {

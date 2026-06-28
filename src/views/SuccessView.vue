@@ -3,10 +3,10 @@ import { useRouter } from 'vue-router';
 
 defineProps<{ amount: number; recipient: string }>();
 
-const router = useRouter()
+const router = useRouter();
 
 function goBack() {
-  router.push({ name: 'home' })
+  router.push({ name: 'home' });
 }
 </script>
 
@@ -17,8 +17,8 @@ function goBack() {
       <!-- Animated icon -->
       <div class="circle-wrap">
         <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
-          <circle cx="50" cy="50" r="50" fill="#F6B221"/>
-          <path d="M34 66L50 24L66 66H34Z" fill="#1A1916"/>
+          <circle cx="50" cy="50" r="50" fill="#F6B221" />
+          <path d="M34 66L50 24L66 66H34Z" fill="#1A1916" />
           <path
             d="M29 52L39 62L63 36"
             stroke="white"
@@ -41,7 +41,7 @@ function goBack() {
           <span class="tx-confirmed">Confirmé ✓</span>
         </div>
         <div class="tx-hash">Bloc #4 218 756 · via Nimiq Pay</div>
-        <div class="tx-row" style="margin-top:6px;">
+        <div class="tx-row" style="margin-top: 6px">
           <span class="tx-label">Via Nimiq Pay</span>
           <span class="tx-label">~2s</span>
         </div>
@@ -78,9 +78,18 @@ function goBack() {
 }
 
 @keyframes psSuccessCircle {
-  0% { transform: scale(0.3); opacity: 0; }
-  65% { transform: scale(1.12); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  65% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .check-path {
@@ -88,8 +97,12 @@ function goBack() {
 }
 
 @keyframes psCheckDraw {
-  from { stroke-dashoffset: 50; }
-  to { stroke-dashoffset: 0; }
+  from {
+    stroke-dashoffset: 50;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .title {
@@ -111,8 +124,12 @@ function goBack() {
 }
 
 @keyframes psFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .tx-card {
@@ -171,5 +188,7 @@ function goBack() {
   transition: opacity 0.15s;
 }
 
-.btn-back:hover { opacity: 0.85; }
+.btn-back:hover {
+  opacity: 0.85;
+}
 </style>

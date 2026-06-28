@@ -1,7 +1,7 @@
 import { reactive, computed } from 'vue';
 
 // ─────────────────────────────────────────────────────────────────────────
-// Store toast — notifications éphémères basiques (Phase 1).
+// Toast store — basic ephemeral notifications (Phase 1).
 // ─────────────────────────────────────────────────────────────────────────
 
 export type ToastType = 'info' | 'error' | 'success';
@@ -23,8 +23,8 @@ export function useToast() {
       const id = ++seq;
       state.toasts.push({ id, message, type });
       setTimeout(() => {
-        const i = state.toasts.findIndex((t) => t.id === id);
-        if (i !== -1) state.toasts.splice(i, 1);
+        const index = state.toasts.findIndex((toast) => toast.id === id);
+        if (index !== -1) state.toasts.splice(index, 1);
       }, duration);
     },
   };

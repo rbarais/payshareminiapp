@@ -26,14 +26,10 @@ describe('verifyNimiqSignature', () => {
   it('throws when the message is tampered', async () => {
     const message = 'PayShare login\naddr: NQ_TEST\nnonce: deadbeef00112233';
     const v = await makeVector(message);
-    await expect(
-      verifyNimiqSignature(message + 'x', v.publicKey, v.signature)
-    ).rejects.toThrow();
+    await expect(verifyNimiqSignature(message + 'x', v.publicKey, v.signature)).rejects.toThrow();
   });
 
   it('throws on all-zero inputs', async () => {
-    await expect(
-      verifyNimiqSignature('hello', '0'.repeat(64), '0'.repeat(128))
-    ).rejects.toThrow();
+    await expect(verifyNimiqSignature('hello', '0'.repeat(64), '0'.repeat(128))).rejects.toThrow();
   });
 });

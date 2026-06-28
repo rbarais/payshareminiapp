@@ -6,22 +6,37 @@ import { buildInviteDeeplink, decodeInviteFromText } from '../utils/room';
 const session = useSession();
 const emit = defineEmits<{ connected: [] }>();
 
-// Détecte si l'URL contient une invitation groupe (?g=&t=).
+// Detect whether the URL contains a group invitation (?g=&t=).
 const pendingInvite = computed(() => decodeInviteFromText(window.location.href));
 
-// Relaie l'URL courante vers Nimiq Pay via deeplink.
-// Déclenché par un tap (geste utilisateur → obligatoire sur iOS pour les custom schemes).
+// Relay the current URL to Nimiq Pay via deeplink.
+// Triggered by a tap (user gesture → required on iOS for custom schemes).
 function openInNimiqPay() {
   window.location.href = buildInviteDeeplink(window.location.href);
 }
 
-// 'idle' → écran d'accueil · 'connecting' → recherche pairs · 'connected' → succès
+// 'idle' → home screen · 'connecting' → peer discovery · 'connected' → success
 const phase = ref<'idle' | 'connecting' | 'connected'>('idle');
 
 const features = [
-  { title: 'Groupes de dépenses', sub: 'Voyages, appart, restos — partagez sans friction', tint: 'rgba(246,178,33,0.14)', icon: 'people' },
-  { title: 'Règlement en 2 secondes', sub: 'Payez en crypto, sans passer par une banque', tint: 'rgba(33,184,126,0.14)', icon: 'flash' },
-  { title: 'Transparent & vérifiable', sub: 'Tout est tracé sur la blockchain Nimiq', tint: 'rgba(100,130,255,0.14)', icon: 'shield' },
+  {
+    title: 'Groupes de dépenses',
+    sub: 'Voyages, appart, restos — partagez sans friction',
+    tint: 'rgba(246,178,33,0.14)',
+    icon: 'people',
+  },
+  {
+    title: 'Règlement en 2 secondes',
+    sub: 'Payez en crypto, sans passer par une banque',
+    tint: 'rgba(33,184,126,0.14)',
+    icon: 'flash',
+  },
+  {
+    title: 'Transparent & vérifiable',
+    sub: 'Tout est tracé sur la blockchain Nimiq',
+    tint: 'rgba(100,130,255,0.14)',
+    icon: 'shield',
+  },
 ];
 
 async function connect() {
@@ -32,54 +47,119 @@ async function connect() {
     return;
   }
   phase.value = 'connected';
-  // Laisse le message de succès s'afficher brièvement avant d'entrer dans l'app.
+  // Let the success message show briefly before entering the app.
   setTimeout(() => emit('connected'), 700);
 }
 </script>
 
 <template>
   <div class="onboard">
-    <!-- Écran d'accueil -->
+    <!-- Home screen -->
     <div v-if="phase === 'idle'" class="hero">
       <div class="logo-badge">
-        <svg width="40" height="40" viewBox="0 0 26 26" fill="none"><path d="M6 20L13 4L20 20H6Z" fill="#1A1916"/></svg>
+        <svg width="40" height="40" viewBox="0 0 26 26" fill="none">
+          <path d="M6 20L13 4L20 20H6Z" fill="#1A1916" />
+        </svg>
       </div>
       <div class="brand">PayShare</div>
       <div class="tagline">powered by <span>Nimiq Blockchain</span></div>
 
-      <!-- Invitation en attente : UI ciblée -->
+      <!-- Pending invitation: targeted UI -->
       <template v-if="pendingInvite">
         <div class="invite-card">
           <div class="invite-icon">
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <circle cx="10" cy="11" r="4" stroke="#F6B221" stroke-width="1.6"/>
-              <circle cx="18" cy="11" r="4" stroke="#F6B221" stroke-width="1.6"/>
-              <path d="M2 24C2 20.5 5.6 17.5 10 17.5C14.4 17.5 18 20.5 18 24" stroke="#F6B221" stroke-width="1.6" stroke-linecap="round"/>
-              <path d="M18 17.5C22.4 17.5 26 20.5 26 24" stroke="#F6B221" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="10" cy="11" r="4" stroke="#F6B221" stroke-width="1.6" />
+              <circle cx="18" cy="11" r="4" stroke="#F6B221" stroke-width="1.6" />
+              <path
+                d="M2 24C2 20.5 5.6 17.5 10 17.5C14.4 17.5 18 20.5 18 24"
+                stroke="#F6B221"
+                stroke-width="1.6"
+                stroke-linecap="round"
+              />
+              <path
+                d="M18 17.5C22.4 17.5 26 20.5 26 24"
+                stroke="#F6B221"
+                stroke-width="1.6"
+                stroke-linecap="round"
+              />
             </svg>
           </div>
           <div class="invite-title">Tu as été invité</div>
-          <div class="invite-sub">Ouvre ce lien dans Nimiq Pay pour rejoindre le groupe et régler tes dépenses partagées.</div>
+          <div class="invite-sub">
+            Ouvre ce lien dans Nimiq Pay pour rejoindre le groupe et régler tes dépenses partagées.
+          </div>
         </div>
 
         <button class="cta" @click="openInNimiqPay">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <rect width="22" height="22" rx="6" fill="#1B1F3B"/>
-            <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221"/>
+            <rect width="22" height="22" rx="6" fill="#1B1F3B" />
+            <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
           </svg>
           <span>Ouvrir dans Nimiq Pay</span>
         </button>
-        <p class="invite-hint">Si le bouton ne fonctionne pas, copie le lien et colle-le dans Nimiq Pay.</p>
+        <p class="invite-hint">
+          Si le bouton ne fonctionne pas, copie le lien et colle-le dans Nimiq Pay.
+        </p>
       </template>
 
-      <!-- Écran d'accueil standard -->
+      <!-- Standard home screen -->
       <template v-else>
         <div class="features">
           <div v-for="f in features" :key="f.title" class="feature">
             <div class="feature-icon" :style="{ background: f.tint }">
-              <svg v-if="f.icon === 'people'" width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="7" cy="8" r="3" stroke="#F6B221" stroke-width="1.4"/><circle cx="13" cy="8" r="3" stroke="#F6B221" stroke-width="1.4"/><path d="M1 18C1 15.5 3.7 13.5 7 13.5C10.3 13.5 13 15.5 13 18" stroke="#F6B221" stroke-width="1.4" stroke-linecap="round"/><path d="M13 13.5C16.3 13.5 19 15.5 19 18" stroke="#F6B221" stroke-width="1.4" stroke-linecap="round"/></svg>
-              <svg v-else-if="f.icon === 'flash'" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M2 10H18M12 4L18 10L12 16" stroke="#21B87E" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <svg v-else width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 1.5L3 5V10.5C3 14.5 6 17.9 10 18.7C14 17.9 17 14.5 17 10.5V5L10 1.5Z" stroke="#7080FF" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 10L9 12L13 8" stroke="#7080FF" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg
+                v-if="f.icon === 'people'"
+                width="18"
+                height="18"
+                viewBox="0 0 20 20"
+                fill="none"
+              >
+                <circle cx="7" cy="8" r="3" stroke="#F6B221" stroke-width="1.4" />
+                <circle cx="13" cy="8" r="3" stroke="#F6B221" stroke-width="1.4" />
+                <path
+                  d="M1 18C1 15.5 3.7 13.5 7 13.5C10.3 13.5 13 15.5 13 18"
+                  stroke="#F6B221"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M13 13.5C16.3 13.5 19 15.5 19 18"
+                  stroke="#F6B221"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <svg
+                v-else-if="f.icon === 'flash'"
+                width="18"
+                height="18"
+                viewBox="0 0 20 20"
+                fill="none"
+              >
+                <path
+                  d="M2 10H18M12 4L18 10L12 16"
+                  stroke="#21B87E"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <svg v-else width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <path
+                  d="M10 1.5L3 5V10.5C3 14.5 6 17.9 10 18.7C14 17.9 17 14.5 17 10.5V5L10 1.5Z"
+                  stroke="#7080FF"
+                  stroke-width="1.4"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M7 10L9 12L13 8"
+                  stroke="#7080FF"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </div>
             <div class="feature-text">
               <div class="feature-title">{{ f.title }}</div>
@@ -90,8 +170,8 @@ async function connect() {
 
         <button class="cta" @click="connect">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <rect width="22" height="22" rx="6" fill="#1B1F3B"/>
-            <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221"/>
+            <rect width="22" height="22" rx="6" fill="#1B1F3B" />
+            <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
           </svg>
           <span>Me connecter via Nimiq Pay</span>
         </button>
@@ -103,14 +183,18 @@ async function connect() {
           Ouvrir dans Nimiq Pay
         </button>
         <p v-if="session.error.value" class="err">{{ session.error.value }}</p>
-        <p class="privacy">Aucune donnée personnelle n'est collectée. Tes clés restent dans Nimiq Pay.</p>
+        <p class="privacy">
+          Aucune donnée personnelle n'est collectée. Tes clés restent dans Nimiq Pay.
+        </p>
       </template>
     </div>
 
-    <!-- Connexion en cours / succès -->
+    <!-- Connecting / success -->
     <div v-else class="status">
       <div class="logo-badge pulse">
-        <svg width="40" height="40" viewBox="0 0 26 26" fill="none"><path d="M6 20L13 4L20 20H6Z" fill="#1A1916"/></svg>
+        <svg width="40" height="40" viewBox="0 0 26 26" fill="none">
+          <path d="M6 20L13 4L20 20H6Z" fill="#1A1916" />
+        </svg>
       </div>
       <div class="status-text">
         {{ phase === 'connected' ? 'Wallet connecté !' : 'Connexion au réseau…' }}
@@ -127,7 +211,7 @@ async function connect() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #1A1916;
+  background: #1a1916;
   min-height: 100svh;
 }
 
@@ -169,7 +253,10 @@ async function connect() {
   margin-bottom: 28px;
 }
 
-.tagline span { color: var(--accent); font-weight: 700; }
+.tagline span {
+  color: var(--accent);
+  font-weight: 700;
+}
 
 .features {
   width: 100%;
@@ -231,7 +318,9 @@ async function connect() {
   font-family: inherit;
 }
 
-.cta:active { opacity: 0.85; }
+.cta:active {
+  opacity: 0.85;
+}
 
 .cta-secondary {
   width: 100%;
@@ -247,7 +336,9 @@ async function connect() {
   font-family: inherit;
 }
 
-.cta-secondary:active { opacity: 0.85; }
+.cta-secondary:active {
+  opacity: 0.85;
+}
 
 .invite-card {
   width: 100%;
@@ -298,7 +389,7 @@ async function connect() {
 .err {
   margin-top: 12px;
   font-size: 12px;
-  color: #FF8A8A;
+  color: #ff8a8a;
   text-align: center;
 }
 
@@ -338,10 +429,19 @@ async function connect() {
   line-height: 1.7;
 }
 
-.pulse { animation: pulse 1.1s ease-in-out infinite; }
+.pulse {
+  animation: pulse 1.1s ease-in-out infinite;
+}
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(0.92); opacity: 0.7; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
 }
 </style>

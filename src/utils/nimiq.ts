@@ -2,19 +2,18 @@ import { init } from '@nimiq/mini-app-sdk';
 import type { NimiqProvider } from '@nimiq/mini-app-sdk';
 
 // ─────────────────────────────────────────────────────────────────────────
-// Initialisation du provider Nimiq.
+// Nimiq provider initialization.
 //
-// Suivant le tutoriel officiel : on lance `init({ timeout })` UNE seule fois
-// au démarrage (App.vue onMounted) et on conserve la promesse. `init()` poll
-// l'injection de `window.nimiq` et rejette après le timeout si on n'est pas
-// dans Nimiq Pay. Toutes les fonctions ci-dessous awaitent cette même promesse
-// — pas de second appel, pas de dépendance à un check synchrone non fiable.
+// Following the official tutorial: we call `init({ timeout })` ONCE at startup
+// (App.vue onMounted) and keep the promise. `init()` polls for the injection of
+// `window.nimiq` and rejects after the timeout if we are not inside Nimiq Pay.
+// All functions below await this same promise — no second call, no dependency
+// on an unreliable synchronous check.
 // ─────────────────────────────────────────────────────────────────────────
-
 
 let nimiqPromise: Promise<NimiqProvider> | null = null;
 
-/** Démarre (ou réutilise) l'initialisation du provider. */
+/** Start (or reuse) the provider initialization. */
 export function initNimiq(): Promise<NimiqProvider> {
   if (!nimiqPromise) {
     nimiqPromise = init();
@@ -23,9 +22,9 @@ export function initNimiq(): Promise<NimiqProvider> {
 }
 
 /**
- * Détecte si l'app tourne dans Nimiq Pay : true si le provider s'initialise,
- * false si `init()` rejette (provider jamais injecté). Réutilise la promesse
- * d'init partagée — aucun appel `init()` supplémentaire.
+ * Detect whether the app runs inside Nimiq Pay: true if the provider
+ * initializes, false if `init()` rejects (provider never injected). Reuses the
+ * shared init promise — no extra `init()` call.
  */
 export async function detectNimiqApp(): Promise<boolean> {
   try {
@@ -36,7 +35,7 @@ export async function detectNimiqApp(): Promise<boolean> {
   }
 }
 
-/** Provider si disponible, sinon null (hors Nimiq Pay). Ne rejette pas. */
+/** Provider if available, otherwise null (outside Nimiq Pay). Never rejects. */
 async function getProvider(): Promise<NimiqProvider | null> {
   try {
     return await initNimiq();
@@ -45,7 +44,7 @@ async function getProvider(): Promise<NimiqProvider | null> {
   }
 }
 
-/** Récupère l'adresse Nimiq de l'utilisateur courant (déclenche le dialogue). */
+/** Get the current user's Nimiq address (triggers the access dialog). */
 export async function getNimiqAddress(): Promise<string> {
   const provider = await initNimiq();
   const accounts = await provider.listAccounts();
@@ -56,17 +55,17 @@ export async function getNimiqAddress(): Promise<string> {
   return accounts[0];
 }
 
-/** Nom de l'utilisateur — placeholder, le provider n'expose pas de nom. */
+/** User name — placeholder, the provider does not expose a name. */
 export async function getNimiqUserName(): Promise<string> {
   return 'Nimiq User';
 }
 
 /**
- * Récupère l'adresse + le nom de l'utilisateur courant.
+ * Get the current user's address + name.
  *
- * Hors Nimiq Pay (navigateur de dev, init rejetée), renvoie un utilisateur
- * factice pour permettre les tests. DANS Nimiq Pay, propage les erreurs (ex.
- * dialogue d'accès refusé) au lieu de les masquer.
+ * Outside Nimiq Pay (dev browser, init rejected), returns a fake user to allow
+ * testing. INSIDE Nimiq Pay, propagates errors (e.g. access dialog refused)
+ * instead of hiding them.
  */
 export async function getCurrentUser(): Promise<{ id: string; name: string }> {
   const provider = await getProvider();
@@ -86,7 +85,7 @@ export async function getCurrentUser(): Promise<{ id: string; name: string }> {
   return { id: address, name: name || 'User ' + address.slice(0, 6) };
 }
 
-/** Tronque une adresse Nimiq pour l'affichage : "NQ48 8CKH…BA76". */
+/** Truncate a Nimiq address for display: "NQ48 8CKH…BA76". */
 export function formatAddressShort(address: string): string {
   if (!address) return '';
   const clean = address.trim();
@@ -95,10 +94,10 @@ export function formatAddressShort(address: string): string {
 }
 
 /**
- * Ouvre une demande de paiement via le provider Nimiq.
- * @param amount Montant à payer (en NIM)
- * @param recipient Adresse du bénéficiaire
- * @param reason Raison du paiement (champ `data`)
+ * Open a payment request through the Nimiq provider.
+ * @param amount Amount to pay (in NIM)
+ * @param recipient Recipient address
+ * @param reason Payment reason (the `data` field)
  */
 export async function requestPayment(
   amount: number,
@@ -122,7 +121,7 @@ export async function requestPayment(
   return result;
 }
 
-/** Signe un message via le provider. Renvoie publicKey + signature (hex). */
+/** Sign a message through the provider. Returns publicKey + signature (hex). */
 export async function signMessage(
   message: string,
 ): Promise<{ publicKey: string; signature: string }> {
@@ -135,8 +134,8 @@ export async function signMessage(
 }
 
 /**
- * Check synchrone (provider déjà injecté ?). Non fiable juste après le
- * chargement — préférer `detectNimiqApp()` / l'état `isNimiqApp` du store.
+ * Synchronous check (provider already injected?). Unreliable right after load —
+ * prefer `detectNimiqApp()` / the store's `isNimiqApp` state.
  */
 export function isNimiqEnvironment(): boolean {
   return typeof window !== 'undefined' && !!window.nimiq;

@@ -3,7 +3,7 @@ import type { GroupIcon } from '../types';
 import { GROUP_ICON_STYLE } from '../utils/groupUi';
 import GroupIconGlyph from './GroupIcon.vue';
 
-// Sélecteur d'icône de groupe (v-model). Réutilisé à la création et à l'édition.
+// Group icon picker (v-model). Reused for both creation and editing.
 defineProps<{ modelValue: GroupIcon }>();
 const emit = defineEmits<{ 'update:modelValue': [GroupIcon] }>();
 
@@ -27,7 +27,10 @@ const TYPES: GroupIcon[] = ['person', 'home', 'car', 'list'];
 </template>
 
 <style scoped>
-.icon-picker { display: flex; gap: 10px; }
+.icon-picker {
+  display: flex;
+  gap: 10px;
+}
 
 .icon-option {
   width: 52px;
@@ -38,8 +41,13 @@ const TYPES: GroupIcon[] = ['person', 'home', 'car', 'list'];
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color 0.15s, transform 0.1s;
+  transition:
+    border-color 0.15s,
+    transform 0.1s;
 }
 
-.icon-option.selected { border-color: var(--dark); transform: scale(1.05); }
+.icon-option.selected {
+  border-color: var(--dark);
+  transform: scale(1.05);
+}
 </style>

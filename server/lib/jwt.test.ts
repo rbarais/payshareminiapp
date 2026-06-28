@@ -22,8 +22,8 @@ describe('verifyJwt', () => {
 
   it('throws on a tampered token', async () => {
     const token = await signJwt('NQ TEST ADDRESS');
-    const [h, p, s] = token.split('.');
-    await expect(verifyJwt(`${h}.${p}.INVALIDSIG`)).rejects.toThrow();
+    const [header, payload] = token.split('.');
+    await expect(verifyJwt(`${header}.${payload}.INVALIDSIG`)).rejects.toThrow();
   });
 
   it('throws on a completely invalid string', async () => {

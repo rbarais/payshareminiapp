@@ -4,8 +4,8 @@ import { blake2b } from '@noble/hashes/blake2.js';
 function hexToBytes(hex: string): Uint8Array {
   const clean = hex.replace(/\s/g, '');
   const out = new Uint8Array(clean.length / 2);
-  for (let i = 0; i < clean.length; i += 2) {
-    out[i / 2] = parseInt(clean.slice(i, i + 2), 16);
+  for (let index = 0; index < clean.length; index += 2) {
+    out[index / 2] = parseInt(clean.slice(index, index + 2), 16);
   }
   return out;
 }
@@ -13,9 +13,11 @@ function hexToBytes(hex: string): Uint8Array {
 const B32 = '0123456789ABCDEFGHJKLMNPQRSTUVXY';
 
 function base32Encode(bytes: Uint8Array): string {
-  let buf = 0, bits = 0, out = '';
-  for (const b of bytes) {
-    buf = (buf << 8) | b;
+  let buf = 0,
+    bits = 0,
+    out = '';
+  for (const byte of bytes) {
+    buf = (buf << 8) | byte;
     bits += 8;
     while (bits >= 5) {
       bits -= 5;
@@ -29,16 +31,16 @@ function base32Encode(bytes: Uint8Array): string {
 // IBAN MOD-97-10 checksum: digits stay 0-9, letters use standard A=10..Z=35
 function nimiqChecksum(encoded: string): string {
   let numStr = '';
-  for (const c of encoded + 'NQ00') {
-    const code = c.charCodeAt(0);
+  for (const char of encoded + 'NQ00') {
+    const code = char.charCodeAt(0);
     if (code >= 48 && code <= 57) {
-      numStr += c; // digit 0-9
+      numStr += char; // digit 0-9
     } else {
       numStr += (code - 55).toString(); // A=10, B=11, ..., Z=35
     }
   }
   let rem = 0;
-  for (const c of numStr) rem = (rem * 10 + parseInt(c)) % 97;
+  for (const digit of numStr) rem = (rem * 10 + parseInt(digit)) % 97;
   return (98 - rem).toString().padStart(2, '0');
 }
 

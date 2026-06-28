@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-// Carte « solde global » : ce qu'on te doit vs ce que tu dois, agrégé.
-// Le toggle NIM/EUR est présent mais le taux de change réel arrive en Phase 6.
+// "Global balance" card: what others owe you vs what you owe, aggregated.
+// The NIM/EUR toggle is present but the real exchange rate comes in Phase 6.
 defineProps<{ credited: number; owed: number }>();
 
 const showEur = ref(false);
@@ -14,7 +14,13 @@ const showEur = ref(false);
       <div class="balance-title">Solde global</div>
       <button class="toggle-btn" @click="showEur = !showEur">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M1 3.5H9M1 6.5H9M3 1L1 3.5L3 6M7 9L9 6.5L7 4" stroke="rgba(0,0,0,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M1 3.5H9M1 6.5H9M3 1L1 3.5L3 6M7 9L9 6.5L7 4"
+            stroke="rgba(0,0,0,0.5)"
+            stroke-width="1.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
         <span>{{ showEur ? 'NIM' : 'EUR' }}</span>
       </button>
@@ -22,7 +28,9 @@ const showEur = ref(false);
     <div class="balance-row">
       <div>
         <div class="balance-label">On te doit</div>
-        <div class="balance-amount">{{ showEur ? 'Bientôt' : '+' + credited.toFixed(1) + ' NIM' }}</div>
+        <div class="balance-amount">
+          {{ showEur ? 'Bientôt' : '+' + credited.toFixed(1) + ' NIM' }}
+        </div>
       </div>
       <div class="balance-right">
         <div class="balance-label">Tu dois</div>
@@ -50,13 +58,13 @@ const showEur = ref(false);
 .balance-title {
   font-size: 10px;
   font-weight: 700;
-  color: rgba(0,0,0,0.4);
+  color: rgba(0, 0, 0, 0.4);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .toggle-btn {
-  background: rgba(0,0,0,0.12);
+  background: rgba(0, 0, 0, 0.12);
   border: none;
   border-radius: 20px;
   padding: 4px 10px;
@@ -67,10 +75,12 @@ const showEur = ref(false);
   transition: background 0.15s;
   font-size: 10px;
   font-weight: 700;
-  color: rgba(0,0,0,0.5);
+  color: rgba(0, 0, 0, 0.5);
 }
 
-.toggle-btn:hover { background: rgba(0,0,0,0.18); }
+.toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.18);
+}
 
 .balance-row {
   display: flex;
@@ -78,11 +88,13 @@ const showEur = ref(false);
   align-items: flex-end;
 }
 
-.balance-right { text-align: right; }
+.balance-right {
+  text-align: right;
+}
 
 .balance-label {
   font-size: 10px;
-  color: rgba(0,0,0,0.45);
+  color: rgba(0, 0, 0, 0.45);
   margin-bottom: 3px;
 }
 

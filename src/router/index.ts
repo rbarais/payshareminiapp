@@ -1,34 +1,34 @@
-import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import GroupsView from '../views/GroupsView.vue'
-import GroupView from '../views/GroupView.vue'
-import AddExpenseView from '../views/AddExpenseView.vue'
-import PayView from '../views/PayView.vue'
-import SuccessView from '../views/SuccessView.vue'
-import NewGroupView from '../views/NewGroupView.vue'
-import JoinGroupView from '../views/JoinGroupView.vue'
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router';
+import HomeView from '../views/HomeView.vue';
+import GroupsView from '../views/GroupsView.vue';
+import GroupView from '../views/GroupView.vue';
+import AddExpenseView from '../views/AddExpenseView.vue';
+import PayView from '../views/PayView.vue';
+import SuccessView from '../views/SuccessView.vue';
+import NewGroupView from '../views/NewGroupView.vue';
+import JoinGroupView from '../views/JoinGroupView.vue';
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
+    component: HomeView,
   },
   {
     path: '/groups',
     name: 'groups',
-    component: GroupsView
+    component: GroupsView,
   },
   {
     path: '/group/:id',
     name: 'group',
     component: GroupView,
-    props: true
+    props: true,
   },
   {
     path: '/add-expense',
     name: 'addExpense',
-    component: AddExpenseView
+    component: AddExpenseView,
   },
   {
     path: '/pay',
@@ -37,7 +37,7 @@ const routes: RouteRecordRaw[] = [
     props: (route) => ({
       room: route.query.room ? JSON.parse(decodeURIComponent(route.query.room as string)) : null,
       groupId: (route.query.groupId as string) || undefined,
-    })
+    }),
   },
   {
     path: '/success',
@@ -45,65 +45,67 @@ const routes: RouteRecordRaw[] = [
     component: SuccessView,
     props: (route) => ({
       amount: route.query.amount ? Number(route.query.amount) : 0,
-      recipient: route.query.recipient || ''
-    })
+      recipient: route.query.recipient || '',
+    }),
   },
   {
     path: '/new-group',
     name: 'newGroup',
-    component: NewGroupView
+    component: NewGroupView,
   },
   {
     path: '/join',
     name: 'join',
     component: JoinGroupView,
-    props: (route) => ({ g: route.query.g ?? '', t: route.query.t ?? '' })
+    props: (route) => ({ groupId: route.query.g ?? '', token: route.query.t ?? '' }),
   },
   {
     path: '/scan',
     name: 'scan',
-    component: () => import('../components/QRScanner.vue')
-  }
-]
+    component: () => import('../components/QRScanner.vue'),
+  },
+];
 
 const router = createRouter({
   history: createWebHashHistory(),
-  routes
-})
+  routes,
+});
 
-// Double back to quit pour mini-apps
+// Double-back-to-quit for mini-apps
 if (typeof window !== 'undefined') {
-  let lastBackTime = 0
-  let isAtRoot = true
+  let lastBackTime = 0;
+  let isAtRoot = true;
 
-  // Suivre si on est à la racine de la navigation
+  // Track whether we are at the navigation root
   router.afterEach((to) => {
-    // Si on naviguer vers home, vérifier s'il y a de l'historique avant
+    // When navigating to home, check whether there is history before it
     if (to.name === 'home') {
-      isAtRoot = window.history.length <= 1
+      isAtRoot = window.history.length <= 1;
     } else {
-      isAtRoot = false
+      isAtRoot = false;
     }
-  })
+  });
 
   window.addEventListener('popstate', (event) => {
-    const currentRoute = router.currentRoute.value
-    
-    // Bloquer UNIQUEMENT si on est sur home ET qu'on est à la racine de l'historique
+    const currentRoute = router.currentRoute.value;
+
+    // Block ONLY if we are on home AND at the root of the history
     if (currentRoute.name === 'home' && isAtRoot) {
-      const now = Date.now()
-      
+      const now = Date.now();
+
       if (now - lastBackTime < 2000) {
-        // Double back -> on quitte
-        lastBackTime = 0
+        // Double back -> quit
+        lastBackTime = 0;
       } else {
-        // Premier back -> on bloque
-        lastBackTime = now
-        event.preventDefault()
-        setTimeout(() => { lastBackTime = 0 }, 2000)
+        // First back -> block
+        lastBackTime = now;
+        event.preventDefault();
+        setTimeout(() => {
+          lastBackTime = 0;
+        }, 2000);
       }
     }
-  })
+  });
 }
 
-export default router
+export default router;

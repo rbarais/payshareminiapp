@@ -7,63 +7,66 @@ import { useToast } from './stores/toast';
 import LoginView from './views/LoginView.vue';
 import ToastHost from './components/ToastHost.vue';
 
-const router = useRouter()
-const route = useRoute()
-const session = useSession()
-const toast = useToast()
+const router = useRouter();
+const route = useRoute();
+const session = useSession();
+const toast = useToast();
 
-// L'app n'est accessible que si le provider Nimiq s'est initialisé (on est
-// bien dans Nimiq Pay) ET que l'utilisateur est connecté. Si init() échoue,
-// on reste sur l'écran de login, même avec une session en cache.
-const showApp = computed(
-  () => session.isLoggedIn.value && session.isNimiqApp.value === true,
-)
+// The app is only reachable once the Nimiq provider has initialized (we are
+// indeed inside Nimiq Pay) AND the user is connected. If init() fails, we stay
+// on the login screen, even with a cached session.
+const showApp = computed(() => session.isLoggedIn.value && session.isNimiqApp.value === true);
 
-// Rejoue un éventuel lien profond (?r=… paiement, ?g=&t= invitation) dès qu'on
-// entre dans l'app.
+// Replay any deeplink (?r=… payment, ?g=&t= invitation) as soon as we enter
+// the app.
 watch(showApp, (visible) => {
-  if (visible) checkUrlForDeeplink()
-})
+  if (visible) checkUrlForDeeplink();
+});
 
-// Gérer le décodage de l'URL au montage et lors des changements de route
+// Handle URL decoding on mount and on route changes.
 function checkUrlForDeeplink() {
-  // Invitation à rejoindre un groupe : ?g=<id>&t=<token>
-  const invite = decodeInviteFromText(window.location.href)
+  // Invitation to join a group: ?g=<id>&t=<token>
+  const invite = decodeInviteFromText(window.location.href);
   if (invite && route.name !== 'join') {
-    router.push({ name: 'join', query: { g: invite.groupId, t: invite.token } })
-    return
+    router.push({ name: 'join', query: { g: invite.groupId, t: invite.token } });
+    return;
   }
-  // Lien de paiement : ?r=<base64>
-  const room = decodeRoomFromUrl()
+  // Payment link: ?r=<base64>
+  const room = decodeRoomFromUrl();
   if (room && route.name !== 'pay') {
     router.push({
       name: 'pay',
-      query: { room: encodeURIComponent(JSON.stringify(room)) }
-    })
+      query: { room: encodeURIComponent(JSON.stringify(room)) },
+    });
   }
 }
 
 onMounted(async () => {
-  // Lance l'init du provider Nimiq au démarrage (cf. tutoriel mini-app).
-  // Si init() échoue, on n'entre pas dans l'app : simple toast pour l'instant,
-  // un écran dédié viendra plus tard.
-  const inNimiq = await session.checkEnvironment()
+  // Start the Nimiq provider init at startup (see mini-app tutorial).
+  // If init() fails, we do not enter the app: a simple toast for now, a
+  // dedicated screen will come later.
+  const inNimiq = await session.checkEnvironment();
   if (!inNimiq) {
-    toast.show('Ouvre PayShare depuis Nimiq Pay pour les paiements réels.', 'error')
+    toast.show('Ouvre PayShare depuis Nimiq Pay pour les paiements réels.', 'error');
   }
-  if (showApp.value) checkUrlForDeeplink()
-})
+  if (showApp.value) checkUrlForDeeplink();
+});
 
-// Surveiller les changements de route pour réagir aux retours
-watch(() => route.name, (newName) => {
-  if (newName === 'home' || newName === 'group') {
-    checkUrlForDeeplink()
-  }
-})
+// Watch route changes to react to back navigations.
+watch(
+  () => route.name,
+  (newName) => {
+    if (newName === 'home' || newName === 'group') {
+      checkUrlForDeeplink();
+    }
+  },
+);
 
 function handleScanned(text: string) {
-  // Un deeplink nimiqpay:// embarque l'URL https → on l'extrait d'abord.
-  const decoded = text.startsWith('nimiqpay://') ? decodeURIComponent(new URL(text).searchParams.get('url') ?? '') : text;
+  // A nimiqpay:// deeplink embeds the https URL → extract it first.
+  const decoded = text.startsWith('nimiqpay://')
+    ? decodeURIComponent(new URL(text).searchParams.get('url') ?? '')
+    : text;
 
   const invite = decodeInviteFromText(decoded);
   if (invite) {
@@ -81,8 +84,8 @@ function handleScanned(text: string) {
 function handlePaySuccess(amount: number, recipient: string) {
   router.push({
     name: 'success',
-    query: { amount: amount.toString(), recipient }
-  })
+    query: { amount: amount.toString(), recipient },
+  });
 }
 </script>
 

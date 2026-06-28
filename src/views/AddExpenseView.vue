@@ -18,7 +18,7 @@ const groupId = computed(() => String(route.query.groupId ?? ''));
 const group = computed(() => store.getGroup(groupId.value));
 const members = computed(() => group.value?.members ?? []);
 const userId = computed(() => session.user.value?.id ?? '');
-// UUID stable du membre courant dans ce groupe
+// Stable UUID of the current member in this group
 const myMemberId = computed(() => store.myMemberId(groupId.value, userId.value));
 
 onMounted(() => {
@@ -34,15 +34,15 @@ const paidBy = ref('');
 const showPayerMenu = ref(false);
 const mode = ref<SplitMode>('equal');
 
-// État de répartition par membre : inclusion (équitable), pourcentage (%), montant (fixe).
+// Per-member split state: inclusion (equal), percentage (%), amount (fixed).
 const split = reactive<Record<string, { included: boolean; pct: number; amt: number }>>({});
 
-// (Ré)initialise l'état de répartition quand les membres sont connus.
+// (Re)initialize the split state once the members are known.
 watch(
   members,
   (list) => {
-    for (const m of list) {
-      if (!split[m.id]) split[m.id] = { included: true, pct: 0, amt: 0 };
+    for (const member of list) {
+      if (!split[member.id]) split[member.id] = { included: true, pct: 0, amt: 0 };
     }
     paidBy.value = paidBy.value || myMemberId.value || list[0]?.id || '';
     distributeEvenly();
@@ -51,33 +51,38 @@ watch(
 );
 
 const memberName = (id: string) =>
-  id === myMemberId.value ? `${members.value.find((m) => m.id === id)?.name ?? 'Toi'} (toi)`
-                          : members.value.find((m) => m.id === id)?.name ?? '';
+  id === myMemberId.value
+    ? `${members.value.find((member) => member.id === id)?.name ?? 'Toi'} (toi)`
+    : (members.value.find((member) => member.id === id)?.name ?? '');
 
-// Répartit pourcentages et montants à parts égales (base de départ des modes % et fixe).
+// Split percentages and amounts evenly (starting point for the % and fixed modes).
 function distributeEvenly() {
   const list = members.value;
   if (!list.length) return;
   const pct = Math.round((100 / list.length) * 10) / 10;
   const amt = amount.value ? Math.round((amount.value / list.length) * 100) / 100 : 0;
-  list.forEach((m) => {
-    split[m.id].pct = pct;
-    split[m.id].amt = amt;
+  list.forEach((member) => {
+    split[member.id].pct = pct;
+    split[member.id].amt = amt;
   });
 }
 
-// Membres inclus dans le partage équitable.
-const includedMembers = computed(() => members.value.filter((m) => split[m.id]?.included));
+// Members included in the equal split.
+const includedMembers = computed(() =>
+  members.value.filter((member) => split[member.id]?.included),
+);
 const equalShare = computed(() =>
-  amount.value && includedMembers.value.length
-    ? amount.value / includedMembers.value.length
-    : 0,
+  amount.value && includedMembers.value.length ? amount.value / includedMembers.value.length : 0,
 );
 
-const pctTotal = computed(() => members.value.reduce((s, m) => s + (split[m.id]?.pct ?? 0), 0));
-const amtTotal = computed(() => members.value.reduce((s, m) => s + (split[m.id]?.amt ?? 0), 0));
+const pctTotal = computed(() =>
+  members.value.reduce((sum, member) => sum + (split[member.id]?.pct ?? 0), 0),
+);
+const amtTotal = computed(() =>
+  members.value.reduce((sum, member) => sum + (split[member.id]?.amt ?? 0), 0),
+);
 
-// Validation selon le mode. Renvoie un message d'erreur ou '' si OK.
+// Validation depending on the mode. Returns an error message or '' if OK.
 const splitError = computed(() => {
   if (!amount.value || amount.value <= 0) return 'Indique un montant';
   if (!description.value.trim()) return 'Indique une description';
@@ -85,16 +90,18 @@ const splitError = computed(() => {
     return includedMembers.value.length ? '' : 'Sélectionne au moins un membre';
   }
   if (mode.value === 'percentage') {
-    return Math.abs(pctTotal.value - 100) < 0.5 ? '' : `Total ${pctTotal.value.toFixed(0)}% (doit faire 100%)`;
+    return Math.abs(pctTotal.value - 100) < 0.5
+      ? ''
+      : `Total ${pctTotal.value.toFixed(0)}% (doit faire 100%)`;
   }
   return Math.abs(amtTotal.value - amount.value) < 0.01
     ? ''
     : `Total ${amtTotal.value.toFixed(2)} / ${amount.value.toFixed(2)} ${currency.value}`;
 });
 
-function setMode(m: SplitMode) {
-  mode.value = m;
-  if (m !== 'equal') distributeEvenly();
+function setMode(newMode: SplitMode) {
+  mode.value = newMode;
+  if (newMode !== 'equal') distributeEvenly();
 }
 
 function selectPayer(id: string) {
@@ -109,15 +116,15 @@ async function create() {
   }
   let participants: { memberId: string; weight?: number }[];
   if (mode.value === 'equal') {
-    participants = includedMembers.value.map((m) => ({ memberId: m.id }));
+    participants = includedMembers.value.map((member) => ({ memberId: member.id }));
   } else if (mode.value === 'percentage') {
     participants = members.value
-      .filter((m) => split[m.id].pct > 0)
-      .map((m) => ({ memberId: m.id, weight: split[m.id].pct }));
+      .filter((member) => split[member.id].pct > 0)
+      .map((member) => ({ memberId: member.id, weight: split[member.id].pct }));
   } else {
     participants = members.value
-      .filter((m) => split[m.id].amt > 0)
-      .map((m) => ({ memberId: m.id, weight: split[m.id].amt }));
+      .filter((member) => split[member.id].amt > 0)
+      .map((member) => ({ memberId: member.id, weight: split[member.id].amt }));
   }
 
   try {
@@ -150,13 +157,24 @@ function goBack() {
     <div class="top-bar">
       <button class="icon-btn gray" @click="goBack">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M2 2L12 12M12 2L2 12" stroke="#3D3B35" stroke-width="1.8" stroke-linecap="round"/>
+          <path
+            d="M2 2L12 12M12 2L2 12"
+            stroke="#3D3B35"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
         </svg>
       </button>
       <span class="bar-title">Nouvelle dépense</span>
       <button class="icon-btn accent" @click="create">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M2 7L5.5 10.5L12 3" stroke="#1A1916" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M2 7L5.5 10.5L12 3"
+            stroke="#1A1916"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </button>
     </div>
@@ -166,12 +184,14 @@ function goBack() {
       <div class="amount-display">{{ amount ? amount.toFixed(2) : '0.00' }}</div>
       <div class="currency-row">
         <button
-          v-for="c in CURRENCIES"
-          :key="c"
+          v-for="currencyCode in CURRENCIES"
+          :key="currencyCode"
           class="currency-pill"
-          :class="{ active: currency === c }"
-          @click="currency = c"
-        >{{ c }}</button>
+          :class="{ active: currency === currencyCode }"
+          @click="currency = currencyCode"
+        >
+          {{ currencyCode }}
+        </button>
       </div>
     </div>
 
@@ -180,15 +200,15 @@ function goBack() {
       <!-- Description -->
       <div class="field-card">
         <div class="field-label">Description</div>
-        <input class="field-input" v-model="description" type="text" placeholder="Tapas + bières"/>
+        <input v-model="description" class="field-input" type="text" placeholder="Tapas + bières" />
       </div>
 
       <!-- Amount input -->
       <div class="field-card">
         <div class="field-label">Montant total</div>
         <input
-          class="field-input"
           v-model.number="amount"
+          class="field-input"
           type="number"
           placeholder="0"
           min="0.01"
@@ -205,17 +225,25 @@ function goBack() {
             <div class="payer-name">{{ memberName(paidBy) }}</div>
           </div>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M5 7L8 10L11 7" stroke="#8B8880" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path
+              d="M5 7L8 10L11 7"
+              stroke="#8B8880"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
         </div>
         <div v-if="showPayerMenu" class="payer-menu">
           <button
-            v-for="m in members"
-            :key="m.id"
+            v-for="member in members"
+            :key="member.id"
             class="payer-option"
-            :class="{ active: paidBy === m.id }"
-            @click="selectPayer(m.id)"
-          >{{ memberName(m.id) }}</button>
+            :class="{ active: paidBy === member.id }"
+            @click="selectPayer(member.id)"
+          >
+            {{ memberName(member.id) }}
+          </button>
         </div>
       </div>
 
@@ -225,52 +253,71 @@ function goBack() {
 
         <!-- Mode tabs -->
         <div class="mode-tabs">
-          <button class="mode-tab" :class="{ active: mode === 'equal' }" @click="setMode('equal')">Équitable</button>
-          <button class="mode-tab" :class="{ active: mode === 'percentage' }" @click="setMode('percentage')">%</button>
-          <button class="mode-tab" :class="{ active: mode === 'fixed' }" @click="setMode('fixed')">Montants</button>
+          <button class="mode-tab" :class="{ active: mode === 'equal' }" @click="setMode('equal')">
+            Équitable
+          </button>
+          <button
+            class="mode-tab"
+            :class="{ active: mode === 'percentage' }"
+            @click="setMode('percentage')"
+          >
+            %
+          </button>
+          <button class="mode-tab" :class="{ active: mode === 'fixed' }" @click="setMode('fixed')">
+            Montants
+          </button>
         </div>
 
-        <!-- Équitable -->
+        <!-- Equal -->
         <div v-if="mode === 'equal'" class="equal-row">
           <button
-            v-for="(m, i) in members"
-            :key="m.id"
+            v-for="(member, index) in members"
+            :key="member.id"
             class="member-chip"
-            :class="{ off: !split[m.id]?.included }"
-            @click="split[m.id].included = !split[m.id].included"
+            :class="{ off: !split[member.id]?.included }"
+            @click="split[member.id].included = !split[member.id].included"
           >
-            <InitialAvatar :name="m.name" :index="i" :size="40" />
-            <span class="chip-name">{{ m.name }}</span>
+            <InitialAvatar :name="member.name" :index="index" :size="40" />
+            <span class="chip-name">{{ member.name }}</span>
           </button>
         </div>
         <div v-if="mode === 'equal' && amount" class="share-info">
           Part de chacun · <strong>{{ equalShare.toFixed(2) }} {{ currency }}</strong>
         </div>
 
-        <!-- % / Montants -->
+        <!-- % / Amounts -->
         <div v-else-if="mode !== 'equal'" class="split-list">
-          <div v-for="(m, i) in members" :key="m.id" class="split-row">
-            <InitialAvatar :name="m.name" :index="i" :size="30" />
-            <span class="split-name">{{ m.name }}</span>
+          <div v-for="(member, index) in members" :key="member.id" class="split-row">
+            <InitialAvatar :name="member.name" :index="index" :size="30" />
+            <span class="split-name">{{ member.name }}</span>
             <div class="split-input-wrap">
               <input
                 v-if="mode === 'percentage'"
+                v-model.number="split[member.id].pct"
                 class="split-input"
-                v-model.number="split[m.id].pct"
-                type="number" min="0" max="100" step="1"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
               />
               <input
                 v-else
+                v-model.number="split[member.id].amt"
                 class="split-input"
-                v-model.number="split[m.id].amt"
-                type="number" min="0" step="0.01"
+                type="number"
+                min="0"
+                step="0.01"
               />
               <span class="split-unit">{{ mode === 'percentage' ? '%' : currency }}</span>
             </div>
           </div>
           <div class="total-row" :class="{ ok: !splitError }">
             <span>Total attribué</span>
-            <span>{{ mode === 'percentage' ? pctTotal.toFixed(0) + '%' : amtTotal.toFixed(2) + ' ' + currency }}</span>
+            <span>{{
+              mode === 'percentage'
+                ? pctTotal.toFixed(0) + '%'
+                : amtTotal.toFixed(2) + ' ' + currency
+            }}</span>
           </div>
         </div>
       </div>
@@ -288,7 +335,12 @@ function goBack() {
 </template>
 
 <style scoped>
-.screen { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
 
 .top-bar {
   padding: 10px 18px 16px;
@@ -298,7 +350,11 @@ function goBack() {
   flex-shrink: 0;
 }
 
-.bar-title { font-size: 16px; font-weight: 600; color: var(--dark); }
+.bar-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dark);
+}
 
 .icon-btn {
   width: 36px;
@@ -312,11 +368,19 @@ function goBack() {
   cursor: pointer;
 }
 
-.icon-btn.gray { background: var(--border); }
-.icon-btn.accent { background: var(--accent); }
+.icon-btn.gray {
+  background: var(--border);
+}
+.icon-btn.accent {
+  background: var(--accent);
+}
 
 /* Amount */
-.amount-section { padding: 4px 18px 18px; text-align: center; flex-shrink: 0; }
+.amount-section {
+  padding: 4px 18px 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
 
 .amount-display {
   font-size: 50px;
@@ -326,7 +390,12 @@ function goBack() {
   line-height: 1.05;
 }
 
-.currency-row { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+.currency-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 12px;
+}
 
 .currency-pill {
   background: var(--border);
@@ -338,10 +407,15 @@ function goBack() {
   border-radius: 20px;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
-.currency-pill.active { background: var(--dark); color: var(--accent); }
+.currency-pill.active {
+  background: var(--dark);
+  color: var(--accent);
+}
 
 /* Form */
 .form-area {
@@ -357,7 +431,7 @@ function goBack() {
   background: var(--bg-card);
   border-radius: 14px;
   padding: 14px 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .field-label {
@@ -381,10 +455,14 @@ function goBack() {
   font-family: inherit;
 }
 
-.field-input::placeholder { color: #C8C5BF; }
+.field-input::placeholder {
+  color: #c8c5bf;
+}
 
 /* Payer */
-.payer-card { padding-bottom: 0; }
+.payer-card {
+  padding-bottom: 0;
+}
 .payer-head {
   display: flex;
   justify-content: space-between;
@@ -392,9 +470,16 @@ function goBack() {
   cursor: pointer;
   padding-bottom: 14px;
 }
-.payer-name { font-size: 14px; font-weight: 500; color: var(--dark); }
+.payer-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dark);
+}
 
-.payer-menu { border-top: 1px solid var(--border-subtle); padding: 6px 0 10px; }
+.payer-menu {
+  border-top: 1px solid var(--border-subtle);
+  padding: 6px 0 10px;
+}
 .payer-option {
   display: block;
   width: 100%;
@@ -408,8 +493,13 @@ function goBack() {
   cursor: pointer;
   font-family: inherit;
 }
-.payer-option.active { color: var(--dark); font-weight: 600; }
-.payer-option:hover { background: var(--border-subtle); }
+.payer-option.active {
+  color: var(--dark);
+  font-weight: 600;
+}
+.payer-option:hover {
+  background: var(--border-subtle);
+}
 
 /* Mode tabs */
 .mode-tabs {
@@ -432,13 +522,22 @@ function goBack() {
   color: var(--text-mid);
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
-.mode-tab.active { background: var(--dark); color: var(--accent); }
+.mode-tab.active {
+  background: var(--dark);
+  color: var(--accent);
+}
 
 /* Equal */
-.equal-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.equal-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
 .member-chip {
   display: flex;
@@ -451,9 +550,15 @@ function goBack() {
   transition: opacity 0.15s;
 }
 
-.member-chip.off { opacity: 0.3; }
+.member-chip.off {
+  opacity: 0.3;
+}
 
-.chip-name { font-size: 9px; font-weight: 600; color: var(--dark); }
+.chip-name {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--dark);
+}
 
 .share-info {
   margin-top: 12px;
@@ -462,10 +567,15 @@ function goBack() {
   font-size: 12px;
   color: var(--text-mid);
 }
-.share-info strong { color: var(--dark); }
+.share-info strong {
+  color: var(--dark);
+}
 
 /* Split list (% / fixed) */
-.split-list { display: flex; flex-direction: column; }
+.split-list {
+  display: flex;
+  flex-direction: column;
+}
 
 .split-row {
   display: flex;
@@ -475,7 +585,12 @@ function goBack() {
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.split-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--dark); }
+.split-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+}
 
 .split-input-wrap {
   display: flex;
@@ -498,7 +613,10 @@ function goBack() {
   font-family: inherit;
 }
 
-.split-unit { font-size: 11px; color: var(--text); }
+.split-unit {
+  font-size: 11px;
+  color: var(--text);
+}
 
 .total-row {
   display: flex;
@@ -512,7 +630,9 @@ function goBack() {
   font-weight: 600;
 }
 
-.total-row.ok { color: var(--green); }
+.total-row.ok {
+  color: var(--green);
+}
 
 .error-msg {
   font-size: 13px;
@@ -524,7 +644,10 @@ function goBack() {
 }
 
 /* CTA */
-.cta-area { padding: 14px 18px 28px; flex-shrink: 0; }
+.cta-area {
+  padding: 14px 18px 28px;
+  flex-shrink: 0;
+}
 
 .btn-primary {
   display: block;
@@ -542,6 +665,11 @@ function goBack() {
   transition: opacity 0.15s;
 }
 
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary:hover:not(:disabled) { opacity: 0.9; }
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
 </style>
