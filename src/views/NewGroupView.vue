@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { GroupIcon } from '../types';
 import { useSession } from '../stores/session';
@@ -10,11 +10,13 @@ import GroupIconPicker from '../components/GroupIconPicker.vue';
 import NimiqIdenticon from '../components/NimiqIdenticon.vue';
 import { captureError } from '../utils/errors';
 import InitialAvatar from '../components/InitialAvatar.vue';
+import { useI18n } from '../stores/i18n';
 
 const router = useRouter();
 const session = useSession();
 const store = useGroupsStore();
 const toast = useToast();
+const { t } = useI18n();
 
 const groupName = ref('');
 const selectedIcon = ref<GroupIcon>('person');
@@ -25,7 +27,7 @@ const guests = ref<{ id: string; name: string }[]>([]);
 const adding = ref(false);
 const newGuestName = ref('');
 
-const creatorName = session.user.value?.name ?? 'Toi';
+const creatorName = computed(() => session.user.value?.name ?? t('newGroup.you'));
 
 function goBack() {
   router.back();
@@ -65,7 +67,7 @@ async function done() {
     router.replace({ name: 'group', params: { id: group.id } });
   } catch (err) {
     captureError(err, 'NewGroupView.createGroup');
-    toast.show('Création du groupe impossible', 'error');
+    toast.show(t('newGroup.createFailed'), 'error');
   }
 }
 </script>
@@ -83,17 +85,17 @@ async function done() {
           />
         </svg>
       </button>
-      <span class="bar-title">Nouveau groupe</span>
+      <span class="bar-title">{{ t('newGroup.title') }}</span>
       <div style="width: 36px" />
     </div>
 
     <div class="content">
       <!-- Icon + Name card -->
       <div class="field-card">
-        <div class="field-label">Icône du groupe</div>
+        <div class="field-label">{{ t('newGroup.iconLabel') }}</div>
         <GroupIconPicker v-model="selectedIcon" />
 
-        <div class="field-label" style="margin-top: 18px">Nom</div>
+        <div class="field-label" style="margin-top: 18px">{{ t('newGroup.nameLabel') }}</div>
         <div class="name-input-wrap">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
             <path
@@ -108,14 +110,14 @@ async function done() {
             v-model="groupName"
             class="name-input"
             type="text"
-            placeholder="Vacances été 2025"
+            :placeholder="t('newGroup.namePlaceholder')"
           />
         </div>
       </div>
 
       <!-- Members card -->
       <div class="field-card">
-        <div class="field-label">Membres</div>
+        <div class="field-label">{{ t('newGroup.membersLabel') }}</div>
         <div class="members-row">
           <!-- Creator -->
           <div class="member">
@@ -123,14 +125,14 @@ async function done() {
               <NimiqIdenticon :size="36" />
             </div>
             <span class="member-name">{{ creatorName }}</span>
-            <span class="member-sub">toi</span>
+            <span class="member-sub">{{ t('group.you') }}</span>
           </div>
 
           <!-- Guests -->
           <div v-for="g in guests" :key="g.id" class="member" @click="removeGuest(g.id)">
             <InitialAvatar :name="g.name" :size="46" />
             <span class="member-name">{{ g.name }}</span>
-            <span class="member-sub">retirer</span>
+            <span class="member-sub">{{ t('newGroup.remove') }}</span>
           </div>
 
           <!-- Ajout -->
@@ -146,11 +148,11 @@ async function done() {
             v-model="newGuestName"
             class="guest-input"
             type="text"
-            placeholder="Nom de l'invité"
+            :placeholder="t('newGroup.guestNamePlaceholder')"
             autofocus
             @keyup.enter="confirmGuest"
           />
-          <button class="guest-add-btn" @click="confirmGuest">Ajouter</button>
+          <button class="guest-add-btn" @click="confirmGuest">{{ t('common.add') }}</button>
         </div>
       </div>
 
@@ -160,7 +162,7 @@ async function done() {
     <!-- CTA -->
     <div class="cta-area">
       <button class="btn-primary" :disabled="!groupName.trim()" @click="done">
-        Créer le groupe
+        {{ t('newGroup.createGroup') }}
       </button>
     </div>
   </div>
