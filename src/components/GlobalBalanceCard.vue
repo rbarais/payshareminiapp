@@ -1,11 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { eurRate, fetchRate } from '../utils/rate';
 
 // "Global balance" card: what others owe you vs what you owe, aggregated.
-// The NIM/EUR toggle is present but the real exchange rate comes in Phase 6.
-defineProps<{ credited: number; owed: number }>();
+const props = defineProps<{ credited: number; owed: number }>();
 
 const showEur = ref(false);
+onMounted(() => {
+  fetchRate();
+});
+
+function eur(nim: number): string {
+  if (eurRate.value == null) return '—';
+  return '≈ ' + (nim * eurRate.value).toFixed(2) + ' €';
+}
+
+const creditedStr = computed(() =>
+  showEur.value ? eur(props.credited) : '+' + props.credited.toFixed(1) + ' NIM',
+);
+const owedStr = computed(() =>
+  showEur.value ? eur(props.owed) : '−' + props.owed.toFixed(1) + ' NIM',
+);
 </script>
 
 <template>
@@ -28,13 +43,11 @@ const showEur = ref(false);
     <div class="balance-row">
       <div>
         <div class="balance-label">On te doit</div>
-        <div class="balance-amount">
-          {{ showEur ? 'Bientôt' : '+' + credited.toFixed(1) + ' NIM' }}
-        </div>
+        <div class="balance-amount">{{ creditedStr }}</div>
       </div>
       <div class="balance-right">
         <div class="balance-label">Tu dois</div>
-        <div class="balance-amount">{{ showEur ? 'Bientôt' : '−' + owed.toFixed(1) + ' NIM' }}</div>
+        <div class="balance-amount">{{ owedStr }}</div>
       </div>
     </div>
   </div>

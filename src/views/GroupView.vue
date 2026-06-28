@@ -9,6 +9,7 @@ import { buildInviteUrl, buildInviteDeeplink } from '../utils/room';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import ExpenseCard from '../components/ExpenseCard.vue';
 import { captureError } from '../utils/errors';
+import { eurRate, fetchRate } from '../utils/rate';
 import InviteSheet from '../components/InviteSheet.vue';
 import SettleSheet from '../components/SettleSheet.vue';
 import BaseSheet from '../components/BaseSheet.vue';
@@ -48,6 +49,7 @@ onMounted(async () => {
     captureError(err, 'GroupView.refreshGroupExpenses');
     toast.show('Synchronisation impossible', 'error');
   }
+  fetchRate();
 });
 
 const monthLabel = computed(() =>
@@ -64,6 +66,11 @@ function memberName(id: string): string {
 function userShare(expenseId: string): number {
   const expense = expenses.value.find((entry) => entry.id === expenseId);
   return expense?.shares.find((share) => share.memberId === myMemberId.value)?.amount ?? 0;
+}
+
+function eurApprox(nim: number): string {
+  if (eurRate.value == null) return '';
+  return '≈ ' + (nim * eurRate.value).toFixed(2) + ' €';
 }
 
 // ── Invitation to join the group (QR + link) ────────────────────────────────
@@ -248,6 +255,7 @@ function openSettle() {
       <div>
         <div class="debt-who">Tu dois</div>
         <div class="debt-amount">{{ grossDebt.toFixed(2) }} NIM</div>
+        <div v-if="eurApprox(grossDebt)" class="eur-approx">{{ eurApprox(grossDebt) }}</div>
       </div>
       <button class="settle-btn" @click="openSettle">Régler →</button>
     </div>
@@ -256,6 +264,7 @@ function openSettle() {
     <div v-if="grossCredit > 0.005" class="credit-card">
       <div class="credit-title">On te doit</div>
       <div class="credit-amount">{{ grossCredit.toFixed(2) }} NIM</div>
+      <div v-if="eurApprox(grossCredit)" class="eur-approx">{{ eurApprox(grossCredit) }}</div>
     </div>
 
     <!-- Settled: neither debt nor credit -->
@@ -786,5 +795,12 @@ function openSettle() {
   color: var(--text-mid);
   cursor: pointer;
   font-family: inherit;
+}
+
+.eur-approx {
+  font-size: 11px;
+  color: var(--text-mid);
+  margin-top: 2px;
+  font-weight: 600;
 }
 </style>
