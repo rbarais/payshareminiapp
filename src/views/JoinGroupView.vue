@@ -11,17 +11,17 @@
           />
         </svg>
       </button>
-      <span class="bar-title">Rejoindre un groupe</span>
+      <span class="bar-title">{{ t('join.title') }}</span>
       <div style="width: 36px" />
     </div>
 
     <div class="content">
       <!-- Chargement preview -->
-      <div v-if="loadingPreview" class="loading">Chargement…</div>
+      <div v-if="loadingPreview" class="loading">{{ t('join.loading') }}</div>
 
       <!-- Placeholders disponibles -->
       <template v-else-if="placeholders.length > 0 && choice === null">
-        <p class="hint">Tu as été invité à rejoindre un groupe. Qui es-tu parmi ces membres ?</p>
+        <p class="hint">{{ t('join.hint') }}</p>
 
         <div class="placeholder-list">
           <button
@@ -45,7 +45,7 @@
 
           <button class="placeholder-btn new" @click="selectNew">
             <div class="new-avatar">+</div>
-            <span class="placeholder-name">Je ne suis pas dans la liste</span>
+            <span class="placeholder-name">{{ t('join.notInList') }}</span>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M6 3L11 8L6 13"
@@ -64,9 +64,9 @@
         <div class="confirm-card">
           <InitialAvatar :name="placeholders.find((p) => p.id === choice)?.name ?? ''" :size="56" />
           <p class="confirm-name">{{ placeholders.find((p) => p.id === choice)?.name }}</p>
-          <p class="hint">Tu vas lier ton wallet Nimiq à ce membre du groupe.</p>
+          <p class="hint">{{ t('join.confirmHint') }}</p>
         </div>
-        <button class="link-back" @click="choice = null">← Choisir un autre</button>
+        <button class="link-back" @click="choice = null">{{ t('join.chooseOther') }}</button>
       </template>
 
       <!-- Nouveau membre : entrer son nom -->
@@ -75,30 +75,30 @@
           <p class="hint">
             {{
               placeholders.length > 0
-                ? 'Tu rejoins le groupe en tant que nouveau membre.'
-                : 'Tu as été invité à rejoindre un groupe. Choisis le nom visible par les autres.'
+                ? t('join.newMemberHint')
+                : t('join.chooseNameHint')
             }}
           </p>
-          <div class="field-label" style="margin-top: 18px">Ton nom</div>
+          <div class="field-label" style="margin-top: 18px">{{ t('join.nameLabel') }}</div>
           <div class="name-input-wrap">
             <input
               v-model="displayName"
               class="name-input"
               type="text"
-              placeholder="Ton prénom"
+              :placeholder="t('join.namePlaceholder')"
               @keyup.enter="join"
             />
           </div>
         </div>
         <button v-if="placeholders.length > 0" class="link-back" @click="choice = null">
-          ← Choisir dans la liste
+          {{ t('join.backToList') }}
         </button>
       </template>
     </div>
 
     <div class="cta-area">
       <button class="btn-primary" :disabled="!canJoin() || joining" @click="join">
-        {{ joining ? 'Connexion…' : 'Rejoindre le groupe' }}
+        {{ joining ? t('join.joining') : t('join.joinBtn') }}
       </button>
     </div>
   </div>
@@ -110,6 +110,7 @@ import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
+import { t } from '../stores/i18n';
 import { joinGroup, fetchJoinPreview } from '../utils/api';
 import { authenticate, getStoredJwt } from '../utils/auth';
 import { captureError } from '../utils/errors';
@@ -164,15 +165,15 @@ async function join() {
   if (joining.value) return;
   const user = session.user.value;
   if (!user) {
-    toast.show('Connecte-toi pour rejoindre', 'error');
+    toast.show(t('join.toastNotConnected'), 'error');
     return;
   }
   if (choice.value === null) {
-    toast.show('Choisis qui tu es', 'error');
+    toast.show(t('join.toastChooseWho'), 'error');
     return;
   }
   if (choice.value === 'new' && !displayName.value.trim()) {
-    toast.show('Entre ton prénom', 'error');
+    toast.show(t('join.toastEnterName'), 'error');
     return;
   }
 
@@ -186,7 +187,7 @@ async function join() {
     await joinGroup(props.groupId, props.token, options);
   } catch (err) {
     captureError(err, 'JoinGroupView.joinGroup');
-    toast.show('Invitation invalide ou déjà utilisée', 'error');
+    toast.show(t('join.toastInvalidInvite'), 'error');
     joining.value = false;
     return;
   }
@@ -198,7 +199,7 @@ async function join() {
   }
 
   const groupName = store.getGroup(props.groupId)?.name ?? 'le groupe';
-  toast.show(`Tu as rejoint « ${groupName} »`, 'success');
+  toast.show(t('join.toastJoined', { name: groupName }), 'success');
   router.replace({ name: 'home' });
   joining.value = false;
 }

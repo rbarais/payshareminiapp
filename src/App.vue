@@ -20,6 +20,7 @@ import { onMounted, watch, computed } from 'vue';
 import { decodeRoomFromUrl, decodeRoomFromText, decodeInviteFromText } from './utils/room';
 import { useSession } from './stores/session';
 import { useToast } from './stores/toast';
+import { t } from './stores/i18n';
 import LoginView from './views/LoginView.vue';
 import ToastHost from './components/ToastHost.vue';
 
@@ -63,7 +64,7 @@ onMounted(async () => {
   // dedicated screen will come later.
   const inNimiq = await session.checkEnvironment();
   if (!inNimiq) {
-    toast.show('Ouvre PayShare depuis Nimiq Pay pour les paiements réels.', 'error');
+    toast.show(t('error.openInNimiq'), 'error');
   }
   if (showApp.value) checkUrlForDeeplink();
 });

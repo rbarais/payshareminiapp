@@ -1,6 +1,5 @@
 <template>
-  <img :src="identicon" ref="identicon" :width="size" :height="size" viewBox="0 0 38 38">
-  </img>
+  <img ref="identicon" :src="identicon" :width="size" :height="size" viewBox="0 0 38 38" />
 </template>
 
 <script setup lang="ts">
