@@ -14,6 +14,7 @@ export default defineConfig({
       sourcemaps: {
         filesToDeleteAfterUpload: ['./dist/assets/*.map'],
       },
+      telemetry: false,
     }),
   ],
   build: {
