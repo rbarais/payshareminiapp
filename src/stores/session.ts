@@ -5,16 +5,16 @@ import { authenticate } from '../utils/auth';
 import { getStoredJwt, setStoredJwt } from '../utils/auth';
 
 // ─────────────────────────────────────────────────────────────────────────
-// Store session — identité de l'utilisateur courant (Phase 1).
+// Session store — identity of the current user (Phase 1).
 //
-// L'utilisateur connecté (adresse Nimiq + nom) est exposé à toute l'app.
-// L'adresse est mise en cache localStorage pour ne pas redéclencher le
-// dialogue natif d'accès aux comptes à chaque lancement. La langue est lue
-// depuis Nimiq Pay (préparation i18n — Phase 6).
+// The connected user (Nimiq address + name) is exposed to the whole app.
+// The address is cached in localStorage so the native account-access dialog is
+// not re-triggered on every launch. The language is read from Nimiq Pay
+// (i18n groundwork — Phase 6).
 // ─────────────────────────────────────────────────────────────────────────
 
 interface User {
-  id: string; // adresse Nimiq
+  id: string; // Nimiq address
   name: string;
 }
 
@@ -23,7 +23,7 @@ interface SessionState {
   language: string;
   connecting: boolean;
   error: string;
-  // null = pas encore vérifié · true/false = résultat de la détection provider
+  // null = not checked yet · true/false = result of the provider detection
   isNimiqApp: boolean | null;
 }
 
@@ -33,10 +33,10 @@ function isJwtExpired(): boolean {
   const jwt = getStoredJwt();
   if (!jwt) return true;
   try {
-    // JWT utilise base64url (- et _ au lieu de + et /) — convertir avant atob()
-    const b64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(b64));
-    // 30s buffer pour éviter les races en fin de validité
+    // JWT uses base64url (- and _ instead of + and /) — convert before atob()
+    const base64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
+    // 30s buffer to avoid races near the end of validity
     return Date.now() / 1000 > payload.exp - 30;
   } catch {
     return true;
@@ -44,7 +44,7 @@ function isJwtExpired(): boolean {
 }
 
 function detectLanguage(): string {
-  // Langue exposée par Nimiq Pay (seedée avant l'exécution du script de page).
+  // Language exposed by Nimiq Pay (seeded before the page script runs).
   const fromHost = getHostLanguage();
   if (typeof fromHost === 'string' && fromHost.length === 2) return fromHost;
   return (navigator.language || 'fr').slice(0, 2);
@@ -77,14 +77,14 @@ export function useSession() {
     isNimiqApp: computed(() => state.isNimiqApp),
 
     /**
-     * Vérifie via le provider Nimiq qu'on tourne bien dans Nimiq Pay.
-     * Mémorise le résultat et le renvoie (true = app Nimiq).
+     * Check via the Nimiq provider that we are running inside Nimiq Pay.
+     * Caches the result and returns it (true = Nimiq app).
      */
     async checkEnvironment(): Promise<boolean> {
-      const ok = await detectNimiqApp();
-      state.isNimiqApp = ok;
-      // JWT expiré ou absent : on tente un refresh silencieux via le provider.
-      // Si ça échoue (hors Nimiq Pay ou signature refusée), on déconnecte.
+      const isNimiqApp = await detectNimiqApp();
+      state.isNimiqApp = isNimiqApp;
+      // JWT expired or missing: attempt a silent refresh through the provider.
+      // If it fails (outside Nimiq Pay or signature refused), disconnect.
       if (state.user && isJwtExpired()) {
         try {
           await authenticate(state.user.id);
@@ -94,18 +94,18 @@ export function useSession() {
           setStoredJwt(null);
         }
       }
-      return ok;
+      return isNimiqApp;
     },
-    // Adresse tronquée prête pour l'affichage du wallet-badge.
+    // Truncated address ready for the wallet-badge display.
     walletShort: computed(() => (state.user ? formatAddressShort(state.user.id) : '')),
 
     /**
-     * Déclenche la connexion wallet. N'aboutit que si l'init du provider Nimiq
-     * réussit : hors Nimiq Pay (init en erreur), on reste sur l'écran de login.
+     * Trigger the wallet connection. Only succeeds if the Nimiq provider init
+     * succeeds: outside Nimiq Pay (init error), we stay on the login screen.
      *
-     * authenticate() est appelé avant de mettre à jour state.user pour éviter
-     * que showApp passe à true (HomeView monte) avant que le JWT soit stocké.
-     * Sans ça, HomeView déclenche GET /api/groups sans token → 401.
+     * authenticate() is called before updating state.user so showApp does not
+     * flip to true (HomeView mounts) before the JWT is stored. Otherwise
+     * HomeView fires GET /api/groups without a token → 401.
      */
     async connect(): Promise<boolean> {
       state.connecting = true;
@@ -122,15 +122,15 @@ export function useSession() {
         state.user = user;
         localStorage.setItem(SESSION_KEY, JSON.stringify(user));
         return true;
-      } catch (e) {
-        state.error = e instanceof Error ? e.message : 'Connexion impossible ou refusée';
+      } catch (error) {
+        state.error = error instanceof Error ? error.message : 'Connexion impossible ou refusée';
         return false;
       } finally {
         state.connecting = false;
       }
     },
 
-    /** Efface la session locale (ne touche jamais aux clés du wallet). */
+    /** Clear the local session (never touches the wallet keys). */
     disconnect(): void {
       state.user = null;
       localStorage.removeItem(SESSION_KEY);

@@ -3,9 +3,9 @@ import { signJwt } from '../lib/jwt.js';
 
 const router = Router();
 
-// listAccounts() dans Nimiq Pay requiert l'approbation explicite de l'utilisateur.
-// L'adresse retournée par le wallet est authentique — pas besoin de re-vérifier
-// avec une signature côté backend pour une mini-app qui tourne dans Nimiq Pay.
+// listAccounts() in Nimiq Pay requires the user's explicit approval.
+// The address returned by the wallet is authentic — no need to re-verify it
+// with a backend-side signature for a mini-app running inside Nimiq Pay.
 router.post('/token', async (req, res): Promise<void> => {
   const { address } = req.body as { address?: string };
   if (!address || typeof address !== 'string' || address.trim() === '') {

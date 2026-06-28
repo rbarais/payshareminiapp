@@ -1,5 +1,14 @@
 import { getStoredJwt, setStoredJwt } from './auth';
-import type { Group, Expense, Settlement, Member } from '../types';
+import type {
+  Group,
+  Expense,
+  Settlement,
+  Member,
+  SerializedMember,
+  SerializedGroup,
+  SerializedExpense,
+  SerializedSettlement,
+} from '../types';
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const jwt = getStoredJwt();
@@ -13,7 +22,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (res.status === 401) {
     setStoredJwt(null);
-    throw new Error('Session expirée');
+    throw new Error('Session expirée'); // user-facing message (kept in French)
   }
   if (!res.ok) throw new Error(`API ${res.status}`);
   const text = await res.text();
@@ -21,60 +30,65 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return JSON.parse(text) as T;
 }
 
-function mapMember(m: any): Member {
+function mapMember(member: SerializedMember): Member {
   return {
-    id: m.id,
-    address: m.address ?? undefined,
-    name: m.name,
-    joinedAt: new Date(m.joinedAt),
+    id: member.id,
+    address: member.address ?? undefined,
+    name: member.name,
+    joinedAt: new Date(member.joinedAt),
   };
 }
 
 export async function fetchMyGroups(): Promise<Group[]> {
-  const groups = await apiFetch<any[]>('/api/groups');
-  return groups.map((g) => ({
-    ...g,
-    createdAt: new Date(g.createdAt),
-    members: (g.members as any[]).map(mapMember),
+  const groups = await apiFetch<SerializedGroup[]>('/api/groups');
+  return groups.map((group) => ({
+    ...group,
+    createdAt: new Date(group.createdAt),
+    members: (group.members ?? []).map(mapMember),
   }));
 }
 
 export async function fetchGroupExpenses(groupId: string): Promise<Expense[]> {
-  const expenses = await apiFetch<any[]>(`/api/groups/${groupId}/expenses`);
-  return expenses.map((e) => ({ ...e, createdAt: new Date(e.createdAt) }));
+  const expenses = await apiFetch<SerializedExpense[]>(`/api/groups/${groupId}/expenses`);
+  return expenses.map((expense) => ({ ...expense, createdAt: new Date(expense.createdAt) }));
 }
 
-export async function insertGroup(g: Group, creator: { address: string; name: string }): Promise<{ members: Member[] }> {
-  const res = await apiFetch<{ members: any[] }>('/api/groups', {
+export async function insertGroup(
+  group: Group,
+  creator: { address: string; name: string },
+): Promise<{ members: Member[] }> {
+  const res = await apiFetch<{ members: SerializedMember[] }>('/api/groups', {
     method: 'POST',
     body: JSON.stringify({
-      ...g,
+      ...group,
       members: [{ address: creator.address, name: creator.name }],
     }),
   });
   return { members: (res?.members ?? []).map(mapMember) };
 }
 
-export async function insertExpense(e: Expense): Promise<void> {
-  await apiFetch<void>(`/api/groups/${e.groupId}/expenses`, {
+export async function insertExpense(expense: Expense): Promise<void> {
+  await apiFetch<void>(`/api/groups/${expense.groupId}/expenses`, {
     method: 'POST',
-    body: JSON.stringify(e),
+    body: JSON.stringify(expense),
   });
 }
 
 export async function addPlaceholderMember(groupId: string, name: string): Promise<Member> {
-  const m = await apiFetch<any>(`/api/groups/${groupId}/members`, {
+  const member = await apiFetch<SerializedMember>(`/api/groups/${groupId}/members`, {
     method: 'POST',
     body: JSON.stringify({ name }),
   });
-  return mapMember(m);
+  return mapMember(member);
 }
 
 export async function fetchJoinPreview(
   groupId: string,
   token: string,
 ): Promise<{ placeholders: { id: string; name: string }[] }> {
-  return apiFetch(`/api/join/preview?g=${encodeURIComponent(groupId)}&t=${encodeURIComponent(token)}`);
+  return apiFetch(
+    `/api/join/preview?g=${encodeURIComponent(groupId)}&t=${encodeURIComponent(token)}`,
+  );
 }
 
 export async function joinGroup(
@@ -89,20 +103,20 @@ export async function joinGroup(
 }
 
 export async function fetchGroupSettlements(groupId: string): Promise<Settlement[]> {
-  const rows = await apiFetch<any[]>(`/api/groups/${groupId}/settlements`);
-  return rows.map((r) => ({ ...r, settledAt: new Date(r.settledAt) }));
+  const rows = await apiFetch<SerializedSettlement[]>(`/api/groups/${groupId}/settlements`);
+  return rows.map((row) => ({ ...row, settledAt: new Date(row.settledAt) }));
 }
 
-export async function insertSettlement(s: Settlement): Promise<void> {
-  await apiFetch<void>(`/api/groups/${s.groupId}/settlements`, {
+export async function insertSettlement(settlement: Settlement): Promise<void> {
+  await apiFetch<void>(`/api/groups/${settlement.groupId}/settlements`, {
     method: 'POST',
     body: JSON.stringify({
-      fromId: s.fromId,
-      toId: s.toId,
-      amount: s.amount,
-      currency: s.currency,
-      txHash: s.id,
-      settledAt: s.settledAt.toISOString(),
+      fromId: settlement.fromId,
+      toId: settlement.toId,
+      amount: settlement.amount,
+      currency: settlement.currency,
+      txHash: settlement.id,
+      settledAt: settlement.settledAt.toISOString(),
     }),
   });
 }

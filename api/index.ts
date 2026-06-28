@@ -30,7 +30,7 @@ app.get('/api/health', async (_req, res) => {
       WHERE schemaname = 'public'
       ORDER BY tablename
     `;
-    res.json({ ok: true, env, db: 'connected', tables: tables.map((t) => t.tablename) });
+    res.json({ ok: true, env, db: 'connected', tables: tables.map((table) => table.tablename) });
   } catch (err) {
     res.status(500).json({ ok: false, env, db: 'error', error: String(err) });
   }

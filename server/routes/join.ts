@@ -5,7 +5,7 @@ import { requireAuth, type AuthRequest } from '../lib/auth.js';
 const router = Router();
 
 // GET /api/join/preview?g=<groupId>&t=<token>
-// Retourne les placeholders disponibles (address IS NULL) sans authentification.
+// Returns the available placeholders (address IS NULL) without authentication.
 router.get('/join/preview', async (req, res): Promise<void> => {
   const groupId = req.query.g as string;
   const token = req.query.t as string;
@@ -30,7 +30,9 @@ router.get('/join/preview', async (req, res): Promise<void> => {
       ORDER BY joined_at
     `;
 
-    res.json({ placeholders: placeholders.map((m) => ({ id: m.id, name: m.name })) });
+    res.json({
+      placeholders: placeholders.map((member) => ({ id: member.id, name: member.name })),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'internal server error' });
@@ -38,13 +40,16 @@ router.get('/join/preview', async (req, res): Promise<void> => {
 });
 
 // POST /api/join
-// Deux cas :
-//   1. placeholderId fourni → lie l'adresse au placeholder existant
-//   2. pas de placeholderId → insère un nouveau membre avec son adresse
+// Two cases:
+//   1. placeholderId provided → link the address to the existing placeholder
+//   2. no placeholderId → insert a new member with their address
 router.post('/join', requireAuth, async (req, res): Promise<void> => {
   const { address } = (req as AuthRequest).user;
   const { groupId, token, placeholderId, name } = req.body as {
-    groupId?: string; token?: string; placeholderId?: string; name?: string;
+    groupId?: string;
+    token?: string;
+    placeholderId?: string;
+    name?: string;
   };
 
   if (!groupId || !token) {
@@ -63,7 +68,7 @@ router.post('/join', requireAuth, async (req, res): Promise<void> => {
     }
 
     if (placeholderId) {
-      // Cas 1 : l'utilisateur réclame un placeholder
+      // Case 1: the user claims a placeholder
       let updated: { id: string }[];
       try {
         updated = await sql<{ id: string }[]>`
@@ -72,17 +77,17 @@ router.post('/join', requireAuth, async (req, res): Promise<void> => {
           RETURNING id
         `;
       } catch {
-        // Contrainte unique violée : l'adresse est déjà dans le groupe
+        // Unique constraint violated: the address is already in the group
         res.status(409).json({ error: 'already a member of this group' });
         return;
       }
       if (updated.length === 0) {
-        // Soit le placeholder n'existe pas, soit il est déjà réclamé
+        // Either the placeholder does not exist, or it is already claimed
         res.status(409).json({ error: 'placeholder not available' });
         return;
       }
     } else {
-      // Cas 2 : nouveau membre
+      // Case 2: new member
       if (!name?.trim()) {
         res.status(400).json({ error: 'name required' });
         return;
@@ -99,8 +104,8 @@ router.post('/join', requireAuth, async (req, res): Promise<void> => {
       }
     }
 
-    const g = groups[0];
-    res.json({ name: g.name, icon: g.icon });
+    const group = groups[0];
+    res.json({ name: group.name, icon: group.icon });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'internal server error' });

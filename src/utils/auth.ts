@@ -1,4 +1,3 @@
-
 const JWT_KEY = 'payshare_jwt';
 
 export function getStoredJwt(): string | null {
@@ -10,7 +9,7 @@ export function setStoredJwt(token: string | null): void {
   else localStorage.removeItem(JWT_KEY);
 }
 
-async function post(path: string, body: unknown): Promise<any> {
+async function post(path: string, body: unknown): Promise<unknown> {
   const res = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -18,13 +17,17 @@ async function post(path: string, body: unknown): Promise<any> {
   });
   if (!res.ok) {
     let detail = '';
-    try { detail = ' — ' + JSON.stringify(await res.json()); } catch {}
+    try {
+      detail = ' — ' + JSON.stringify(await res.json());
+    } catch {
+      // ignore: response body is not JSON, keep the bare status code
+    }
     throw new Error(`${path} ${res.status}${detail}`);
   }
   return res.json();
 }
 
 export async function authenticate(address: string): Promise<void> {
-  const { token } = await post('/api/auth/token', { address });
+  const { token } = (await post('/api/auth/token', { address })) as { token: string };
   setStoredJwt(token);
 }

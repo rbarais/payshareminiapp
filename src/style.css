@@ -1,20 +1,20 @@
 :root {
-  --bg: #FAF9F7;
+  --bg: #faf9f7;
   --bg-card: #ffffff;
-  --dark: #1A1916;
-  --accent: #F6B221;
-  --accent-dim: #FFF1CF;
+  --dark: #1a1916;
+  --accent: #f6b221;
+  --accent-dim: #fff1cf;
   --green: #198060;
-  --green-bg: #E0F5EE;
-  --red: #CC3C3C;
-  --red-bg: #FFF0F0;
-  --red-border: #F8D8D8;
-  --text: #8B8880;
-  --text-mid: #6B6860;
-  --border: #EDECEA;
-  --border-subtle: #F0EEE9;
-  --shadow-sm: 0 1px 4px rgba(0,0,0,0.05);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+  --green-bg: #e0f5ee;
+  --red: #cc3c3c;
+  --red-bg: #fff0f0;
+  --red-border: #f8d8d8;
+  --text: #8b8880;
+  --text-mid: #6b6860;
+  --border: #edecea;
+  --border-subtle: #f0eee9;
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 16px;
@@ -24,7 +24,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -43,7 +45,18 @@ body {
   background: var(--bg);
 }
 
-h1, h2, h3 { margin: 0; }
-p { margin: 0; }
-button { font-family: inherit; cursor: pointer; }
-input { font-family: inherit; }
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+p {
+  margin: 0;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+input {
+  font-family: inherit;
+}

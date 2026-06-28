@@ -1,5 +1,13 @@
 import { reactive, computed, watch } from 'vue';
-import type { Group, Expense, Member, Settlement, SplitMode, ExpenseShare, GroupIcon } from '../types';
+import type {
+  Group,
+  Expense,
+  Member,
+  Settlement,
+  SplitMode,
+  ExpenseShare,
+  GroupIcon,
+} from '../types';
 import {
   loadGroups,
   saveGroups,
@@ -32,18 +40,32 @@ const state = reactive<State>({
   syncing: false,
 });
 
-watch(() => state.groups, (g) => saveGroups(g), { deep: true });
-watch(() => state.expenses, (e) => saveExpenses(e), { deep: true });
-watch(() => state.settlements, (s) => saveSettlements(s), { deep: true });
+watch(
+  () => state.groups,
+  (groups) => saveGroups(groups),
+  { deep: true },
+);
+watch(
+  () => state.expenses,
+  (expenses) => saveExpenses(expenses),
+  { deep: true },
+);
+watch(
+  () => state.settlements,
+  (settlements) => saveSettlements(settlements),
+  { deep: true },
+);
 
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 function randomInviteToken(): string {
-  const b = new Uint8Array(16);
-  crypto.getRandomValues(b);
-  return Array.from(b).map((x) => x.toString(16).padStart(2, '0')).join('');
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 function computeShares(
@@ -55,30 +77,42 @@ function computeShares(
 
   if (mode === 'equal') {
     const each = round2(amount / entries.length);
-    const shares = entries.map((e) => ({ memberId: e.memberId, weight: 0, amount: each }));
+    const shares = entries.map((entry) => ({ memberId: entry.memberId, weight: 0, amount: each }));
     const diff = round2(amount - each * entries.length);
-    if (diff !== 0) shares[shares.length - 1].amount = round2(shares[shares.length - 1].amount + diff);
+    if (diff !== 0) {
+      shares[shares.length - 1].amount = round2(shares[shares.length - 1].amount + diff);
+    }
     return shares;
   }
 
   if (mode === 'percentage') {
-    return entries.map((e) => {
-      const pct = e.weight ?? 0;
-      return { memberId: e.memberId, weight: pct, amount: round2((amount * pct) / 100) };
+    return entries.map((entry) => {
+      const percentage = entry.weight ?? 0;
+      return {
+        memberId: entry.memberId,
+        weight: percentage,
+        amount: round2((amount * percentage) / 100),
+      };
     });
   }
 
-  return entries.map((e) => ({ memberId: e.memberId, weight: e.weight ?? 0, amount: e.weight ?? 0 }));
+  return entries.map((entry) => ({
+    memberId: entry.memberId,
+    weight: entry.weight ?? 0,
+    amount: entry.weight ?? 0,
+  }));
 }
 
-// Retourne l'UUID du membre courant dans un groupe à partir de son adresse Nimiq.
+// Return the current member's UUID in a group from their Nimiq address.
 function findMemberByAddress(groupId: string, nimiqAddress: string): Member | undefined {
-  return state.groups.find((g) => g.id === groupId)?.members.find((m) => m.address === nimiqAddress);
+  return state.groups
+    .find((group) => group.id === groupId)
+    ?.members.find((member) => member.address === nimiqAddress);
 }
 
-// Une dette brute de l'utilisateur courant envers un créancier (le membre qui a payé).
-// owed = somme de mes parts sur les dépenses de ce créancier ; paid = règlements
-// on-chain déjà envoyés à ce créancier ; remaining = ce qui reste à régler.
+// A gross debt of the current user toward a creditor (the member who paid).
+// owed = sum of my shares on this creditor's expenses; paid = on-chain
+// settlements already sent to this creditor; remaining = what is left to settle.
 export interface CreditorDebt {
   creditor: Member;
   expenses: { expense: Expense; share: number }[];
@@ -87,34 +121,44 @@ export interface CreditorDebt {
   remaining: number;
 }
 
-// Dettes brutes (sans compensation) de l'utilisateur, groupées par créancier.
-// memberId = UUID du membre courant ; nimiqAddress = son adresse (pour les settlements).
-function grossDebtsForMember(groupId: string, memberId: string, nimiqAddress?: string): CreditorDebt[] {
-  const group = state.groups.find((g) => g.id === groupId);
+// Gross debts (no netting) of the user, grouped by creditor.
+// memberId = current member UUID; nimiqAddress = their address (for settlements).
+function grossDebtsForMember(
+  groupId: string,
+  memberId: string,
+  nimiqAddress?: string,
+): CreditorDebt[] {
+  const group = state.groups.find((group) => group.id === groupId);
   if (!group || !memberId) return [];
-  const myAddr = nimiqAddress ?? memberId;
+  const myAddress = nimiqAddress ?? memberId;
 
-  // Regroupe mes parts par payeur (en excluant les dépenses que j'ai payées).
+  // Group my shares by payer (excluding the expenses I paid myself).
   const byCreditor = new Map<string, { expense: Expense; share: number }[]>();
-  for (const exp of state.expenses) {
-    if (exp.groupId !== groupId || exp.paidBy === memberId) continue;
-    const share = exp.shares.find((s) => s.memberId === memberId)?.amount ?? 0;
+  for (const expense of state.expenses) {
+    if (expense.groupId !== groupId || expense.paidBy === memberId) continue;
+    const share = expense.shares.find((entry) => entry.memberId === memberId)?.amount ?? 0;
     if (share <= 0) continue;
-    const list = byCreditor.get(exp.paidBy) ?? [];
-    list.push({ expense: exp, share });
-    byCreditor.set(exp.paidBy, list);
+    const list = byCreditor.get(expense.paidBy) ?? [];
+    list.push({ expense, share });
+    byCreditor.set(expense.paidBy, list);
   }
 
   const debts: CreditorDebt[] = [];
   for (const [creditorId, expenses] of byCreditor) {
-    const creditor = group.members.find((m) => m.id === creditorId);
+    const creditor = group.members.find((member) => member.id === creditorId);
     if (!creditor) continue;
-    const owed = round2(expenses.reduce((s, e) => s + e.share, 0));
-    // Règlements déjà envoyés à ce créancier (settlements indexés par adresse Nimiq).
+    const owed = round2(expenses.reduce((sum, item) => sum + item.share, 0));
+    // Settlements already sent to this creditor (indexed by Nimiq address).
     let paid = 0;
     if (creditor.address) {
-      for (const s of state.settlements) {
-        if (s.groupId === groupId && s.fromId === myAddr && s.toId === creditor.address) paid += s.amount;
+      for (const settlement of state.settlements) {
+        if (
+          settlement.groupId === groupId &&
+          settlement.fromId === myAddress &&
+          settlement.toId === creditor.address
+        ) {
+          paid += settlement.amount;
+        }
       }
     }
     const remaining = round2(Math.max(0, owed - paid));
@@ -124,20 +168,22 @@ function grossDebtsForMember(groupId: string, memberId: string, nimiqAddress?: s
   return debts;
 }
 
-// Ce que les autres me doivent (brut) : leurs parts sur MES dépenses, moins les
-// règlements déjà reçus. Clampé à ≥ 0.
+// What others owe me (gross): their shares on MY expenses, minus settlements
+// already received. Clamped to ≥ 0.
 function grossCreditForMember(groupId: string, memberId: string, nimiqAddress?: string): number {
   if (!memberId) return 0;
-  const myAddr = nimiqAddress ?? memberId;
+  const myAddress = nimiqAddress ?? memberId;
   let credit = 0;
-  for (const exp of state.expenses) {
-    if (exp.groupId !== groupId || exp.paidBy !== memberId) continue;
-    for (const s of exp.shares) {
-      if (s.memberId !== memberId) credit += s.amount;
+  for (const expense of state.expenses) {
+    if (expense.groupId !== groupId || expense.paidBy !== memberId) continue;
+    for (const share of expense.shares) {
+      if (share.memberId !== memberId) credit += share.amount;
     }
   }
-  for (const s of state.settlements) {
-    if (s.groupId === groupId && s.toId === myAddr) credit -= s.amount;
+  for (const settlement of state.settlements) {
+    if (settlement.groupId === groupId && settlement.toId === myAddress) {
+      credit -= settlement.amount;
+    }
   }
   return round2(Math.max(0, credit));
 }
@@ -148,43 +194,46 @@ export function useGroupsStore() {
     expenses: computed(() => state.expenses),
     syncing: computed(() => state.syncing),
 
-    getGroup: (id: string) => state.groups.find((g) => g.id === id) ?? null,
+    getGroup: (id: string) => state.groups.find((group) => group.id === id) ?? null,
     groupExpenses: (groupId: string) =>
       state.expenses
-        .filter((e) => e.groupId === groupId)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+        .filter((expense) => expense.groupId === groupId)
+        .sort((first, second) => second.createdAt.getTime() - first.createdAt.getTime()),
 
-    // Dettes brutes de l'utilisateur (par adresse Nimiq), groupées par créancier.
+    // Gross debts of the user (by Nimiq address), grouped by creditor.
     grossDebtsForUser: (groupId: string, nimiqAddress: string): CreditorDebt[] => {
       const member = findMemberByAddress(groupId, nimiqAddress);
       if (!member) return [];
       return grossDebtsForMember(groupId, member.id, nimiqAddress);
     },
 
-    // Total brut que l'utilisateur doit dans un groupe (somme des restes par créancier).
+    // Total gross amount the user owes in a group (sum of remaining per creditor).
     grossDebtTotal: (groupId: string, nimiqAddress: string): number => {
       const member = findMemberByAddress(groupId, nimiqAddress);
       if (!member) return 0;
       return round2(
-        grossDebtsForMember(groupId, member.id, nimiqAddress).reduce((s, d) => s + d.remaining, 0),
+        grossDebtsForMember(groupId, member.id, nimiqAddress).reduce(
+          (sum, debt) => sum + debt.remaining,
+          0,
+        ),
       );
     },
 
-    // Total brut qu'on doit à l'utilisateur dans un groupe.
+    // Total gross amount owed to the user in a group.
     grossCreditForUser: (groupId: string, nimiqAddress: string): number => {
       const member = findMemberByAddress(groupId, nimiqAddress);
       if (!member) return 0;
       return grossCreditForMember(groupId, member.id, nimiqAddress);
     },
 
-    // UUID du membre courant dans un groupe (undefined si pas encore lié).
+    // Current member UUID in a group (empty string if not linked yet).
     myMemberId: (groupId: string, nimiqAddress: string): string =>
       findMemberByAddress(groupId, nimiqAddress)?.id ?? '',
 
     async createGroup(params: {
       name: string;
       icon: GroupIcon;
-      creatorId: string;   // adresse Nimiq du créateur
+      creatorId: string; // Nimiq address of the creator
       creatorName: string;
       currencies?: string[];
     }): Promise<Group> {
@@ -199,42 +248,45 @@ export function useGroupsStore() {
         createdAt: now,
         inviteToken: randomInviteToken(),
       };
-      const created = await insertGroup(group, { address: params.creatorId, name: params.creatorName });
+      const created = await insertGroup(group, {
+        address: params.creatorId,
+        name: params.creatorName,
+      });
       group.members = created.members;
       state.groups.push(group);
       return group;
     },
 
     updateGroup(id: string, patch: Partial<Omit<Group, 'id' | 'createdAt'>>): Group | null {
-      const group = state.groups.find((g) => g.id === id);
+      const group = state.groups.find((group) => group.id === id);
       if (!group) return null;
       Object.assign(group, patch);
       return group;
     },
 
     deleteGroup(id: string): void {
-      const i = state.groups.findIndex((g) => g.id === id);
-      if (i !== -1) state.groups.splice(i, 1);
-      for (let j = state.expenses.length - 1; j >= 0; j--) {
-        if (state.expenses[j].groupId === id) state.expenses.splice(j, 1);
+      const groupIndex = state.groups.findIndex((group) => group.id === id);
+      if (groupIndex !== -1) state.groups.splice(groupIndex, 1);
+      for (let expenseIndex = state.expenses.length - 1; expenseIndex >= 0; expenseIndex--) {
+        if (state.expenses[expenseIndex].groupId === id) state.expenses.splice(expenseIndex, 1);
       }
     },
 
     addMember(groupId: string, member: Omit<Member, 'joinedAt'>): Member | null {
-      const group = state.groups.find((g) => g.id === groupId);
+      const group = state.groups.find((group) => group.id === groupId);
       if (!group) return null;
-      if (group.members.some((m) => m.id === member.id)) {
-        return group.members.find((m) => m.id === member.id)!;
+      if (group.members.some((existing) => existing.id === member.id)) {
+        return group.members.find((existing) => existing.id === member.id)!;
       }
-      const m: Member = { ...member, joinedAt: new Date() };
-      group.members.push(m);
-      return m;
+      const created: Member = { ...member, joinedAt: new Date() };
+      group.members.push(created);
+      return created;
     },
 
-    // Ajoute un membre placeholder (sans adresse) — créateur uniquement.
+    // Add a placeholder member (without an address) — creator only.
     async addPlaceholderMember(groupId: string, name: string): Promise<Member> {
       const member = await addPlaceholderMember(groupId, name);
-      const group = state.groups.find((g) => g.id === groupId);
+      const group = state.groups.find((group) => group.id === groupId);
       if (group) group.members.push(member);
       return member;
     },
@@ -264,25 +316,24 @@ export function useGroupsStore() {
       return expense;
     },
 
-    updateExpense(
-      id: string,
-      patch: Partial<Pick<Expense, 'description'>>,
-    ): Expense | null {
-      const expense = state.expenses.find((e) => e.id === id);
+    updateExpense(id: string, patch: Partial<Pick<Expense, 'description'>>): Expense | null {
+      const expense = state.expenses.find((entry) => entry.id === id);
       if (!expense) return null;
       Object.assign(expense, patch);
       return expense;
     },
 
     deleteExpense(id: string): void {
-      const i = state.expenses.findIndex((e) => e.id === id);
-      if (i !== -1) state.expenses.splice(i, 1);
+      const index = state.expenses.findIndex((expense) => expense.id === id);
+      if (index !== -1) state.expenses.splice(index, 1);
     },
 
-    addSettlement(s: Settlement): void {
-      if (state.settlements.some((existing) => existing.id === s.id)) return;
-      state.settlements.push(s);
-      insertSettlement(s).catch((err) => console.warn('settlement backend sync failed:', err));
+    addSettlement(settlement: Settlement): void {
+      if (state.settlements.some((existing) => existing.id === settlement.id)) return;
+      state.settlements.push(settlement);
+      insertSettlement(settlement).catch((error) =>
+        console.warn('settlement backend sync failed:', error),
+      );
     },
 
     async refreshAll(): Promise<void> {
@@ -290,8 +341,8 @@ export function useGroupsStore() {
       try {
         const groups = await fetchMyGroups();
         const [allExpenses, allSettlements] = await Promise.all([
-          Promise.all(groups.map((g) => fetchGroupExpenses(g.id))),
-          Promise.all(groups.map((g) => fetchGroupSettlements(g.id))),
+          Promise.all(groups.map((group) => fetchGroupExpenses(group.id))),
+          Promise.all(groups.map((group) => fetchGroupSettlements(group.id))),
         ]);
         state.groups = groups;
         state.expenses = allExpenses.flat();
@@ -306,8 +357,14 @@ export function useGroupsStore() {
         fetchGroupExpenses(groupId),
         fetchGroupSettlements(groupId),
       ]);
-      state.expenses = [...state.expenses.filter((e) => e.groupId !== groupId), ...expenses];
-      state.settlements = [...state.settlements.filter((s) => s.groupId !== groupId), ...settlements];
+      state.expenses = [
+        ...state.expenses.filter((expense) => expense.groupId !== groupId),
+        ...expenses,
+      ];
+      state.settlements = [
+        ...state.settlements.filter((settlement) => settlement.groupId !== groupId),
+        ...settlements,
+      ];
     },
 
     computeShares,

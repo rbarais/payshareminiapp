@@ -2,8 +2,8 @@
 import { ref } from 'vue';
 import NimiqIdenticon from './NimiqIdenticon.vue';
 
-// Badge wallet (adresse + statut connecté) avec menu de déconnexion.
-// Le profil complet arrivera en Phase 6bis ; ici, version minimale.
+// Wallet badge (address + connected status) with a disconnect menu.
+// The full profile will come in Phase 6bis; here, a minimal version.
 defineProps<{ address: string }>();
 const emit = defineEmits<{ disconnect: [] }>();
 
@@ -27,12 +27,20 @@ function disconnect() {
     <div class="identicon">
       <NimiqIdenticon :size="38" />
       <div class="connected-dot">
-        <svg width="6" height="5" viewBox="0 0 6 5" fill="none"><path d="M1 2.5L2.3 3.8L5 1" stroke="white" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="6" height="5" viewBox="0 0 6 5" fill="none">
+          <path
+            d="M1 2.5L2.3 3.8L5 1"
+            stroke="white"
+            stroke-width="1.1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </div>
     </div>
   </div>
 
-  <!-- Menu wallet (déconnexion) -->
+  <!-- Wallet menu (disconnect) -->
   <div v-if="showMenu" class="menu-overlay" @click="showMenu = false">
     <div class="wallet-menu" @click.stop>
       <div class="menu-addr">{{ address }}</div>
@@ -49,7 +57,9 @@ function disconnect() {
   cursor: pointer;
 }
 
-.wallet-info { text-align: right; }
+.wallet-info {
+  text-align: right;
+}
 
 .wallet-addr {
   font-size: 9px;
@@ -87,7 +97,7 @@ function disconnect() {
   overflow: hidden;
   flex-shrink: 0;
   position: relative;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
 }
 
 .connected-dot {
@@ -146,6 +156,10 @@ function disconnect() {
   font-family: inherit;
 }
 
-.menu-item:hover { background: var(--border-subtle); }
-.menu-item.danger { color: var(--red); }
+.menu-item:hover {
+  background: var(--border-subtle);
+}
+.menu-item.danger {
+  color: var(--red);
+}
 </style>

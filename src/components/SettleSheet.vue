@@ -15,7 +15,7 @@ const emit = defineEmits<{ (e: 'close'): void }>();
 
 const router = useRouter();
 
-// Un créancier est payable on-chain s'il a lié une adresse Nimiq (pas un placeholder).
+// A creditor is payable on-chain if they linked a Nimiq address (not a placeholder).
 function canSettle(debt: CreditorDebt): boolean {
   return !!debt.creditor.address?.startsWith('NQ');
 }
@@ -54,11 +54,7 @@ function settle(debt: CreditorDebt) {
             <div class="creditor-name">{{ debt.creditor.name }}</div>
             <div class="creditor-amount">{{ debt.remaining.toFixed(2) }} NIM</div>
           </div>
-          <button
-            v-if="canSettle(debt)"
-            class="settle-btn"
-            @click="settle(debt)"
-          >Régler →</button>
+          <button v-if="canSettle(debt)" class="settle-btn" @click="settle(debt)">Régler →</button>
           <span v-else class="settle-disabled">Doit se connecter</span>
         </div>
 
@@ -76,8 +72,17 @@ function settle(debt: CreditorDebt) {
 </template>
 
 <style scoped>
-.sheet-title { font-size: 17px; font-weight: 700; color: var(--dark); }
-.sheet-sub { font-size: 12px; color: var(--text); margin-top: 2px; margin-bottom: 16px; }
+.sheet-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--dark);
+}
+.sheet-sub {
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 2px;
+  margin-bottom: 16px;
+}
 
 .creditor-list {
   display: flex;
@@ -97,9 +102,22 @@ function settle(debt: CreditorDebt) {
   gap: 10px;
 }
 
-.creditor-info { flex: 1; min-width: 0; }
-.creditor-name { font-size: 13px; font-weight: 600; color: var(--dark); }
-.creditor-amount { font-size: 16px; font-weight: 700; color: var(--red); letter-spacing: -0.3px; margin-top: 1px; }
+.creditor-info {
+  flex: 1;
+  min-width: 0;
+}
+.creditor-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+}
+.creditor-amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: -0.3px;
+  margin-top: 1px;
+}
 
 .settle-btn {
   background: var(--red);
@@ -115,7 +133,9 @@ function settle(debt: CreditorDebt) {
   transition: opacity 0.15s;
 }
 
-.settle-btn:hover { opacity: 0.85; }
+.settle-btn:hover {
+  opacity: 0.85;
+}
 
 .settle-disabled {
   font-size: 10px;
@@ -141,8 +161,13 @@ function settle(debt: CreditorDebt) {
   font-size: 12px;
 }
 
-.detail-desc { color: var(--text-mid); }
-.detail-share { color: var(--dark); font-weight: 500; }
+.detail-desc {
+  color: var(--text-mid);
+}
+.detail-share {
+  color: var(--dark);
+  font-weight: 500;
+}
 
 .sheet-back {
   width: 100%;

@@ -1,10 +1,10 @@
-import { createApp } from 'vue'
-import * as Sentry from '@sentry/vue'
-import './style.css'
-import App from './App.vue'
-import router from './router'
+import { createApp } from 'vue';
+import * as Sentry from '@sentry/vue';
+import './style.css';
+import App from './App.vue';
+import router from './router';
 
-const app = createApp(App)
+const app = createApp(App);
 
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
@@ -13,8 +13,8 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     environment: import.meta.env.MODE,
     integrations: [Sentry.browserTracingIntegration({ router })],
     tracesSampleRate: 1.0,
-  })
+  });
 }
 
-app.use(router)
-app.mount('#app')
+app.use(router);
+app.mount('#app');

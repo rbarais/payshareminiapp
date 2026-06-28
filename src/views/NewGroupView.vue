@@ -11,16 +11,16 @@ import NimiqIdenticon from '../components/NimiqIdenticon.vue';
 import { captureError } from '../utils/errors';
 import InitialAvatar from '../components/InitialAvatar.vue';
 
-const router = useRouter()
-const session = useSession()
-const store = useGroupsStore()
-const toast = useToast()
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
+const toast = useToast();
 
 const groupName = ref('');
 const selectedIcon = ref<GroupIcon>('person');
 
-// Membres invités ajoutés manuellement (sans adresse pour l'instant — une vraie
-// adhésion par QR/contacts viendra plus tard). Le créateur est ajouté à part.
+// Guest members added manually (no address for now — real QR/contacts joining
+// will come later). The creator is added separately.
 const guests = ref<{ id: string; name: string }[]>([]);
 const adding = ref(false);
 const newGuestName = ref('');
@@ -28,19 +28,22 @@ const newGuestName = ref('');
 const creatorName = session.user.value?.name ?? 'Toi';
 
 function goBack() {
-  router.back()
+  router.back();
 }
 
 function confirmGuest() {
   const name = newGuestName.value.trim();
-  if (!name) { adding.value = false; return; }
+  if (!name) {
+    adding.value = false;
+    return;
+  }
   guests.value.push({ id: generateId('guest'), name });
   newGuestName.value = '';
   adding.value = false;
 }
 
 function removeGuest(id: string) {
-  guests.value = guests.value.filter((g) => g.id !== id);
+  guests.value = guests.value.filter((guest) => guest.id !== id);
 }
 
 async function done() {
@@ -56,10 +59,10 @@ async function done() {
       creatorId: user.id,
       creatorName: user.name,
     });
-    for (const g of guests.value) {
-      store.addMember(group.id, { id: g.id, name: g.name });
+    for (const guest of guests.value) {
+      store.addMember(group.id, { id: guest.id, name: guest.name });
     }
-    router.replace({ name: 'group', params: { id: group.id } })
+    router.replace({ name: 'group', params: { id: group.id } });
   } catch (err) {
     captureError(err, 'NewGroupView.createGroup');
     toast.show('Création du groupe impossible', 'error');
@@ -72,11 +75,16 @@ async function done() {
     <div class="top-bar">
       <button class="icon-btn" @click="goBack">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M2 2L12 12M12 2L2 12" stroke="#3D3B35" stroke-width="1.8" stroke-linecap="round"/>
+          <path
+            d="M2 2L12 12M12 2L2 12"
+            stroke="#3D3B35"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
         </svg>
       </button>
       <span class="bar-title">Nouveau groupe</span>
-      <div style="width:36px"/>
+      <div style="width: 36px" />
     </div>
 
     <div class="content">
@@ -85,14 +93,20 @@ async function done() {
         <div class="field-label">Icône du groupe</div>
         <GroupIconPicker v-model="selectedIcon" />
 
-        <div class="field-label" style="margin-top:18px;">Nom</div>
+        <div class="field-label" style="margin-top: 18px">Nom</div>
         <div class="name-input-wrap">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <path d="M2 13L5 10M9 2L13 6L6.5 12.5L2.5 12.5L2.5 8.5L9 2Z" stroke="#8B8880" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path
+              d="M2 13L5 10M9 2L13 6L6.5 12.5L2.5 12.5L2.5 8.5L9 2Z"
+              stroke="#8B8880"
+              stroke-width="1.3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
           <input
-            class="name-input"
             v-model="groupName"
+            class="name-input"
             type="text"
             placeholder="Vacances été 2025"
           />
@@ -103,16 +117,16 @@ async function done() {
       <div class="field-card">
         <div class="field-label">Membres</div>
         <div class="members-row">
-          <!-- Créateur -->
+          <!-- Creator -->
           <div class="member">
-            <div class="member-av" style="overflow:hidden;">
+            <div class="member-av" style="overflow: hidden">
               <NimiqIdenticon :size="36" />
             </div>
             <span class="member-name">{{ creatorName }}</span>
             <span class="member-sub">toi</span>
           </div>
 
-          <!-- Invités -->
+          <!-- Guests -->
           <div v-for="g in guests" :key="g.id" class="member" @click="removeGuest(g.id)">
             <InitialAvatar :name="g.name" :size="46" />
             <span class="member-name">{{ g.name }}</span>
@@ -122,25 +136,25 @@ async function done() {
           <!-- Ajout -->
           <button class="add-member" @click="adding = true">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 2V12M2 7H12" stroke="#6B6860" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M7 2V12M2 7H12" stroke="#6B6860" stroke-width="1.6" stroke-linecap="round" />
             </svg>
           </button>
         </div>
 
         <div v-if="adding" class="guest-input-wrap">
           <input
-            class="guest-input"
             v-model="newGuestName"
+            class="guest-input"
             type="text"
             placeholder="Nom de l'invité"
-            @keyup.enter="confirmGuest"
             autofocus
+            @keyup.enter="confirmGuest"
           />
           <button class="guest-add-btn" @click="confirmGuest">Ajouter</button>
         </div>
       </div>
 
-      <div class="spacer"/>
+      <div class="spacer" />
     </div>
 
     <!-- CTA -->
@@ -199,7 +213,7 @@ async function done() {
   background: var(--bg-card);
   border-radius: 18px;
   padding: 18px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .field-label {
@@ -219,7 +233,7 @@ async function done() {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #FAFAF8;
+  background: #fafaf8;
 }
 
 .name-input {
@@ -233,7 +247,9 @@ async function done() {
   font-family: inherit;
 }
 
-.name-input::placeholder { color: var(--text); }
+.name-input::placeholder {
+  color: var(--text);
+}
 
 /* Members */
 .members-row {
@@ -284,7 +300,9 @@ async function done() {
   transition: border-color 0.15s;
 }
 
-.add-member:hover { border-color: var(--dark); }
+.add-member:hover {
+  border-color: var(--dark);
+}
 
 .guest-input-wrap {
   display: flex;
@@ -299,7 +317,7 @@ async function done() {
   padding: 10px 12px;
   font-size: 14px;
   outline: none;
-  background: #FAFAF8;
+  background: #fafaf8;
   font-family: inherit;
 }
 
@@ -315,7 +333,9 @@ async function done() {
   font-family: inherit;
 }
 
-.spacer { flex: 1; }
+.spacer {
+  flex: 1;
+}
 
 /* CTA */
 .cta-area {
@@ -339,6 +359,11 @@ async function done() {
   transition: opacity 0.15s;
 }
 
-.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-primary:hover:not(:disabled) { opacity: 0.9; }
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
 </style>

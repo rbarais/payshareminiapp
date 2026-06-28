@@ -44,12 +44,18 @@ const bal = computed(() => grossBalanceView(props.grossDebt, props.grossCredit))
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   text-align: left;
-  transition: transform 0.12s, box-shadow 0.12s;
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
   width: 100%;
 }
 
-.group-card:hover { transform: scale(0.99); }
-.group-card:active { transform: scale(0.97); }
+.group-card:hover {
+  transform: scale(0.99);
+}
+.group-card:active {
+  transform: scale(0.97);
+}
 
 .group-icon {
   width: 44px;
@@ -61,7 +67,10 @@ const bal = computed(() => grossBalanceView(props.grossDebt, props.grossCredit))
   flex-shrink: 0;
 }
 
-.group-info { flex: 1; min-width: 0; }
+.group-info {
+  flex: 1;
+  min-width: 0;
+}
 
 .group-name {
   font-size: 13px;
@@ -70,11 +79,24 @@ const bal = computed(() => grossBalanceView(props.grossDebt, props.grossCredit))
   margin-bottom: 2px;
 }
 
-.group-meta { font-size: 11px; color: var(--text); }
+.group-meta {
+  font-size: 11px;
+  color: var(--text);
+}
 
-.group-balance { text-align: right; flex-shrink: 0; }
+.group-balance {
+  text-align: right;
+  flex-shrink: 0;
+}
 
-.group-amount { font-size: 13px; font-weight: 600; }
+.group-amount {
+  font-size: 13px;
+  font-weight: 600;
+}
 
-.group-label { font-size: 10px; color: var(--text); margin-top: 1px; }
+.group-label {
+  font-size: 10px;
+  color: var(--text);
+  margin-top: 1px;
+}
 </style>

@@ -13,19 +13,19 @@ import { useRouter } from 'vue-router';
 
 const props = defineProps<{ room: ShareableRoom | null; groupId?: string }>();
 
-const router = useRouter()
-const session = useSession()
-const store = useGroupsStore()
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
 
 function goBack() {
-  router.back()
+  router.back();
 }
 
 function handleSuccess(amount: number, recipient: string) {
   router.push({
     name: 'success',
-    query: { amount: amount.toString(), recipient }
-  })
+    query: { amount: amount.toString(), recipient },
+  });
 }
 
 const currentUser = ref<{ id: string; name: string } | null>(null);
@@ -38,13 +38,15 @@ const payments = ref<RoomPayment[]>([]);
 const syncing = ref(false);
 const loadError = ref('');
 
-const perPerson = computed(() => props.room ? amountPerPerson(props.room) : 0);
+const perPerson = computed(() => (props.room ? amountPerPerson(props.room) : 0));
 const isCreator = computed(() => props.room && currentUser.value?.id === props.room.creatorId);
 const trackingAvailable = computed(() => !!props.room?.creatorId.startsWith('NQ'));
 
-const norm = (a: string) => a.replace(/\s/g, '').toUpperCase();
+const norm = (address: string) => address.replace(/\s/g, '').toUpperCase();
 
-const collected = computed(() => payments.value.reduce((s, p) => s + p.valueNim, 0));
+const collected = computed(() =>
+  payments.value.reduce((sum, payment) => sum + payment.valueNim, 0),
+);
 const payersCount = computed(() => payments.value.length);
 const remaining = computed(() => Math.max(0, (props.room?.amount ?? 0) - collected.value));
 const progressPct = computed(() =>
@@ -55,7 +57,7 @@ const progressPct = computed(() =>
 
 const hasPaidOnChain = computed(() => {
   const me = currentUser.value ? norm(currentUser.value.id) : '';
-  return !!me && payments.value.some((p) => norm(p.from) === me);
+  return !!me && payments.value.some((payment) => norm(payment.from) === me);
 });
 
 const shareUrl = computed(() => {
@@ -87,18 +89,18 @@ async function pay() {
     await requestPayment(perPerson.value, props.room.creatorId, paymentData(props.room));
 
     if (!trackingAvailable.value) {
-      // Hors Nimiq Pay ou adresse non-NQ : pas de vérification on-chain possible.
+      // Outside Nimiq Pay or non-NQ address: no on-chain verification possible.
       handleSuccess(perPerson.value, props.room.creatorName);
       return;
     }
 
-    // On-chain disponible : on attend que webclient.ts confirme la tx avant de naviguer.
+    // On-chain available: wait for webclient.ts to confirm the tx before navigating.
     awaitingOnChain.value = true;
     if (pollId !== null) clearInterval(pollId);
-    pollId = setInterval(loadPayments, 3000); // polling agressif pendant l'attente
+    pollId = setInterval(loadPayments, 3000); // aggressive polling while waiting
     loadPayments();
 
-    // Sécurité : si la confirmation tarde trop (réseau lent), on navigue quand même.
+    // Safety net: if confirmation takes too long (slow network), navigate anyway.
     setTimeout(() => {
       if (!awaitingOnChain.value) return;
       awaitingOnChain.value = false;
@@ -111,12 +113,12 @@ async function pay() {
   }
 }
 
-// Dès que webclient.ts détecte la tx on-chain : enregistre le settlement (avec le
-// vrai hash blockchain) et navigue vers SuccessView si on attendait la confirmation.
+// As soon as webclient.ts detects the on-chain tx: record the settlement (with the
+// real blockchain hash) and navigate to SuccessView if we were awaiting confirmation.
 watch(hasPaidOnChain, (confirmed) => {
   if (!confirmed || !props.room || !currentUser.value) return;
   const me = norm(currentUser.value.id);
-  const myPayment = payments.value.find((p) => norm(p.from) === me);
+  const myPayment = payments.value.find((payment) => norm(payment.from) === me);
   if (!myPayment) return;
 
   if (props.groupId) {
@@ -139,7 +141,7 @@ watch(hasPaidOnChain, (confirmed) => {
 });
 
 onMounted(async () => {
-  // Réutilise l'utilisateur déjà connecté (évite de redéclencher le dialogue natif).
+  // Reuse the already-connected user (avoids re-triggering the native dialog).
   currentUser.value = session.user.value ?? (await getCurrentUser());
   loadPayments();
   if (trackingAvailable.value) {
@@ -147,7 +149,9 @@ onMounted(async () => {
   }
 });
 
-onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
+onUnmounted(() => {
+  if (pollId !== null) clearInterval(pollId);
+});
 </script>
 
 <template>
@@ -156,11 +160,17 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
     <div class="top-bar">
       <button class="icon-btn" @click="showQR = false">
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-          <path d="M10.5 4L6 8.5L10.5 13" stroke="#1A1916" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M10.5 4L6 8.5L10.5 13"
+            stroke="#1A1916"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </button>
       <span class="bar-title">QR Code</span>
-      <div style="width:36px"/>
+      <div style="width: 36px" />
     </div>
     <div class="qr-center">
       <div class="qr-desc">{{ room?.reason }}</div>
@@ -177,11 +187,17 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
     <div class="top-bar">
       <button class="icon-btn" @click="goBack">
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-          <path d="M10.5 4L6 8.5L10.5 13" stroke="#1A1916" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M10.5 4L6 8.5L10.5 13"
+            stroke="#1A1916"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </button>
       <span class="bar-title">Régler ma part</span>
-      <div style="width:36px"/>
+      <div style="width: 36px" />
     </div>
 
     <div class="scroll">
@@ -195,8 +211,12 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
       <!-- Amount -->
       <div class="amount-block">
         <div class="amount-label">Montant à payer</div>
-        <div class="amount-big">{{ perPerson.toFixed(2) }} <span class="amount-currency">NIM</span></div>
-        <div class="amount-sub">{{ room?.maxParticipants }} participants · {{ room?.amount.toFixed(2) }} NIM total</div>
+        <div class="amount-big">
+          {{ perPerson.toFixed(2) }} <span class="amount-currency">NIM</span>
+        </div>
+        <div class="amount-sub">
+          {{ room?.maxParticipants }} participants · {{ room?.amount.toFixed(2) }} NIM total
+        </div>
       </div>
 
       <!-- Breakdown -->
@@ -206,7 +226,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
           <span class="detail-item">{{ room.reason }}</span>
           <span class="detail-val">{{ perPerson.toFixed(2) }} NIM</span>
         </div>
-        <div class="detail-sep"/>
+        <div class="detail-sep" />
         <div class="detail-row">
           <span class="detail-total">Total</span>
           <span class="detail-total">{{ perPerson.toFixed(2) }} NIM</span>
@@ -218,12 +238,16 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
         <div class="progress-head">
           <span class="progress-label">Avancement</span>
           <button class="refresh-btn" :disabled="syncing" @click="loadPayments">
-            <span v-if="syncing" class="spin-dot"/> {{ syncing ? 'Sync…' : '↻' }}
+            <span v-if="syncing" class="spin-dot" /> {{ syncing ? 'Sync…' : '↻' }}
           </button>
         </div>
-        <div class="progress-bar"><div class="progress-fill" :style="{ width: progressPct + '%' }"/></div>
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: progressPct + '%' }" />
+        </div>
         <div class="progress-stats">
-          <span><strong>{{ collected.toFixed(2) }}</strong> / {{ room?.amount.toFixed(2) }} NIM</span>
+          <span
+            ><strong>{{ collected.toFixed(2) }}</strong> / {{ room?.amount.toFixed(2) }} NIM</span
+          >
           <span>{{ payersCount }}/{{ room?.maxParticipants }} payés</span>
         </div>
         <p v-if="remaining > 0" class="remaining">Reste {{ remaining.toFixed(2) }} NIM</p>
@@ -239,8 +263,14 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
       <!-- Already paid on chain -->
       <div v-else-if="hasPaidOnChain" class="already-paid">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="8" fill="#198060"/>
-          <path d="M5 8L7 10L11 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="8" cy="8" r="8" fill="#198060" />
+          <path
+            d="M5 8L7 10L11 6"
+            stroke="white"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
         Déjà payé on-chain ✓
       </div>
@@ -248,8 +278,19 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
       <!-- Security note -->
       <div class="security-note">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-          <path d="M6.5 1L2 3V7C2 9.5 4 11.8 6.5 12.5C9 11.8 11 9.5 11 7V3L6.5 1Z" stroke="#8B8880" stroke-width="1.1" fill="none"/>
-          <path d="M4.5 6.5L5.8 7.8L8.5 5" stroke="#8B8880" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M6.5 1L2 3V7C2 9.5 4 11.8 6.5 12.5C9 11.8 11 9.5 11 7V3L6.5 1Z"
+            stroke="#8B8880"
+            stroke-width="1.1"
+            fill="none"
+          />
+          <path
+            d="M4.5 6.5L5.8 7.8L8.5 5"
+            stroke="#8B8880"
+            stroke-width="1.1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
         <span>Sécurisé via Nimiq Pay · clés jamais exposées</span>
       </div>
@@ -261,9 +302,9 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
 
     <!-- Buttons -->
     <div class="actions">
-      <!-- En attente de confirmation on-chain après paiement -->
+      <!-- Awaiting on-chain confirmation after payment -->
       <div v-if="awaitingOnChain" class="confirming-banner">
-        <span class="spin-dot"/>
+        <span class="spin-dot" />
         <span>Confirmation on-chain en cours…</span>
       </div>
 
@@ -274,21 +315,26 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
         @click="pay"
       >
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <circle cx="11" cy="11" r="11" fill="#1A1916"/>
-          <path d="M6.5 17L11 7L15.5 17H6.5Z" fill="#F6B221"/>
+          <circle cx="11" cy="11" r="11" fill="#1A1916" />
+          <path d="M6.5 17L11 7L15.5 17H6.5Z" fill="#F6B221" />
         </svg>
         <span>{{ isPaying ? 'Traitement…' : `Payer ${perPerson.toFixed(2)} NIM` }}</span>
       </button>
 
       <button class="btn-qr" :disabled="awaitingOnChain" @click="showQR = true">
         <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-          <rect x="2" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4"/>
-          <rect x="2" y="11" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4"/>
-          <rect x="11" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4"/>
-          <rect x="3.5" y="3.5" width="2" height="2" fill="#3D3B35"/>
-          <rect x="3.5" y="12.5" width="2" height="2" fill="#3D3B35"/>
-          <rect x="12.5" y="3.5" width="2" height="2" fill="#3D3B35"/>
-          <path d="M11 11H13M15 11V13M11 15H13M15 15V13M15 13H11" stroke="#3D3B35" stroke-width="1.4" stroke-linecap="round"/>
+          <rect x="2" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
+          <rect x="2" y="11" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
+          <rect x="11" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
+          <rect x="3.5" y="3.5" width="2" height="2" fill="#3D3B35" />
+          <rect x="3.5" y="12.5" width="2" height="2" fill="#3D3B35" />
+          <rect x="12.5" y="3.5" width="2" height="2" fill="#3D3B35" />
+          <path
+            d="M11 11H13M15 11V13M11 15H13M15 15V13M15 13H11"
+            stroke="#3D3B35"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
         </svg>
         <span>Afficher QR Code</span>
       </button>
@@ -332,7 +378,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   cursor: pointer;
 }
 
@@ -354,7 +400,9 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   box-shadow: var(--shadow-md);
 }
 
-.recipient-avatar { margin: 0 auto 10px; }
+.recipient-avatar {
+  margin: 0 auto 10px;
+}
 
 .recipient-name {
   font-size: 16px;
@@ -369,7 +417,9 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
 }
 
 /* Amount */
-.amount-block { text-align: center; }
+.amount-block {
+  text-align: center;
+}
 
 .amount-label {
   font-size: 10px;
@@ -406,7 +456,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   background: var(--bg-card);
   border-radius: 14px;
   padding: 14px 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .detail-label {
@@ -424,9 +474,17 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   font-size: 12px;
 }
 
-.detail-item { color: var(--text-mid); }
-.detail-val { font-weight: 600; color: var(--dark); }
-.detail-sep { border-top: 1px solid var(--border-subtle); margin: 8px 0; }
+.detail-item {
+  color: var(--text-mid);
+}
+.detail-val {
+  font-weight: 600;
+  color: var(--dark);
+}
+.detail-sep {
+  border-top: 1px solid var(--border-subtle);
+  margin: 8px 0;
+}
 
 .detail-total {
   font-size: 13px;
@@ -439,7 +497,7 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   background: var(--bg-card);
   border-radius: 14px;
   padding: 14px 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .progress-head {
@@ -471,7 +529,9 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   font-family: inherit;
 }
 
-.refresh-btn:disabled { opacity: 0.5; }
+.refresh-btn:disabled {
+  opacity: 0.5;
+}
 
 .spin-dot {
   width: 8px;
@@ -483,7 +543,11 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   display: inline-block;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .progress-bar {
   height: 4px;
@@ -507,9 +571,21 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   color: var(--text-mid);
 }
 
-.remaining { font-size: 12px; color: var(--text); margin-top: 6px; }
-.remaining.done { color: var(--green); font-weight: 600; }
-.load-error { font-size: 11px; color: var(--text); font-style: italic; margin-top: 6px; }
+.remaining {
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 6px;
+}
+.remaining.done {
+  color: var(--green);
+  font-weight: 600;
+}
+.load-error {
+  font-size: 11px;
+  color: var(--text);
+  font-style: italic;
+  margin-top: 6px;
+}
 
 .info-banner {
   background: var(--accent-dim);
@@ -539,7 +615,10 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   padding: 4px 0;
 }
 
-.security-note span { font-size: 10.5px; color: var(--text); }
+.security-note span {
+  font-size: 10.5px;
+  color: var(--text);
+}
 
 .dev-notice {
   font-size: 11px;
@@ -576,8 +655,13 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   transition: opacity 0.15s;
 }
 
-.btn-pay:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-pay:hover:not(:disabled) { opacity: 0.9; }
+.btn-pay:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-pay:hover:not(:disabled) {
+  opacity: 0.9;
+}
 
 .confirming-banner {
   display: flex;
@@ -603,14 +687,16 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   background: transparent;
   font-size: 13px;
   font-weight: 500;
-  color: #3D3B35;
+  color: #3d3b35;
   font-family: inherit;
   width: 100%;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.btn-qr:hover { background: var(--border-subtle); }
+.btn-qr:hover {
+  background: var(--border-subtle);
+}
 
 .error-msg {
   font-size: 13px;
@@ -632,8 +718,17 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   gap: 8px;
 }
 
-.qr-desc { font-size: 18px; font-weight: 700; color: var(--dark); }
-.qr-amount { font-size: 32px; font-weight: 700; color: var(--dark); letter-spacing: -1px; }
+.qr-desc {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dark);
+}
+.qr-amount {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--dark);
+  letter-spacing: -1px;
+}
 
 .qr-wrap {
   background: var(--bg-card);
@@ -643,5 +738,8 @@ onUnmounted(() => { if (pollId !== null) clearInterval(pollId); });
   margin: 12px 0 4px;
 }
 
-.qr-hint { font-size: 13px; color: var(--text); }
+.qr-hint {
+  font-size: 13px;
+  color: var(--text);
+}
 </style>

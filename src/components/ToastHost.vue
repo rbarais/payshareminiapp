@@ -43,11 +43,20 @@ const toast = useToast();
   text-align: center;
 }
 
-.toast.error { background: var(--red); }
-.toast.success { background: var(--green); }
+.toast.error {
+  background: var(--red);
+}
+.toast.success {
+  background: var(--green);
+}
 
 .toast-enter-active,
-.toast-leave-active { transition: all 0.25s ease; }
+.toast-leave-active {
+  transition: all 0.25s ease;
+}
 .toast-enter-from,
-.toast-leave-to { opacity: 0; transform: translateY(14px); }
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(14px);
+}
 </style>

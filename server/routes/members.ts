@@ -4,7 +4,7 @@ import { requireAuth, type AuthRequest } from '../lib/auth.js';
 
 const router = Router();
 
-// POST /api/groups/:id/members — le créateur ajoute un membre placeholder (sans adresse)
+// POST /api/groups/:id/members — the creator adds a placeholder member (without an address)
 router.post('/:id/members', requireAuth, async (req, res): Promise<void> => {
   const { address } = (req as AuthRequest).user;
   const groupId = req.params.id;

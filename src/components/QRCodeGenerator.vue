@@ -12,13 +12,7 @@ const size = computed(() => props.size || 220);
 
 <template>
   <div class="qr-wrapper">
-    <QrcodeVue
-      :value="url"
-      :size="size"
-      foreground="#000000"
-      background="#ffffff"
-      level="H"
-    />
+    <QrcodeVue :value="url" :size="size" foreground="#000000" background="#ffffff" level="H" />
   </div>
 </template>
 

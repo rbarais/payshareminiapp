@@ -10,36 +10,37 @@ import WalletBadge from '../components/WalletBadge.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
 import { captureError } from '../utils/errors';
 
-const router = useRouter()
-const session = useSession()
-const store = useGroupsStore()
-const toast = useToast()
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
+const toast = useToast();
 
-// Hydrate groupes + dépenses depuis la DB à l'ouverture (stale-while-revalidate).
+// Hydrate groups + expenses from the DB on open (stale-while-revalidate).
 onMounted(async () => {
-  try { await store.refreshAll(); } catch (err) { captureError(err, 'HomeView.refreshAll'); toast.show('Synchronisation impossible', 'error'); }
+  try {
+    await store.refreshAll();
+  } catch (err) {
+    captureError(err, 'HomeView.refreshAll');
+    toast.show('Synchronisation impossible', 'error');
+  }
 });
 
 const userId = computed(() => session.user.value?.id ?? '');
 const syncing = computed(() => store.syncing.value);
 
-// Groupes réels + nb de dépenses + dettes/crédits bruts de l'utilisateur.
+// Real groups + expense count + the user's gross debts/credits.
 const groups = computed(() =>
-  store.groups.value.map((g) => ({
-    group: g,
-    expenseCount: store.groupExpenses(g.id).length,
-    grossDebt: store.grossDebtTotal(g.id, userId.value),
-    grossCredit: store.grossCreditForUser(g.id, userId.value),
+  store.groups.value.map((group) => ({
+    group,
+    expenseCount: store.groupExpenses(group.id).length,
+    grossDebt: store.grossDebtTotal(group.id, userId.value),
+    grossCredit: store.grossCreditForUser(group.id, userId.value),
   })),
 );
 
-// Solde global agrégé (brut) : ce qu'on te doit vs ce que tu dois.
-const credited = computed(() =>
-  groups.value.reduce((s, g) => s + g.grossCredit, 0),
-);
-const owed = computed(() =>
-  groups.value.reduce((s, g) => s + g.grossDebt, 0),
-);
+// Aggregated global balance (gross): what others owe you vs what you owe.
+const credited = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossCredit, 0));
+const owed = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossDebt, 0));
 
 function disconnect() {
   session.disconnect();
@@ -47,11 +48,11 @@ function disconnect() {
 }
 
 function goToNewGroup() {
-  router.push({ name: 'newGroup' })
+  router.push({ name: 'newGroup' });
 }
 
 function goToGroup(id: string) {
-  router.push({ name: 'group', params: { id } })
+  router.push({ name: 'group', params: { id } });
 }
 </script>
 
@@ -80,13 +81,13 @@ function goToGroup(id: string) {
       <!-- Group list -->
       <div v-if="groups.length" class="group-list">
         <GroupCard
-          v-for="g in groups"
-          :key="g.group.id"
-          :group="g.group"
-          :expense-count="g.expenseCount"
-          :gross-debt="g.grossDebt"
-          :gross-credit="g.grossCredit"
-          @click="goToGroup(g.group.id)"
+          v-for="entry in groups"
+          :key="entry.group.id"
+          :group="entry.group"
+          :expense-count="entry.expenseCount"
+          :gross-debt="entry.grossDebt"
+          :gross-credit="entry.grossCredit"
+          @click="goToGroup(entry.group.id)"
         />
       </div>
 
@@ -94,10 +95,20 @@ function goToGroup(id: string) {
       <div v-else class="empty">
         <div class="empty-icon">
           <svg width="34" height="34" viewBox="0 0 22 22" fill="none">
-            <circle cx="8" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5"/>
-            <circle cx="15" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5"/>
-            <path d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19" stroke="#C8C5BF" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M15 14C18.31 14 21 16.24 21 19" stroke="#C8C5BF" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="8" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5" />
+            <circle cx="15" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5" />
+            <path
+              d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19"
+              stroke="#C8C5BF"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M15 14C18.31 14 21 16.24 21 19"
+              stroke="#C8C5BF"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
         </div>
         <div class="empty-title">Aucun groupe ici</div>
@@ -175,7 +186,9 @@ function goToGroup(id: string) {
   transition: opacity 0.15s;
 }
 
-.new-btn:hover { opacity: 0.8; }
+.new-btn:hover {
+  opacity: 0.8;
+}
 
 .syncing-dot {
   width: 7px;
@@ -187,8 +200,15 @@ function goToGroup(id: string) {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.85); }
-  50% { opacity: 0.9; transform: scale(1.1); }
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.1);
+  }
 }
 
 .new-plus {

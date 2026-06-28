@@ -1,33 +1,43 @@
-import type { Group, Expense, Settlement } from '../types';
+import type {
+  Group,
+  Expense,
+  Settlement,
+  SerializedGroup,
+  SerializedExpense,
+  SerializedSettlement,
+} from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────
-// Persistance locale (localStorage).
+// Local persistence (localStorage).
 //
-// En Option B, localStorage sert de cache offline : la source de vérité du
-// métier collaboratif sera le backend (Phase 1bis), et celle des paiements
-// la blockchain. Pour la Phase 0, c'est le stockage principal du store.
+// In Option B, localStorage acts as an offline cache: the source of truth for
+// collaborative data will be the backend (Phase 1bis), and the blockchain for
+// payments. For Phase 0 it is the store's primary storage.
 // ─────────────────────────────────────────────────────────────────────────
 
 const GROUPS_KEY = 'payshare_groups';
 const EXPENSES_KEY = 'payshare_expenses';
 const SETTLEMENTS_KEY = 'payshare_settlements';
 
-// Recharge un tableau JSON typé, en re-hydratant les dates depuis leurs strings.
-function load<T>(key: string, reviveDates: (raw: any) => T): T[] {
+// Reload a typed JSON array, re-hydrating dates from their string form.
+function load<TStored, TResult>(key: string, reviveDates: (raw: TStored) => TResult): TResult[] {
   const stored = localStorage.getItem(key);
   if (!stored) return [];
   try {
-    return (JSON.parse(stored) as any[]).map(reviveDates);
+    return (JSON.parse(stored) as TStored[]).map(reviveDates);
   } catch {
     return [];
   }
 }
 
 export function loadGroups(): Group[] {
-  return load<Group>(GROUPS_KEY, (g) => ({
-    ...g,
-    createdAt: new Date(g.createdAt),
-    members: (g.members ?? []).map((m: any) => ({ ...m, joinedAt: new Date(m.joinedAt) })),
+  return load<SerializedGroup, Group>(GROUPS_KEY, (group) => ({
+    ...group,
+    createdAt: new Date(group.createdAt),
+    members: (group.members ?? []).map((member) => ({
+      ...member,
+      joinedAt: new Date(member.joinedAt),
+    })),
   }));
 }
 
@@ -36,7 +46,10 @@ export function saveGroups(groups: Group[]): void {
 }
 
 export function loadExpenses(): Expense[] {
-  return load<Expense>(EXPENSES_KEY, (e) => ({ ...e, createdAt: new Date(e.createdAt) }));
+  return load<SerializedExpense, Expense>(EXPENSES_KEY, (expense) => ({
+    ...expense,
+    createdAt: new Date(expense.createdAt),
+  }));
 }
 
 export function saveExpenses(expenses: Expense[]): void {
@@ -44,14 +57,17 @@ export function saveExpenses(expenses: Expense[]): void {
 }
 
 export function loadSettlements(): Settlement[] {
-  return load<Settlement>(SETTLEMENTS_KEY, (s) => ({ ...s, settledAt: new Date(s.settledAt) }));
+  return load<SerializedSettlement, Settlement>(SETTLEMENTS_KEY, (settlement) => ({
+    ...settlement,
+    settledAt: new Date(settlement.settledAt),
+  }));
 }
 
 export function saveSettlements(settlements: Settlement[]): void {
   localStorage.setItem(SETTLEMENTS_KEY, JSON.stringify(settlements));
 }
 
-// Génère un id unique préfixé (ex. generateId('group') → 'group_…').
+// Generate a unique prefixed id (e.g. generateId('group') → 'group_…').
 export function generateId(prefix = 'id'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }

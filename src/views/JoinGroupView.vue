@@ -9,33 +9,36 @@ import { authenticate, getStoredJwt } from '../utils/auth';
 import { captureError } from '../utils/errors';
 import InitialAvatar from '../components/InitialAvatar.vue';
 
-const props = defineProps<{ g: string; t: string }>();
+const props = defineProps<{ groupId: string; token: string }>();
 
 const router = useRouter();
 const session = useSession();
 const store = useGroupsStore();
 const toast = useToast();
 
-// Placeholders disponibles (address IS NULL) dans le groupe
+// Available placeholders (address IS NULL) in the group
 const placeholders = ref<{ id: string; name: string }[]>([]);
 const loadingPreview = ref(true);
 
-// null = pas encore choisi · string = UUID du placeholder sélectionné · 'new' = nouveau membre
+// null = not chosen yet · string = selected placeholder UUID · 'new' = new member
 const choice = ref<string | 'new' | null>(null);
 const displayName = ref(session.user.value?.name ?? '');
 const joining = ref(false);
 
 onMounted(async () => {
-  if (!props.g || !props.t) { loadingPreview.value = false; return; }
+  if (!props.groupId || !props.token) {
+    loadingPreview.value = false;
+    return;
+  }
   try {
-    const preview = await fetchJoinPreview(props.g, props.t);
+    const preview = await fetchJoinPreview(props.groupId, props.token);
     placeholders.value = preview.placeholders;
   } catch {
-    // Token invalide ou réseau — on le saura au moment du join
+    // Invalid token or network error — we'll find out at join time
   } finally {
     loadingPreview.value = false;
   }
-  // Pré-remplir le nom si déjà connecté
+  // Pre-fill the name if already connected
   if (session.user.value?.name) displayName.value = session.user.value.name;
 });
 
@@ -72,11 +75,9 @@ async function join() {
     if (!getStoredJwt()) await authenticate(user.id);
 
     const options =
-      choice.value === 'new'
-        ? { name: displayName.value.trim() }
-        : { placeholderId: choice.value };
+      choice.value === 'new' ? { name: displayName.value.trim() } : { placeholderId: choice.value };
 
-    await joinGroup(props.g, props.t, options);
+    await joinGroup(props.groupId, props.token, options);
   } catch (err) {
     captureError(err, 'JoinGroupView.joinGroup');
     toast.show('Invitation invalide ou déjà utilisée', 'error');
@@ -90,7 +91,7 @@ async function join() {
     captureError(err, 'JoinGroupView.refreshAll');
   }
 
-  const groupName = store.getGroup(props.g)?.name ?? 'le groupe';
+  const groupName = store.getGroup(props.groupId)?.name ?? 'le groupe';
   toast.show(`Tu as rejoint « ${groupName} »`, 'success');
   router.replace({ name: 'home' });
   joining.value = false;
@@ -108,11 +109,16 @@ const canJoin = () => {
     <div class="top-bar">
       <button class="icon-btn" @click="goBack">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M2 2L12 12M12 2L2 12" stroke="#3D3B35" stroke-width="1.8" stroke-linecap="round"/>
+          <path
+            d="M2 2L12 12M12 2L2 12"
+            stroke="#3D3B35"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
         </svg>
       </button>
       <span class="bar-title">Rejoindre un groupe</span>
-      <div style="width:36px"/>
+      <div style="width: 36px" />
     </div>
 
     <div class="content">
@@ -133,7 +139,13 @@ const canJoin = () => {
             <InitialAvatar :name="p.name" :size="40" />
             <span class="placeholder-name">{{ p.name }}</span>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M6 3L11 8L6 13" stroke="#8B8880" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path
+                d="M6 3L11 8L6 13"
+                stroke="#8B8880"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </button>
 
@@ -141,17 +153,23 @@ const canJoin = () => {
             <div class="new-avatar">+</div>
             <span class="placeholder-name">Je ne suis pas dans la liste</span>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M6 3L11 8L6 13" stroke="#8B8880" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path
+                d="M6 3L11 8L6 13"
+                stroke="#8B8880"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </button>
         </div>
       </template>
 
-      <!-- Placeholder sélectionné : confirmer -->
+      <!-- Selected placeholder: confirm -->
       <template v-else-if="choice !== null && choice !== 'new'">
         <div class="confirm-card">
-          <InitialAvatar :name="placeholders.find(p => p.id === choice)?.name ?? ''" :size="56" />
-          <p class="confirm-name">{{ placeholders.find(p => p.id === choice)?.name }}</p>
+          <InitialAvatar :name="placeholders.find((p) => p.id === choice)?.name ?? ''" :size="56" />
+          <p class="confirm-name">{{ placeholders.find((p) => p.id === choice)?.name }}</p>
           <p class="hint">Tu vas lier ton wallet Nimiq à ce membre du groupe.</p>
         </div>
         <button class="link-back" @click="choice = null">← Choisir un autre</button>
@@ -161,31 +179,31 @@ const canJoin = () => {
       <template v-else>
         <div class="field-card">
           <p class="hint">
-            {{ placeholders.length > 0
-              ? 'Tu rejoins le groupe en tant que nouveau membre.'
-              : 'Tu as été invité à rejoindre un groupe. Choisis le nom visible par les autres.' }}
+            {{
+              placeholders.length > 0
+                ? 'Tu rejoins le groupe en tant que nouveau membre.'
+                : 'Tu as été invité à rejoindre un groupe. Choisis le nom visible par les autres.'
+            }}
           </p>
-          <div class="field-label" style="margin-top:18px;">Ton nom</div>
+          <div class="field-label" style="margin-top: 18px">Ton nom</div>
           <div class="name-input-wrap">
             <input
-              class="name-input"
               v-model="displayName"
+              class="name-input"
               type="text"
               placeholder="Ton prénom"
               @keyup.enter="join"
             />
           </div>
         </div>
-        <button v-if="placeholders.length > 0" class="link-back" @click="choice = null">← Choisir dans la liste</button>
+        <button v-if="placeholders.length > 0" class="link-back" @click="choice = null">
+          ← Choisir dans la liste
+        </button>
       </template>
     </div>
 
     <div class="cta-area">
-      <button
-        class="btn-primary"
-        :disabled="!canJoin() || joining"
-        @click="join"
-      >
+      <button class="btn-primary" :disabled="!canJoin() || joining" @click="join">
         {{ joining ? 'Connexion…' : 'Rejoindre le groupe' }}
       </button>
     </div>
@@ -237,7 +255,7 @@ const canJoin = () => {
 }
 .hint {
   font-size: 14px;
-  color: var(--muted, #6B6860);
+  color: var(--muted, #6b6860);
   line-height: 1.45;
   margin: 0 0 4px;
 }
@@ -259,8 +277,12 @@ const canJoin = () => {
   cursor: pointer;
   font-family: inherit;
 }
-.placeholder-btn:active { opacity: 0.75; }
-.placeholder-btn.new { background: var(--border, #f0ede8); }
+.placeholder-btn:active {
+  opacity: 0.75;
+}
+.placeholder-btn.new {
+  background: var(--border, #f0ede8);
+}
 .placeholder-name {
   flex: 1;
   font-size: 15px;
@@ -303,7 +325,7 @@ const canJoin = () => {
 .field-label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--muted, #8B8880);
+  color: var(--muted, #8b8880);
   margin-bottom: 8px;
 }
 .name-input-wrap {
@@ -326,7 +348,7 @@ const canJoin = () => {
   background: none;
   border: none;
   font-size: 13px;
-  color: var(--text-mid, #8B8880);
+  color: var(--text-mid, #8b8880);
   cursor: pointer;
   padding: 4px 0;
   font-family: inherit;
@@ -341,10 +363,12 @@ const canJoin = () => {
   padding: 16px;
   border: none;
   border-radius: 14px;
-  background: var(--accent, #1F2348);
+  background: var(--accent, #1f2348);
   color: #fff;
   font-size: 16px;
   font-weight: 600;
 }
-.btn-primary:disabled { opacity: 0.5; }
+.btn-primary:disabled {
+  opacity: 0.5;
+}
 </style>

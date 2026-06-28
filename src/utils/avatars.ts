@@ -1,5 +1,5 @@
-// Palette d'avatars par initiale, assignée par index (membre, participant…).
-// Centralisée ici car réutilisée par plusieurs vues/composants.
+// Initial-avatar palette, assigned by index (member, participant…).
+// Centralized here because it is reused by several views/components.
 export const AVATAR_COLORS = [
   { bg: '#BEE0FF', color: '#0D3A5C' },
   { bg: '#C6F0DC', color: '#0A4028' },
