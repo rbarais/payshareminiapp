@@ -1,33 +1,11 @@
-<script setup lang="ts">
-import { computed } from 'vue';
-import type { Expense } from '../types';
-
-// Card for an expense within a group. Clicking opens the pay invitation;
-// the pencil emits `edit`. Derived values (share, payer) are provided by the
-// parent, which knows the group context and the current user.
-const props = defineProps<{
-  expense: Expense;
-  userShare: number;
-  paidByName: string;
-  isMine: boolean;
-}>();
-defineEmits<{ select: []; edit: [] }>();
-
-const dateLabel = computed(() =>
-  props.expense.createdAt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
-);
-
-const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.amount) * 100));
-</script>
-
 <template>
   <div class="expense-card" @click="$emit('select')">
     <div class="expense-top">
       <div class="expense-left">
         <div class="expense-title">{{ expense.description }}</div>
-        <div class="expense-meta">Payé par {{ paidByName }} · {{ dateLabel }}</div>
+        <div class="expense-meta">{{ t('group.paidByMeta') }} {{ paidByName }} · {{ dateLabel }}</div>
       </div>
-      <button class="exp-edit-btn" aria-label="Modifier la dépense" @click.stop="$emit('edit')">
+      <button class="exp-edit-btn" :aria-label="t('group.editExpenseAriaLabel')" @click.stop="$emit('edit')">
         <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
           <path
             d="M2 13L5 10M9 2L13 6L6.5 12.5L2.5 12.5L2.5 8.5L9 2Z"
@@ -41,7 +19,7 @@ const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.am
       <div class="expense-right">
         <div class="expense-total">{{ expense.amount.toFixed(2) }} {{ expense.currency }}</div>
         <div class="expense-share" :style="{ color: isMine ? '#198060' : '#CC3C3C' }">
-          {{ isMine ? 'tu as payé' : `−${userShare.toFixed(2)} ${expense.currency}` }}
+          {{ isMine ? t('group.youPaid') : `−${userShare.toFixed(2)} ${expense.currency}` }}
         </div>
       </div>
     </div>
@@ -53,6 +31,34 @@ const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.am
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { Expense } from '../types';
+import { useI18n } from '../stores/i18n';
+
+// Card for an expense within a group. Clicking opens the pay invitation;
+// the pencil emits `edit`. Derived values (share, payer) are provided by the
+// parent, which knows the group context and the current user.
+const props = defineProps<{
+  expense: Expense;
+  userShare: number;
+  paidByName: string;
+  isMine: boolean;
+}>();
+defineEmits<{ select: []; edit: [] }>();
+
+const { t, locale } = useI18n();
+
+const dateLabel = computed(() =>
+  props.expense.createdAt.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'fr-FR', {
+    day: 'numeric',
+    month: 'short',
+  }),
+);
+
+const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.amount) * 100));
+</script>
 
 <style scoped>
 .expense-card {

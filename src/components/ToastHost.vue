@@ -1,9 +1,3 @@
-<script setup lang="ts">
-import { useToast } from '../stores/toast';
-
-const toast = useToast();
-</script>
-
 <template>
   <div class="toast-host">
     <transition-group name="toast">
@@ -13,6 +7,12 @@ const toast = useToast();
     </transition-group>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useToast } from '../stores/toast';
+
+const toast = useToast();
+</script>
 
 <style scoped>
 .toast-host {

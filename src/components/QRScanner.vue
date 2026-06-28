@@ -1,8 +1,61 @@
+<template>
+  <div class="scanner">
+    <div v-if="error" class="error-state">
+      <p class="error-icon">📷</p>
+      <p class="error-text">{{ error }}</p>
+
+      <!-- Fallback: paste the link manually -->
+      <div class="manual">
+        <input
+          v-model="manualLink"
+          type="text"
+          inputmode="url"
+          :placeholder="t('scan.pastePlaceholder')"
+          @keyup.enter="submitManual"
+        />
+        <button class="btn-submit" :disabled="!manualLink.trim()" @click="submitManual">
+          {{ t('scan.openBtn') }}
+        </button>
+      </div>
+
+      <button class="btn-cancel" @click="cancel">{{ t('common.back') }}</button>
+    </div>
+
+    <div v-else class="camera-view">
+      <video ref="videoEl" class="video" playsinline muted autoplay />
+      <canvas ref="canvasEl" class="canvas" />
+
+      <!-- Viewfinder -->
+      <div class="viewfinder">
+        <div class="corner tl" />
+        <div class="corner tr" />
+        <div class="corner bl" />
+        <div class="corner br" />
+      </div>
+
+      <p class="hint">{{ t('scan.hint') }}</p>
+
+      <button
+        class="btn-cancel"
+        @click="
+          () => {
+            stop();
+            cancel();
+          }
+        "
+      >
+        {{ t('common.cancel') }}
+      </button>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import jsQR from 'jsqr';
 import { decodeRoomFromText } from '../utils/room';
+import { useI18n } from '../stores/i18n';
 
 declare const BarcodeDetector: {
   new (options: { formats: string[] }): {
@@ -11,6 +64,7 @@ declare const BarcodeDetector: {
 };
 
 const router = useRouter();
+const { t } = useI18n();
 
 const videoEl = ref<HTMLVideoElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
@@ -51,8 +105,8 @@ async function start() {
 
   if (!navigator.mediaDevices?.getUserMedia) {
     error.value = !window.isSecureContext
-      ? `La caméra nécessite une connexion sécurisée (HTTPS). Ouvre l'app en https:// ou colle le lien manuellement.`
-      : 'Caméra non disponible sur cet appareil.';
+      ? t('scan.errHttps')
+      : t('scan.errUnavailable');
     return;
   }
 
@@ -81,11 +135,11 @@ async function start() {
   } catch (err) {
     const name = (err as DOMException)?.name;
     if (name === 'NotAllowedError') {
-      error.value = 'Accès caméra refusé. Autorise la caméra dans les réglages du navigateur.';
+      error.value = t('scan.errDenied');
     } else if (name === 'NotFoundError') {
-      error.value = 'Aucune caméra détectée sur cet appareil.';
+      error.value = t('scan.errNotFound');
     } else {
-      error.value = "Impossible d'accéder à la caméra.";
+      error.value = t('scan.errGeneric');
     }
   }
 }
@@ -149,58 +203,6 @@ function stop() {
 onMounted(start);
 onUnmounted(stop);
 </script>
-
-<template>
-  <div class="scanner">
-    <div v-if="error" class="error-state">
-      <p class="error-icon">📷</p>
-      <p class="error-text">{{ error }}</p>
-
-      <!-- Fallback: paste the link manually -->
-      <div class="manual">
-        <input
-          v-model="manualLink"
-          type="text"
-          inputmode="url"
-          placeholder="Colle le lien PayShare ici"
-          @keyup.enter="submitManual"
-        />
-        <button class="btn-submit" :disabled="!manualLink.trim()" @click="submitManual">
-          Ouvrir
-        </button>
-      </div>
-
-      <button class="btn-cancel" @click="cancel">Retour</button>
-    </div>
-
-    <div v-else class="camera-view">
-      <video ref="videoEl" class="video" playsinline muted autoplay />
-      <canvas ref="canvasEl" class="canvas" />
-
-      <!-- Viewfinder -->
-      <div class="viewfinder">
-        <div class="corner tl" />
-        <div class="corner tr" />
-        <div class="corner bl" />
-        <div class="corner br" />
-      </div>
-
-      <p class="hint">Pointe la caméra vers le QR code</p>
-
-      <button
-        class="btn-cancel"
-        @click="
-          () => {
-            stop();
-            cancel();
-          }
-        "
-      >
-        Annuler
-      </button>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .scanner {

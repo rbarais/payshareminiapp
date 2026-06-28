@@ -1,15 +1,3 @@
-<script setup lang="ts">
-import { useRouter } from 'vue-router';
-
-defineProps<{ amount: number; recipient: string }>();
-
-const router = useRouter();
-
-function goBack() {
-  router.push({ name: 'home' });
-}
-</script>
-
 <template>
   <div class="screen">
     <!-- Content -->
@@ -31,29 +19,43 @@ function goBack() {
         </svg>
       </div>
 
-      <div class="title">Paiement confirmé !</div>
-      <div class="subtitle">{{ amount.toFixed(2) }} NIM envoyés à {{ recipient }}</div>
+      <div class="title">{{ t('success.title') }}</div>
+      <div class="subtitle">{{ t('success.subtitle', { amount: amount.toFixed(2), recipient }) }}</div>
 
       <!-- TX card -->
       <div class="tx-card">
         <div class="tx-row">
-          <span class="tx-label">Transaction</span>
-          <span class="tx-confirmed">Confirmé ✓</span>
+          <span class="tx-label">{{ t('success.txLabel') }}</span>
+          <span class="tx-confirmed">{{ t('success.txConfirmed') }}</span>
         </div>
-        <div class="tx-hash">Bloc #4 218 756 · via Nimiq Pay</div>
+        <div class="tx-hash">{{ t('success.txHash') }}</div>
         <div class="tx-row" style="margin-top: 6px">
-          <span class="tx-label">Via Nimiq Pay</span>
-          <span class="tx-label">~2s</span>
+          <span class="tx-label">{{ t('success.txVia') }}</span>
+          <span class="tx-label">{{ t('success.txTime') }}</span>
         </div>
       </div>
     </div>
 
     <!-- Back button -->
     <div class="back-area">
-      <button class="btn-back" @click="goBack">← Retour à l'accueil</button>
+      <button class="btn-back" @click="goBack">{{ t('success.backBtn') }}</button>
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+import { useI18n } from '../stores/i18n';
+
+defineProps<{ amount: number; recipient: string }>();
+
+const router = useRouter();
+const { t } = useI18n();
+
+function goBack() {
+  router.push({ name: 'home' });
+}
+</script>
 
 <style scoped>
 .screen {

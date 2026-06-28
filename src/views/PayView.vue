@@ -1,3 +1,193 @@
+<template>
+  <!-- QR modal -->
+  <div v-if="showQR" class="screen">
+    <div class="top-bar">
+      <button class="icon-btn" @click="showQR = false">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+          <path
+            d="M10.5 4L6 8.5L10.5 13"
+            stroke="#1A1916"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+      <span class="bar-title">{{ t('pay.qrTitle') }}</span>
+      <div style="width: 36px" />
+    </div>
+    <div class="qr-center">
+      <div class="qr-desc">{{ room?.reason }}</div>
+      <div class="qr-amount">{{ perPerson.toFixed(2) }} NIM</div>
+      <div class="qr-wrap">
+        <QRCodeGenerator :url="shareUrl" :size="220" />
+      </div>
+      <p class="qr-hint">{{ t('pay.qrHint') }}</p>
+    </div>
+  </div>
+
+  <!-- Pay screen -->
+  <div v-else class="screen">
+    <div class="top-bar">
+      <button class="icon-btn" @click="goBack">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+          <path
+            d="M10.5 4L6 8.5L10.5 13"
+            stroke="#1A1916"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+      <span class="bar-title">{{ t('pay.title') }}</span>
+      <div style="width: 36px" />
+    </div>
+
+    <div class="scroll">
+      <!-- Recipient -->
+      <div class="recipient-card">
+        <InitialAvatar :name="room?.creatorName || 'M'" :size="56" class="recipient-avatar" />
+        <div class="recipient-name">{{ room?.creatorName ?? 'Marie' }}</div>
+        <div class="recipient-desc">{{ room?.reason ?? '' }}</div>
+      </div>
+
+      <!-- Amount -->
+      <div class="amount-block">
+        <div class="amount-label">{{ t('pay.amountLabel') }}</div>
+        <div class="amount-big">
+          {{ perPerson.toFixed(2) }} <span class="amount-currency">NIM</span>
+        </div>
+        <div class="amount-sub">
+          {{ t('pay.amountSub', { participants: room?.maxParticipants ?? 0, total: room?.amount?.toFixed(2) ?? '0.00' }) }}
+        </div>
+      </div>
+
+      <!-- Breakdown -->
+      <div v-if="room" class="detail-card">
+        <div class="detail-label">{{ t('pay.detailLabel') }}</div>
+        <div class="detail-row">
+          <span class="detail-item">{{ room.reason }}</span>
+          <span class="detail-val">{{ perPerson.toFixed(2) }} NIM</span>
+        </div>
+        <div class="detail-sep" />
+        <div class="detail-row">
+          <span class="detail-total">{{ t('pay.total') }}</span>
+          <span class="detail-total">{{ perPerson.toFixed(2) }} NIM</span>
+        </div>
+      </div>
+
+      <!-- Progress (tracking) -->
+      <div v-if="trackingAvailable" class="progress-card">
+        <div class="progress-head">
+          <span class="progress-label">{{ t('pay.progressLabel') }}</span>
+          <button class="refresh-btn" :disabled="syncing" @click="loadPayments">
+            <span v-if="syncing" class="spin-dot" /> {{ syncing ? t('pay.syncing') : '↻' }}
+          </button>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: progressPct + '%' }" />
+        </div>
+        <div class="progress-stats">
+          <span
+            ><strong>{{ collected.toFixed(2) }}</strong> / {{ room?.amount.toFixed(2) }} NIM</span
+          >
+          <span>{{ t('pay.paidCount', { paid: payersCount, total: room?.maxParticipants ?? 0 }) }}</span>
+        </div>
+        <p v-if="remaining > 0" class="remaining">{{ t('pay.remaining', { amount: remaining.toFixed(2) }) }}</p>
+        <p v-else class="remaining done">{{ t('pay.collected') }}</p>
+        <p v-if="loadError" class="load-error">{{ loadError }}</p>
+      </div>
+
+      <!-- Creator info -->
+      <div v-if="isCreator" class="info-banner">
+        {{ t('pay.creatorInfo') }}
+      </div>
+
+      <!-- Already paid on chain -->
+      <div v-else-if="hasPaidOnChain" class="already-paid">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="8" fill="#198060" />
+          <path
+            d="M5 8L7 10L11 6"
+            stroke="white"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        {{ t('pay.alreadyPaid') }}
+      </div>
+
+      <!-- Security note -->
+      <div class="security-note">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path
+            d="M6.5 1L2 3V7C2 9.5 4 11.8 6.5 12.5C9 11.8 11 9.5 11 7V3L6.5 1Z"
+            stroke="#8B8880"
+            stroke-width="1.1"
+            fill="none"
+          />
+          <path
+            d="M4.5 6.5L5.8 7.8L8.5 5"
+            stroke="#8B8880"
+            stroke-width="1.1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>{{ t('pay.securityNote') }}</span>
+      </div>
+
+      <div v-if="session.isNimiqApp.value === false" class="dev-notice">
+        {{ t('pay.devNotice') }}
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="actions">
+      <!-- Awaiting on-chain confirmation after payment -->
+      <div v-if="awaitingOnChain" class="confirming-banner">
+        <span class="spin-dot" />
+        <span>{{ t('pay.confirming') }}</span>
+      </div>
+
+      <button
+        v-else-if="!hasPaidOnChain && !isCreator"
+        class="btn-pay"
+        :disabled="isPaying"
+        @click="pay"
+      >
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="11" r="11" fill="#1A1916" />
+          <path d="M6.5 17L11 7L15.5 17H6.5Z" fill="#F6B221" />
+        </svg>
+        <span>{{ isPaying ? t('pay.processing') : t('pay.payButton', { amount: perPerson.toFixed(2) }) }}</span>
+      </button>
+
+      <button class="btn-qr" :disabled="awaitingOnChain" @click="showQR = true">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+          <rect x="2" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
+          <rect x="2" y="11" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
+          <rect x="11" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
+          <rect x="3.5" y="3.5" width="2" height="2" fill="#3D3B35" />
+          <rect x="3.5" y="12.5" width="2" height="2" fill="#3D3B35" />
+          <rect x="12.5" y="3.5" width="2" height="2" fill="#3D3B35" />
+          <path
+            d="M11 11H13M15 11V13M11 15H13M15 15V13M15 13H11"
+            stroke="#3D3B35"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span>{{ t('pay.showQr') }}</span>
+      </button>
+
+      <p v-if="error" class="error-msg">{{ error }}</p>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import type { ShareableRoom, Settlement } from '../types';
@@ -10,12 +200,14 @@ import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 
 import { useRouter } from 'vue-router';
+import { useI18n } from '../stores/i18n';
 
 const props = defineProps<{ room: ShareableRoom | null; groupId?: string }>();
 
 const router = useRouter();
 const session = useSession();
 const store = useGroupsStore();
+const { t } = useI18n();
 
 function goBack() {
   router.back();
@@ -75,7 +267,7 @@ async function loadPayments() {
   try {
     payments.value = await fetchRoomPayments(props.room.creatorId, props.room.id);
   } catch {
-    loadError.value = 'Synchronisation impossible pour le moment';
+    loadError.value = t('pay.syncError');
   } finally {
     syncing.value = false;
   }
@@ -107,7 +299,7 @@ async function pay() {
       handleSuccess(perPerson.value, props.room!.creatorName);
     }, 90_000);
   } catch {
-    error.value = 'Paiement annulé ou échoué';
+    error.value = t('pay.payError');
   } finally {
     isPaying.value = false;
   }
@@ -153,196 +345,6 @@ onUnmounted(() => {
   if (pollId !== null) clearInterval(pollId);
 });
 </script>
-
-<template>
-  <!-- QR modal -->
-  <div v-if="showQR" class="screen">
-    <div class="top-bar">
-      <button class="icon-btn" @click="showQR = false">
-        <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-          <path
-            d="M10.5 4L6 8.5L10.5 13"
-            stroke="#1A1916"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-      <span class="bar-title">QR Code</span>
-      <div style="width: 36px" />
-    </div>
-    <div class="qr-center">
-      <div class="qr-desc">{{ room?.reason }}</div>
-      <div class="qr-amount">{{ perPerson.toFixed(2) }} NIM</div>
-      <div class="qr-wrap">
-        <QRCodeGenerator :url="shareUrl" :size="220" />
-      </div>
-      <p class="qr-hint">Partage ce QR pour recevoir le paiement</p>
-    </div>
-  </div>
-
-  <!-- Pay screen -->
-  <div v-else class="screen">
-    <div class="top-bar">
-      <button class="icon-btn" @click="goBack">
-        <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-          <path
-            d="M10.5 4L6 8.5L10.5 13"
-            stroke="#1A1916"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-      <span class="bar-title">Régler ma part</span>
-      <div style="width: 36px" />
-    </div>
-
-    <div class="scroll">
-      <!-- Recipient -->
-      <div class="recipient-card">
-        <InitialAvatar :name="room?.creatorName || 'M'" :size="56" class="recipient-avatar" />
-        <div class="recipient-name">{{ room?.creatorName ?? 'Marie' }}</div>
-        <div class="recipient-desc">{{ room?.reason ?? '' }}</div>
-      </div>
-
-      <!-- Amount -->
-      <div class="amount-block">
-        <div class="amount-label">Montant à payer</div>
-        <div class="amount-big">
-          {{ perPerson.toFixed(2) }} <span class="amount-currency">NIM</span>
-        </div>
-        <div class="amount-sub">
-          {{ room?.maxParticipants }} participants · {{ room?.amount.toFixed(2) }} NIM total
-        </div>
-      </div>
-
-      <!-- Breakdown -->
-      <div v-if="room" class="detail-card">
-        <div class="detail-label">Détail</div>
-        <div class="detail-row">
-          <span class="detail-item">{{ room.reason }}</span>
-          <span class="detail-val">{{ perPerson.toFixed(2) }} NIM</span>
-        </div>
-        <div class="detail-sep" />
-        <div class="detail-row">
-          <span class="detail-total">Total</span>
-          <span class="detail-total">{{ perPerson.toFixed(2) }} NIM</span>
-        </div>
-      </div>
-
-      <!-- Progress (tracking) -->
-      <div v-if="trackingAvailable" class="progress-card">
-        <div class="progress-head">
-          <span class="progress-label">Avancement</span>
-          <button class="refresh-btn" :disabled="syncing" @click="loadPayments">
-            <span v-if="syncing" class="spin-dot" /> {{ syncing ? 'Sync…' : '↻' }}
-          </button>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: progressPct + '%' }" />
-        </div>
-        <div class="progress-stats">
-          <span
-            ><strong>{{ collected.toFixed(2) }}</strong> / {{ room?.amount.toFixed(2) }} NIM</span
-          >
-          <span>{{ payersCount }}/{{ room?.maxParticipants }} payés</span>
-        </div>
-        <p v-if="remaining > 0" class="remaining">Reste {{ remaining.toFixed(2) }} NIM</p>
-        <p v-else class="remaining done">Entièrement collecté ✓</p>
-        <p v-if="loadError" class="load-error">{{ loadError }}</p>
-      </div>
-
-      <!-- Creator info -->
-      <div v-if="isCreator" class="info-banner">
-        C'est ta dépense — partage le QR code ci-dessous à tes amis.
-      </div>
-
-      <!-- Already paid on chain -->
-      <div v-else-if="hasPaidOnChain" class="already-paid">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="8" fill="#198060" />
-          <path
-            d="M5 8L7 10L11 6"
-            stroke="white"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-        Déjà payé on-chain ✓
-      </div>
-
-      <!-- Security note -->
-      <div class="security-note">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-          <path
-            d="M6.5 1L2 3V7C2 9.5 4 11.8 6.5 12.5C9 11.8 11 9.5 11 7V3L6.5 1Z"
-            stroke="#8B8880"
-            stroke-width="1.1"
-            fill="none"
-          />
-          <path
-            d="M4.5 6.5L5.8 7.8L8.5 5"
-            stroke="#8B8880"
-            stroke-width="1.1"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-        <span>Sécurisé via Nimiq Pay · clés jamais exposées</span>
-      </div>
-
-      <div v-if="session.isNimiqApp.value === false" class="dev-notice">
-        Mode développement — le vrai paiement se fait dans Nimiq Pay
-      </div>
-    </div>
-
-    <!-- Buttons -->
-    <div class="actions">
-      <!-- Awaiting on-chain confirmation after payment -->
-      <div v-if="awaitingOnChain" class="confirming-banner">
-        <span class="spin-dot" />
-        <span>Confirmation on-chain en cours…</span>
-      </div>
-
-      <button
-        v-else-if="!hasPaidOnChain && !isCreator"
-        class="btn-pay"
-        :disabled="isPaying"
-        @click="pay"
-      >
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <circle cx="11" cy="11" r="11" fill="#1A1916" />
-          <path d="M6.5 17L11 7L15.5 17H6.5Z" fill="#F6B221" />
-        </svg>
-        <span>{{ isPaying ? 'Traitement…' : `Payer ${perPerson.toFixed(2)} NIM` }}</span>
-      </button>
-
-      <button class="btn-qr" :disabled="awaitingOnChain" @click="showQR = true">
-        <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-          <rect x="2" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
-          <rect x="2" y="11" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
-          <rect x="11" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
-          <rect x="3.5" y="3.5" width="2" height="2" fill="#3D3B35" />
-          <rect x="3.5" y="12.5" width="2" height="2" fill="#3D3B35" />
-          <rect x="12.5" y="3.5" width="2" height="2" fill="#3D3B35" />
-          <path
-            d="M11 11H13M15 11V13M11 15H13M15 15V13M15 13H11"
-            stroke="#3D3B35"
-            stroke-width="1.4"
-            stroke-linecap="round"
-          />
-        </svg>
-        <span>Afficher QR Code</span>
-      </button>
-
-      <p v-if="error" class="error-msg">{{ error }}</p>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .screen {

@@ -1,57 +1,3 @@
-<script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useSession } from '../stores/session';
-import { buildInviteDeeplink, decodeInviteFromText } from '../utils/room';
-
-const session = useSession();
-const emit = defineEmits<{ connected: [] }>();
-
-// Detect whether the URL contains a group invitation (?g=&t=).
-const pendingInvite = computed(() => decodeInviteFromText(window.location.href));
-
-// Relay the current URL to Nimiq Pay via deeplink.
-// Triggered by a tap (user gesture → required on iOS for custom schemes).
-function openInNimiqPay() {
-  window.location.href = buildInviteDeeplink(window.location.href);
-}
-
-// 'idle' → home screen · 'connecting' → peer discovery · 'connected' → success
-const phase = ref<'idle' | 'connecting' | 'connected'>('idle');
-
-const features = [
-  {
-    title: 'Groupes de dépenses',
-    sub: 'Voyages, appart, restos — partagez sans friction',
-    tint: 'rgba(246,178,33,0.14)',
-    icon: 'people',
-  },
-  {
-    title: 'Règlement en 2 secondes',
-    sub: 'Payez en crypto, sans passer par une banque',
-    tint: 'rgba(33,184,126,0.14)',
-    icon: 'flash',
-  },
-  {
-    title: 'Transparent & vérifiable',
-    sub: 'Tout est tracé sur la blockchain Nimiq',
-    tint: 'rgba(100,130,255,0.14)',
-    icon: 'shield',
-  },
-];
-
-async function connect() {
-  phase.value = 'connecting';
-  const ok = await session.connect();
-  if (!ok) {
-    phase.value = 'idle';
-    return;
-  }
-  phase.value = 'connected';
-  // Let the success message show briefly before entering the app.
-  setTimeout(() => emit('connected'), 700);
-}
-</script>
-
 <template>
   <div class="onboard">
     <!-- Home screen -->
@@ -85,9 +31,9 @@ async function connect() {
               />
             </svg>
           </div>
-          <div class="invite-title">Tu as été invité</div>
+          <div class="invite-title">{{ t('login.inviteTitle') }}</div>
           <div class="invite-sub">
-            Ouvre ce lien dans Nimiq Pay pour rejoindre le groupe et régler tes dépenses partagées.
+            {{ t('login.inviteSub') }}
           </div>
         </div>
 
@@ -96,10 +42,10 @@ async function connect() {
             <rect width="22" height="22" rx="6" fill="#1B1F3B" />
             <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
           </svg>
-          <span>Ouvrir dans Nimiq Pay</span>
+          <span>{{ t('login.openInNimiq') }}</span>
         </button>
         <p class="invite-hint">
-          Si le bouton ne fonctionne pas, copie le lien et colle-le dans Nimiq Pay.
+          {{ t('login.inviteHint') }}
         </p>
       </template>
 
@@ -173,18 +119,18 @@ async function connect() {
             <rect width="22" height="22" rx="6" fill="#1B1F3B" />
             <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
           </svg>
-          <span>Me connecter via Nimiq Pay</span>
+          <span>{{ t('login.connectBtn') }}</span>
         </button>
         <button
           v-if="session.isNimiqApp.value === false"
           class="cta-secondary"
           @click="openInNimiqPay"
         >
-          Ouvrir dans Nimiq Pay
+          {{ t('login.openInNimiq') }}
         </button>
         <p v-if="session.error.value" class="err">{{ session.error.value }}</p>
         <p class="privacy">
-          Aucune donnée personnelle n'est collectée. Tes clés restent dans Nimiq Pay.
+          {{ t('login.privacy') }}
         </p>
       </template>
     </div>
@@ -197,14 +143,55 @@ async function connect() {
         </svg>
       </div>
       <div class="status-text">
-        {{ phase === 'connected' ? 'Wallet connecté !' : 'Connexion au réseau…' }}
+        {{ phase === 'connected' ? t('login.connected') : t('login.connecting') }}
       </div>
       <div class="status-sub">
-        {{ phase === 'connected' ? session.walletShort.value : 'Recherche des pairs Nimiq…' }}
+        {{ phase === 'connected' ? session.walletShort.value : t('login.searchingPeers') }}
       </div>
     </div>
   </div>
+
 </template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import { useSession } from '../stores/session';
+import { t } from '../stores/i18n';
+import { buildInviteDeeplink, decodeInviteFromText } from '../utils/room';
+
+const session = useSession();
+const emit = defineEmits<{ connected: [] }>();
+
+// Detect whether the URL contains a group invitation (?g=&t=).
+const pendingInvite = computed(() => decodeInviteFromText(window.location.href));
+
+// Relay the current URL to Nimiq Pay via deeplink.
+// Triggered by a tap (user gesture → required on iOS for custom schemes).
+function openInNimiqPay() {
+  window.location.href = buildInviteDeeplink(window.location.href);
+}
+
+// 'idle' → home screen · 'connecting' → peer discovery · 'connected' → success
+const phase = ref<'idle' | 'connecting' | 'connected'>('idle');
+
+const features = computed(() => [
+  { title: t('login.feature1Title'), sub: t('login.feature1Sub'), tint: 'rgba(246,178,33,0.14)', icon: 'people' },
+  { title: t('login.feature2Title'), sub: t('login.feature2Sub'), tint: 'rgba(33,184,126,0.14)', icon: 'flash' },
+  { title: t('login.feature3Title'), sub: t('login.feature3Sub'), tint: 'rgba(100,130,255,0.14)', icon: 'shield' },
+]);
+
+async function connect() {
+  phase.value = 'connecting';
+  const ok = await session.connect();
+  if (!ok) {
+    phase.value = 'idle';
+    return;
+  }
+  phase.value = 'connected';
+  // Let the success message show briefly before entering the app.
+  setTimeout(() => emit('connected'), 700);
+}
+</script>
 
 <style scoped>
 .onboard {
