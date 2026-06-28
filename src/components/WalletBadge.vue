@@ -8,7 +8,7 @@
       </div>
     </div>
     <div class="identicon">
-      <NimiqIdenticon :size="38" />
+      <NimiqIdenticon :address="address" :size="38" />
       <div class="connected-dot">
         <svg width="6" height="5" viewBox="0 0 6 5" fill="none">
           <path

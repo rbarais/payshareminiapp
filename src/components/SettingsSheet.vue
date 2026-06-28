@@ -4,7 +4,7 @@
 
     <!-- Bloc wallet -->
     <div class="wallet-block">
-      <div class="identicon"><NimiqIdenticon :size="44" /></div>
+      <div class="identicon"><NimiqIdenticon :address="session.user.value?.id ?? ''" :size="44" /></div>
       <div class="wallet-meta">
         <div class="wallet-name">{{ session.user.value?.name }}</div>
         <div class="wallet-addr">{{ session.walletShort.value }}</div>
@@ -60,6 +60,7 @@ import type { Theme, Locale } from '../utils/prefsStorage';
 defineEmits<{ close: []; disconnect: [] }>();
 
 const session = useSession();
+
 const { theme, setTheme } = usePrefs();
 const { locale, setLocale, t } = useI18n();
 

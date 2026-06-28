@@ -2,6 +2,7 @@
   <div class="onboard">
     <!-- Home screen -->
     <div v-if="phase === 'idle'" class="hero">
+      <NimiqIdenticon address="NQ08 MB9N EYYA GRVB FSPX LY55 X5J9 RCHJ SDTB" :size="38" />
       <div class="logo-badge">
         <svg width="40" height="40" viewBox="0 0 26 26" fill="none">
           <path d="M6 20L13 4L20 20H6Z" fill="#1A1916" />
@@ -150,12 +151,14 @@
       </div>
     </div>
   </div>
+
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useSession } from '../stores/session';
 import { buildInviteDeeplink, decodeInviteFromText } from '../utils/room';
+import NimiqIdenticon from '../components/NimiqIdenticon.vue';
 
 const session = useSession();
 const emit = defineEmits<{ connected: [] }>();
