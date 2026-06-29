@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/vue';
 import './style.css';
 import App from './App.vue';
 import router from './router';
+import { applyTheme } from './stores/prefs';
 
 const app = createApp(App);
 
@@ -17,4 +18,5 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 }
 
 app.use(router);
+applyTheme();
 app.mount('#app');

@@ -1,15 +1,3 @@
-<script setup lang="ts">
-import type { GroupIcon } from '../types';
-import { GROUP_ICON_STYLE } from '../utils/groupUi';
-import GroupIconGlyph from './GroupIcon.vue';
-
-// Group icon picker (v-model). Reused for both creation and editing.
-defineProps<{ modelValue: GroupIcon }>();
-const emit = defineEmits<{ 'update:modelValue': [GroupIcon] }>();
-
-const TYPES: GroupIcon[] = ['person', 'home', 'car', 'list'];
-</script>
-
 <template>
   <div class="icon-picker">
     <button
@@ -25,6 +13,18 @@ const TYPES: GroupIcon[] = ['person', 'home', 'car', 'list'];
     </button>
   </div>
 </template>
+
+<script setup lang="ts">
+import type { GroupIcon } from '../types';
+import { GROUP_ICON_STYLE } from '../utils/groupUi';
+import GroupIconGlyph from './GroupIcon.vue';
+
+// Group icon picker (v-model). Reused for both creation and editing.
+defineProps<{ modelValue: GroupIcon }>();
+const emit = defineEmits<{ 'update:modelValue': [GroupIcon] }>();
+
+const TYPES: GroupIcon[] = ['person', 'home', 'car', 'list'];
+</script>
 
 <style scoped>
 .icon-picker {

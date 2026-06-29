@@ -24,6 +24,30 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+[data-theme='dark'] {
+  --bg: #16151a;
+  --bg-card: #1f1e25;
+  --dark: #f3f1ec;
+  --accent: #f6b221;
+  --accent-dim: #3a2f12;
+  --green: #34c59a;
+  --green-bg: #18352c;
+  --red: #e06b6b;
+  --red-bg: #3a1f1f;
+  --red-border: #4a2a2a;
+  --text: #8b8880;
+  --text-mid: #a8a49c;
+  --border: #2a2930;
+  --border-subtle: #232228;
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='dark'] body,
+[data-theme='dark'] #app {
+  background: var(--bg);
+}
+
 *,
 *::before,
 *::after {
@@ -39,10 +63,11 @@ body {
 #app {
   max-width: 430px;
   margin: 0 auto;
-  min-height: 100svh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  overflow: hidden;
 }
 
 h1,

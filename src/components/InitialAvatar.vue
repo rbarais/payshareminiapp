@@ -1,3 +1,7 @@
+<template>
+  <div class="avatar" :class="{ ring }" :style="style">{{ initial(name) }}</div>
+</template>
+
 <script setup lang="ts">
 import { computed } from 'vue';
 import { avatarStyle, initial } from '../utils/avatars';
@@ -19,10 +23,6 @@ const style = computed(() => {
   };
 });
 </script>
-
-<template>
-  <div class="avatar" :class="{ ring }" :style="style">{{ initial(name) }}</div>
-</template>
 
 <style scoped>
 .avatar {

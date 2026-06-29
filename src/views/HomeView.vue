@@ -1,67 +1,9 @@
-<script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useSession } from '../stores/session';
-import { useGroupsStore } from '../stores/groups';
-import { useToast } from '../stores/toast';
-import GroupCard from '../components/GroupCard.vue';
-import BottomNav from '../components/BottomNav.vue';
-import WalletBadge from '../components/WalletBadge.vue';
-import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
-import { captureError } from '../utils/errors';
-
-const router = useRouter();
-const session = useSession();
-const store = useGroupsStore();
-const toast = useToast();
-
-// Hydrate groups + expenses from the DB on open (stale-while-revalidate).
-onMounted(async () => {
-  try {
-    await store.refreshAll();
-  } catch (err) {
-    captureError(err, 'HomeView.refreshAll');
-    toast.show('Synchronisation impossible', 'error');
-  }
-});
-
-const userId = computed(() => session.user.value?.id ?? '');
-const syncing = computed(() => store.syncing.value);
-
-// Real groups + expense count + the user's gross debts/credits.
-const groups = computed(() =>
-  store.groups.value.map((group) => ({
-    group,
-    expenseCount: store.groupExpenses(group.id).length,
-    grossDebt: store.grossDebtTotal(group.id, userId.value),
-    grossCredit: store.grossCreditForUser(group.id, userId.value),
-  })),
-);
-
-// Aggregated global balance (gross): what others owe you vs what you owe.
-const credited = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossCredit, 0));
-const owed = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossDebt, 0));
-
-function disconnect() {
-  session.disconnect();
-  router.replace({ name: 'home' });
-}
-
-function goToNewGroup() {
-  router.push({ name: 'newGroup' });
-}
-
-function goToGroup(id: string) {
-  router.push({ name: 'group', params: { id } });
-}
-</script>
-
 <template>
   <div class="screen">
     <!-- Header -->
     <div class="header">
       <div class="logo">PayShare</div>
-      <WalletBadge :address="session.walletShort.value" @disconnect="disconnect" />
+      <WalletBadge :address="userId" @open="showSettings = true" />
     </div>
 
     <!-- Content -->
@@ -70,11 +12,11 @@ function goToGroup(id: string) {
 
       <!-- Groups header -->
       <div class="section-row">
-        <span class="section-title">Mes groupes</span>
+        <span class="section-title">{{ t('home.myGroups') }}</span>
         <span v-if="syncing" class="syncing-dot" />
         <button class="new-btn" @click="goToNewGroup">
           <span class="new-plus">+</span>
-          <span>Nouveau</span>
+          <span>{{ t('home.new') }}</span>
         </button>
       </div>
 
@@ -95,36 +37,104 @@ function goToGroup(id: string) {
       <div v-else class="empty">
         <div class="empty-icon">
           <svg width="34" height="34" viewBox="0 0 22 22" fill="none">
-            <circle cx="8" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5" />
-            <circle cx="15" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5" />
+            <circle cx="8" cy="8.5" r="3" stroke="currentColor" stroke-width="1.5" />
+            <circle cx="15" cy="8.5" r="3" stroke="currentColor" stroke-width="1.5" />
             <path
               d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19"
-              stroke="#C8C5BF"
+              stroke="currentColor"
               stroke-width="1.5"
               stroke-linecap="round"
             />
             <path
               d="M15 14C18.31 14 21 16.24 21 19"
-              stroke="#C8C5BF"
+              stroke="currentColor"
               stroke-width="1.5"
               stroke-linecap="round"
             />
           </svg>
         </div>
-        <div class="empty-title">Aucun groupe ici</div>
-        <div class="empty-sub">Crée un groupe ou rejoins-en un via QR code</div>
-        <button class="empty-cta" @click="goToNewGroup">+ Nouveau groupe</button>
+        <div class="empty-title">{{ t('home.emptyTitle') }}</div>
+        <div class="empty-sub">{{ t('home.emptySub') }}</div>
+        <button class="empty-cta" @click="goToNewGroup">{{ t('home.emptyCta') }}</button>
       </div>
     </div>
 
-    <!-- Bottom nav -->
-    <BottomNav active="home" />
+    <SettingsSheet
+      v-if="showSettings"
+      @close="showSettings = false"
+      @disconnect="
+        showSettings = false;
+        disconnect();
+      "
+    />
   </div>
 </template>
 
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useSession } from '../stores/session';
+import { useGroupsStore } from '../stores/groups';
+import { useToast } from '../stores/toast';
+import GroupCard from '../components/GroupCard.vue';
+import WalletBadge from '../components/WalletBadge.vue';
+import SettingsSheet from '../components/SettingsSheet.vue';
+import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
+import { captureError } from '../utils/errors';
+import { useI18n } from '../stores/i18n';
+
+const router = useRouter();
+const session = useSession();
+const store = useGroupsStore();
+const toast = useToast();
+const { t } = useI18n();
+
+// Hydrate groups + expenses from the DB on open (stale-while-revalidate).
+onMounted(async () => {
+  try {
+    await store.refreshAll();
+  } catch (err) {
+    captureError(err, 'HomeView.refreshAll');
+    toast.show(t('error.syncFailed'), 'error');
+  }
+});
+
+const userId = computed(() => session.user.value?.id ?? '');
+const syncing = computed(() => store.syncing.value);
+
+// Real groups + expense count + the user's gross debts/credits.
+const groups = computed(() =>
+  store.groups.value.map((group) => ({
+    group,
+    expenseCount: store.groupExpenses(group.id).length,
+    grossDebt: store.grossDebtTotal(group.id, userId.value),
+    grossCredit: store.grossCreditForUser(group.id, userId.value),
+  })),
+);
+
+// Aggregated global balance (gross): what others owe you vs what you owe.
+const credited = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossCredit, 0));
+const owed = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossDebt, 0));
+
+const showSettings = ref(false);
+
+function disconnect() {
+  session.disconnect();
+  router.replace({ name: 'home' });
+}
+
+function goToNewGroup() {
+  router.push({ name: 'newGroup' });
+}
+
+function goToGroup(id: string) {
+  router.push({ name: 'group', params: { id } });
+}
+</script>
+
 <style scoped>
 .screen {
-  flex: 1;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -154,7 +164,8 @@ function goToGroup(id: string) {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  overflow: hidden;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* Section row */
@@ -222,8 +233,6 @@ function goToGroup(id: string) {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  flex: 1;
-  overflow: hidden;
 }
 
 /* Empty state */
@@ -248,6 +257,7 @@ function goToGroup(id: string) {
   justify-content: center;
   margin-bottom: 8px;
   box-shadow: var(--shadow-sm);
+  color: var(--text);
 }
 
 .empty-title {

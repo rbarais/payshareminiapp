@@ -1,3 +1,9 @@
+<template>
+  <div class="qr-wrapper">
+    <QrcodeVue :value="url" :size="size" foreground="#000000" background="#ffffff" level="H" />
+  </div>
+</template>
+
 <script setup lang="ts">
 import { computed } from 'vue';
 import QrcodeVue from 'qrcode.vue';
@@ -9,12 +15,6 @@ const props = defineProps<{
 
 const size = computed(() => props.size || 220);
 </script>
-
-<template>
-  <div class="qr-wrapper">
-    <QrcodeVue :value="url" :size="size" foreground="#000000" background="#ffffff" level="H" />
-  </div>
-</template>
 
 <style scoped>
 .qr-wrapper {

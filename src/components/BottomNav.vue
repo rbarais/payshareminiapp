@@ -1,25 +1,3 @@
-<script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { useToast } from '../stores/toast';
-
-const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'scan' }>();
-
-const router = useRouter();
-const toast = useToast();
-
-// Icon color depending on the active tab.
-function iconColor(key: string): string {
-  return props.active === key ? '#F6B221' : '#A09890';
-}
-
-function go(key: 'home' | 'groups' | 'history' | 'scan') {
-  if (key === 'home') router.push({ name: 'home' });
-  else if (key === 'groups') router.push({ name: 'groups' });
-  else if (key === 'scan') router.push({ name: 'scan' });
-  else toast.show('Historique — bientôt disponible', 'info'); // Phase 5
-}
-</script>
-
 <template>
   <nav class="bottom-nav">
     <div class="nav-item" :class="{ active: active === 'home' }" @click="go('home')">
@@ -32,7 +10,7 @@ function go(key: 'home' | 'groups' | 'history' | 'scan') {
           stroke-linejoin="round"
         />
       </svg>
-      <span>Accueil</span>
+      <span>{{ t('nav.home') }}</span>
     </div>
     <div class="nav-item" :class="{ active: active === 'groups' }" @click="go('groups')">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
@@ -51,7 +29,7 @@ function go(key: 'home' | 'groups' | 'history' | 'scan') {
           stroke-linecap="round"
         />
       </svg>
-      <span>Groupes</span>
+      <span>{{ t('nav.groups') }}</span>
     </div>
     <div class="nav-item" :class="{ active: active === 'history' }" @click="go('history')">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
@@ -77,7 +55,7 @@ function go(key: 'home' | 'groups' | 'history' | 'scan') {
           stroke-linecap="round"
         />
       </svg>
-      <span>Historique</span>
+      <span>{{ t('nav.history') }}</span>
     </div>
     <div class="nav-item" :class="{ active: active === 'scan' }" @click="go('scan')">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
@@ -115,10 +93,34 @@ function go(key: 'home' | 'groups' | 'history' | 'scan') {
           stroke-linecap="round"
         />
       </svg>
-      <span>Scanner</span>
+      <span>{{ t('nav.scan') }}</span>
     </div>
   </nav>
 </template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+import { useToast } from '../stores/toast';
+import { useI18n } from '../stores/i18n';
+
+const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'scan' }>();
+
+const router = useRouter();
+const toast = useToast();
+const { t } = useI18n();
+
+// Icon color depending on the active tab.
+function iconColor(key: string): string {
+  return props.active === key ? '#F6B221' : 'currentColor';
+}
+
+function go(key: 'home' | 'groups' | 'history' | 'scan') {
+  if (key === 'home') router.push({ name: 'home' });
+  else if (key === 'groups') router.push({ name: 'groups' });
+  else if (key === 'scan') router.push({ name: 'scan' });
+  else toast.show(t('toast.historyComingSoon'), 'info'); // Phase 5
+}
+</script>
 
 <style scoped>
 .bottom-nav {
@@ -138,11 +140,12 @@ function go(key: 'home' | 'groups' | 'history' | 'scan') {
   gap: 3px;
   min-width: 52px;
   cursor: pointer;
+  color: var(--text);
 }
 
 .nav-item span {
   font-size: 10px;
-  color: #a09890;
+  color: var(--text);
   font-weight: 500;
 }
 

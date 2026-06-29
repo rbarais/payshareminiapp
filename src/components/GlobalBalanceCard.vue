@@ -1,17 +1,7 @@
-<script setup lang="ts">
-import { ref } from 'vue';
-
-// "Global balance" card: what others owe you vs what you owe, aggregated.
-// The NIM/EUR toggle is present but the real exchange rate comes in Phase 6.
-defineProps<{ credited: number; owed: number }>();
-
-const showEur = ref(false);
-</script>
-
 <template>
   <div class="balance-card">
     <div class="balance-top">
-      <div class="balance-title">Solde global</div>
+      <div class="balance-title">{{ t('home.globalBalance') }}</div>
       <button class="toggle-btn" @click="showEur = !showEur">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
           <path
@@ -27,18 +17,44 @@ const showEur = ref(false);
     </div>
     <div class="balance-row">
       <div>
-        <div class="balance-label">On te doit</div>
-        <div class="balance-amount">
-          {{ showEur ? 'Bientôt' : '+' + credited.toFixed(1) + ' NIM' }}
-        </div>
+        <div class="balance-label">{{ t('home.credited') }}</div>
+        <div class="balance-amount">{{ creditedStr }}</div>
       </div>
       <div class="balance-right">
-        <div class="balance-label">Tu dois</div>
-        <div class="balance-amount">{{ showEur ? 'Bientôt' : '−' + owed.toFixed(1) + ' NIM' }}</div>
+        <div class="balance-label">{{ t('home.owed') }}</div>
+        <div class="balance-amount">{{ owedStr }}</div>
       </div>
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { eurRate, fetchRate } from '../utils/rate';
+import { useI18n } from '../stores/i18n';
+
+// "Global balance" card: what others owe you vs what you owe, aggregated.
+const props = defineProps<{ credited: number; owed: number }>();
+
+const { t } = useI18n();
+
+const showEur = ref(false);
+onMounted(() => {
+  fetchRate();
+});
+
+function eur(nim: number): string {
+  if (eurRate.value == null) return '—';
+  return '≈ ' + (nim * eurRate.value).toFixed(2) + ' €';
+}
+
+const creditedStr = computed(() =>
+  showEur.value ? eur(props.credited) : '+' + props.credited.toFixed(1) + ' NIM',
+);
+const owedStr = computed(() =>
+  showEur.value ? eur(props.owed) : '−' + props.owed.toFixed(1) + ' NIM',
+);
+</script>
 
 <style scoped>
 .balance-card {

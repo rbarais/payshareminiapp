@@ -1,9 +1,40 @@
+<template>
+  <BaseSheet @close="emit('close')">
+    <div class="sheet-title">{{ t('settle.title') }}</div>
+    <div class="sheet-sub">{{ t('settle.sub') }}</div>
+
+    <div class="creditor-list">
+      <div v-for="debt in debts" :key="debt.creditor.id" class="creditor">
+        <div class="creditor-head">
+          <InitialAvatar :name="debt.creditor.name" :size="34" />
+          <div class="creditor-info">
+            <div class="creditor-name">{{ debt.creditor.name }}</div>
+            <div class="creditor-amount">{{ debt.remaining.toFixed(2) }} NIM</div>
+          </div>
+          <button v-if="canSettle(debt)" class="settle-btn" @click="settle(debt)">{{ t('settle.settleBtn') }}</button>
+          <span v-else class="settle-disabled">{{ t('settle.needsConnect') }}</span>
+        </div>
+
+        <div class="expense-detail">
+          <div v-for="item in debt.expenses" :key="item.expense.id" class="detail-row">
+            <span class="detail-desc">{{ item.expense.description }}</span>
+            <span class="detail-share">{{ item.share.toFixed(2) }} NIM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="sheet-back" @click="emit('close')">{{ t('settle.close') }}</button>
+  </BaseSheet>
+</template>
+
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import type { Group, ShareableRoom } from '../types';
 import type { CreditorDebt } from '../stores/groups';
 import BaseSheet from './BaseSheet.vue';
 import InitialAvatar from './InitialAvatar.vue';
+import { useI18n } from '../stores/i18n';
 
 const props = defineProps<{
   group: Group;
@@ -14,6 +45,7 @@ const props = defineProps<{
 const emit = defineEmits<{ (e: 'close'): void }>();
 
 const router = useRouter();
+const { t } = useI18n();
 
 // A creditor is payable on-chain if they linked a Nimiq address (not a placeholder).
 function canSettle(debt: CreditorDebt): boolean {
@@ -29,7 +61,7 @@ function settle(debt: CreditorDebt) {
     creatorName: debt.creditor.name,
     amount: debt.remaining,
     currency: 'NIM',
-    reason: `Règlement · ${props.group.name}`,
+    reason: t('settle.reason', { groupName: props.group.name }),
     maxParticipants: 1,
   };
 
@@ -40,36 +72,6 @@ function settle(debt: CreditorDebt) {
   });
 }
 </script>
-
-<template>
-  <BaseSheet @close="emit('close')">
-    <div class="sheet-title">À régler</div>
-    <div class="sheet-sub">Un paiement par personne qui a avancé pour toi</div>
-
-    <div class="creditor-list">
-      <div v-for="debt in debts" :key="debt.creditor.id" class="creditor">
-        <div class="creditor-head">
-          <InitialAvatar :name="debt.creditor.name" :size="34" />
-          <div class="creditor-info">
-            <div class="creditor-name">{{ debt.creditor.name }}</div>
-            <div class="creditor-amount">{{ debt.remaining.toFixed(2) }} NIM</div>
-          </div>
-          <button v-if="canSettle(debt)" class="settle-btn" @click="settle(debt)">Régler →</button>
-          <span v-else class="settle-disabled">Doit se connecter</span>
-        </div>
-
-        <div class="expense-detail">
-          <div v-for="item in debt.expenses" :key="item.expense.id" class="detail-row">
-            <span class="detail-desc">{{ item.expense.description }}</span>
-            <span class="detail-share">{{ item.share.toFixed(2) }} NIM</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <button class="sheet-back" @click="emit('close')">Fermer</button>
-  </BaseSheet>
-</template>
 
 <style scoped>
 .sheet-title {

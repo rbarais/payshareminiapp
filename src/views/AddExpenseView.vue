@@ -1,3 +1,186 @@
+<template>
+  <div v-if="group" class="screen">
+    <!-- Top bar -->
+    <div class="top-bar">
+      <button class="icon-btn gray" @click="goBack">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path
+            d="M2 2L12 12M12 2L2 12"
+            stroke="#3D3B35"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <span class="bar-title">{{ t('addExpense.title') }}</span>
+      <button class="icon-btn accent" @click="create">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path
+            d="M2 7L5.5 10.5L12 3"
+            stroke="#1A1916"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Amount -->
+    <div class="amount-section">
+      <div class="amount-display">{{ amount ? amount.toFixed(2) : '0.00' }}</div>
+      <div class="currency-row">
+        <button
+          v-for="currencyCode in CURRENCIES"
+          :key="currencyCode"
+          class="currency-pill"
+          :class="{ active: currency === currencyCode }"
+          @click="currency = currencyCode"
+        >
+          {{ currencyCode }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="form-area">
+      <!-- Description -->
+      <div class="field-card">
+        <div class="field-label">{{ t('addExpense.descriptionLabel') }}</div>
+        <input v-model="description" class="field-input" type="text" :placeholder="t('addExpense.descriptionPlaceholder')" />
+      </div>
+
+      <!-- Amount input -->
+      <div class="field-card">
+        <div class="field-label">{{ t('addExpense.amountLabel') }}</div>
+        <input
+          v-model.number="amount"
+          class="field-input"
+          type="number"
+          placeholder="0"
+          min="0.01"
+          step="0.01"
+          @input="mode !== 'equal' && distributeEvenly()"
+        />
+      </div>
+
+      <!-- Paid by -->
+      <div class="field-card payer-card">
+        <div class="payer-head" @click="showPayerMenu = !showPayerMenu">
+          <div>
+            <div class="field-label">{{ t('addExpense.paidByLabel') }}</div>
+            <div class="payer-name">{{ memberName(paidBy) }}</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M5 7L8 10L11 7"
+              stroke="#8B8880"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <div v-if="showPayerMenu" class="payer-menu">
+          <button
+            v-for="member in members"
+            :key="member.id"
+            class="payer-option"
+            :class="{ active: paidBy === member.id }"
+            @click="selectPayer(member.id)"
+          >
+            {{ memberName(member.id) }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Split -->
+      <div class="field-card">
+        <div class="field-label">{{ t('addExpense.splitBetweenLabel') }}</div>
+
+        <!-- Mode tabs -->
+        <div class="mode-tabs">
+          <button class="mode-tab" :class="{ active: mode === 'equal' }" @click="setMode('equal')">
+            {{ t('addExpense.modeEqual') }}
+          </button>
+          <button
+            class="mode-tab"
+            :class="{ active: mode === 'percentage' }"
+            @click="setMode('percentage')"
+          >
+            {{ t('addExpense.modePct') }}
+          </button>
+          <button class="mode-tab" :class="{ active: mode === 'fixed' }" @click="setMode('fixed')">
+            {{ t('addExpense.modeFixed') }}
+          </button>
+        </div>
+
+        <!-- Equal -->
+        <div v-if="mode === 'equal'" class="equal-row">
+          <button
+            v-for="(member, index) in members"
+            :key="member.id"
+            class="member-chip"
+            :class="{ off: !split[member.id]?.included }"
+            @click="split[member.id].included = !split[member.id].included"
+          >
+            <InitialAvatar :name="member.name" :index="index" :size="40" />
+            <span class="chip-name">{{ member.name }}</span>
+          </button>
+        </div>
+        <div v-if="mode === 'equal' && amount" class="share-info">
+          {{ t('addExpense.shareInfoPrefix') }} <strong>{{ equalShare.toFixed(2) }} {{ currency }}</strong>
+        </div>
+
+        <!-- % / Amounts -->
+        <div v-else-if="mode !== 'equal'" class="split-list">
+          <div v-for="(member, index) in members" :key="member.id" class="split-row">
+            <InitialAvatar :name="member.name" :index="index" :size="30" />
+            <span class="split-name">{{ member.name }}</span>
+            <div class="split-input-wrap">
+              <input
+                v-if="mode === 'percentage'"
+                v-model.number="split[member.id].pct"
+                class="split-input"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+              />
+              <input
+                v-else
+                v-model.number="split[member.id].amt"
+                class="split-input"
+                type="number"
+                min="0"
+                step="0.01"
+              />
+              <span class="split-unit">{{ mode === 'percentage' ? '%' : currency }}</span>
+            </div>
+          </div>
+          <div class="total-row" :class="{ ok: !splitError }">
+            <span>{{ t('addExpense.totalAssigned') }}</span>
+            <span>{{
+              mode === 'percentage'
+                ? pctTotal.toFixed(0) + '%'
+                : amtTotal.toFixed(2) + ' ' + currency
+            }}</span>
+          </div>
+        </div>
+      </div>
+
+      <p v-if="splitError" class="error-msg">{{ splitError }}</p>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-area">
+      <button class="btn-primary" :disabled="!!splitError" @click="create">
+        {{ t('addExpense.addExpense') }}
+      </button>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -7,12 +190,14 @@ import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import { captureError } from '../utils/errors';
+import { useI18n } from '../stores/i18n';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSession();
 const store = useGroupsStore();
 const toast = useToast();
+const { t } = useI18n();
 
 const groupId = computed(() => String(route.query.groupId ?? ''));
 const group = computed(() => store.getGroup(groupId.value));
@@ -52,7 +237,7 @@ watch(
 
 const memberName = (id: string) =>
   id === myMemberId.value
-    ? `${members.value.find((member) => member.id === id)?.name ?? 'Toi'} (toi)`
+    ? `${members.value.find((member) => member.id === id)?.name ?? t('addExpense.youName')} (${t('addExpense.you')})`
     : (members.value.find((member) => member.id === id)?.name ?? '');
 
 // Split percentages and amounts evenly (starting point for the % and fixed modes).
@@ -84,19 +269,23 @@ const amtTotal = computed(() =>
 
 // Validation depending on the mode. Returns an error message or '' if OK.
 const splitError = computed(() => {
-  if (!amount.value || amount.value <= 0) return 'Indique un montant';
-  if (!description.value.trim()) return 'Indique une description';
+  if (!amount.value || amount.value <= 0) return t('addExpense.errorNoAmount');
+  if (!description.value.trim()) return t('addExpense.errorNoDescription');
   if (mode.value === 'equal') {
-    return includedMembers.value.length ? '' : 'Sélectionne au moins un membre';
+    return includedMembers.value.length ? '' : t('addExpense.errorNoMember');
   }
   if (mode.value === 'percentage') {
     return Math.abs(pctTotal.value - 100) < 0.5
       ? ''
-      : `Total ${pctTotal.value.toFixed(0)}% (doit faire 100%)`;
+      : t('addExpense.errorPctTotal', { current: pctTotal.value.toFixed(0) });
   }
   return Math.abs(amtTotal.value - amount.value) < 0.01
     ? ''
-    : `Total ${amtTotal.value.toFixed(2)} / ${amount.value.toFixed(2)} ${currency.value}`;
+    : t('addExpense.errorAmtTotal', {
+        current: amtTotal.value.toFixed(2),
+        total: amount.value.toFixed(2),
+        currency: currency.value,
+      });
 });
 
 function setMode(newMode: SplitMode) {
@@ -111,7 +300,7 @@ function selectPayer(id: string) {
 
 async function create() {
   if (splitError.value || !amount.value) {
-    toast.show(splitError.value || 'Formulaire incomplet', 'error');
+    toast.show(splitError.value || t('addExpense.errorFormIncomplete'), 'error');
     return;
   }
   let participants: { memberId: string; weight?: number }[];
@@ -139,10 +328,10 @@ async function create() {
     });
   } catch (err) {
     captureError(err, 'AddExpenseView.addExpense');
-    toast.show('Ajout de la dépense impossible', 'error');
+    toast.show(t('addExpense.addFailed'), 'error');
     return;
   }
-  toast.show('Dépense ajoutée', 'success');
+  toast.show(t('addExpense.added'), 'success');
   router.replace({ name: 'group', params: { id: groupId.value } });
 }
 
@@ -150,189 +339,6 @@ function goBack() {
   router.replace({ name: 'group', params: { id: groupId.value } });
 }
 </script>
-
-<template>
-  <div v-if="group" class="screen">
-    <!-- Top bar -->
-    <div class="top-bar">
-      <button class="icon-btn gray" @click="goBack">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path
-            d="M2 2L12 12M12 2L2 12"
-            stroke="#3D3B35"
-            stroke-width="1.8"
-            stroke-linecap="round"
-          />
-        </svg>
-      </button>
-      <span class="bar-title">Nouvelle dépense</span>
-      <button class="icon-btn accent" @click="create">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path
-            d="M2 7L5.5 10.5L12 3"
-            stroke="#1A1916"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-    </div>
-
-    <!-- Amount -->
-    <div class="amount-section">
-      <div class="amount-display">{{ amount ? amount.toFixed(2) : '0.00' }}</div>
-      <div class="currency-row">
-        <button
-          v-for="currencyCode in CURRENCIES"
-          :key="currencyCode"
-          class="currency-pill"
-          :class="{ active: currency === currencyCode }"
-          @click="currency = currencyCode"
-        >
-          {{ currencyCode }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Form -->
-    <div class="form-area">
-      <!-- Description -->
-      <div class="field-card">
-        <div class="field-label">Description</div>
-        <input v-model="description" class="field-input" type="text" placeholder="Tapas + bières" />
-      </div>
-
-      <!-- Amount input -->
-      <div class="field-card">
-        <div class="field-label">Montant total</div>
-        <input
-          v-model.number="amount"
-          class="field-input"
-          type="number"
-          placeholder="0"
-          min="0.01"
-          step="0.01"
-          @input="mode !== 'equal' && distributeEvenly()"
-        />
-      </div>
-
-      <!-- Paid by -->
-      <div class="field-card payer-card">
-        <div class="payer-head" @click="showPayerMenu = !showPayerMenu">
-          <div>
-            <div class="field-label">Payé par</div>
-            <div class="payer-name">{{ memberName(paidBy) }}</div>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M5 7L8 10L11 7"
-              stroke="#8B8880"
-              stroke-width="1.6"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </div>
-        <div v-if="showPayerMenu" class="payer-menu">
-          <button
-            v-for="member in members"
-            :key="member.id"
-            class="payer-option"
-            :class="{ active: paidBy === member.id }"
-            @click="selectPayer(member.id)"
-          >
-            {{ memberName(member.id) }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Split -->
-      <div class="field-card">
-        <div class="field-label">Répartir entre</div>
-
-        <!-- Mode tabs -->
-        <div class="mode-tabs">
-          <button class="mode-tab" :class="{ active: mode === 'equal' }" @click="setMode('equal')">
-            Équitable
-          </button>
-          <button
-            class="mode-tab"
-            :class="{ active: mode === 'percentage' }"
-            @click="setMode('percentage')"
-          >
-            %
-          </button>
-          <button class="mode-tab" :class="{ active: mode === 'fixed' }" @click="setMode('fixed')">
-            Montants
-          </button>
-        </div>
-
-        <!-- Equal -->
-        <div v-if="mode === 'equal'" class="equal-row">
-          <button
-            v-for="(member, index) in members"
-            :key="member.id"
-            class="member-chip"
-            :class="{ off: !split[member.id]?.included }"
-            @click="split[member.id].included = !split[member.id].included"
-          >
-            <InitialAvatar :name="member.name" :index="index" :size="40" />
-            <span class="chip-name">{{ member.name }}</span>
-          </button>
-        </div>
-        <div v-if="mode === 'equal' && amount" class="share-info">
-          Part de chacun · <strong>{{ equalShare.toFixed(2) }} {{ currency }}</strong>
-        </div>
-
-        <!-- % / Amounts -->
-        <div v-else-if="mode !== 'equal'" class="split-list">
-          <div v-for="(member, index) in members" :key="member.id" class="split-row">
-            <InitialAvatar :name="member.name" :index="index" :size="30" />
-            <span class="split-name">{{ member.name }}</span>
-            <div class="split-input-wrap">
-              <input
-                v-if="mode === 'percentage'"
-                v-model.number="split[member.id].pct"
-                class="split-input"
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-              />
-              <input
-                v-else
-                v-model.number="split[member.id].amt"
-                class="split-input"
-                type="number"
-                min="0"
-                step="0.01"
-              />
-              <span class="split-unit">{{ mode === 'percentage' ? '%' : currency }}</span>
-            </div>
-          </div>
-          <div class="total-row" :class="{ ok: !splitError }">
-            <span>Total attribué</span>
-            <span>{{
-              mode === 'percentage'
-                ? pctTotal.toFixed(0) + '%'
-                : amtTotal.toFixed(2) + ' ' + currency
-            }}</span>
-          </div>
-        </div>
-      </div>
-
-      <p v-if="splitError" class="error-msg">{{ splitError }}</p>
-    </div>
-
-    <!-- CTA -->
-    <div class="cta-area">
-      <button class="btn-primary" :disabled="!!splitError" @click="create">
-        Ajouter la dépense
-      </button>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .screen {

@@ -3,6 +3,7 @@ import { getHostLanguage } from '@nimiq/mini-app-sdk';
 import { getCurrentUser, formatAddressShort, detectNimiqApp } from '../utils/nimiq';
 import { authenticate } from '../utils/auth';
 import { getStoredJwt, setStoredJwt } from '../utils/auth';
+import { t } from './i18n';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Session store — identity of the current user (Phase 1).
@@ -114,7 +115,7 @@ export function useSession() {
         const inNimiq = await detectNimiqApp();
         state.isNimiqApp = inNimiq;
         if (!inNimiq) {
-          state.error = 'Ouvre PayShare dans Nimiq Pay pour te connecter';
+          state.error = t('error.openInNimiq');
           return false;
         }
         const user = await getCurrentUser();
@@ -123,7 +124,7 @@ export function useSession() {
         localStorage.setItem(SESSION_KEY, JSON.stringify(user));
         return true;
       } catch (error) {
-        state.error = error instanceof Error ? error.message : 'Connexion impossible ou refusée';
+        state.error = error instanceof Error ? error.message : t('error.connectFailed');
         return false;
       } finally {
         state.connecting = false;
