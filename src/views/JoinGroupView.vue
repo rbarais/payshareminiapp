@@ -108,7 +108,6 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
-import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import { t } from '../stores/i18n';
 import { joinGroup, fetchJoinPreview } from '../utils/api';
@@ -120,7 +119,6 @@ const props = defineProps<{ groupId: string; token: string }>();
 
 const router = useRouter();
 const session = useSession();
-const store = useGroupsStore();
 const toast = useToast();
 
 // Available placeholders (address IS NULL) in the group
@@ -184,7 +182,8 @@ async function join() {
     const options =
       choice.value === 'new' ? { name: displayName.value.trim() } : { placeholderId: choice.value };
 
-    await joinGroup(props.groupId, props.token, options);
+    const { name: groupName } = await joinGroup(props.groupId, props.token, options);
+    toast.show(t('join.toastJoined', { name: groupName }), 'success');
   } catch (err) {
     if (err instanceof Error && err.message === 'API 409') {
       toast.show(t('join.toastAlreadyMember'), 'success');
@@ -198,14 +197,6 @@ async function join() {
     return;
   }
 
-  try {
-    await store.refreshAll();
-  } catch (err) {
-    captureError(err, 'JoinGroupView.refreshAll');
-  }
-
-  const groupName = store.getGroup(props.groupId)?.name ?? 'le groupe';
-  toast.show(t('join.toastJoined', { name: groupName }), 'success');
   router.replace({ name: 'home' });
   joining.value = false;
 }

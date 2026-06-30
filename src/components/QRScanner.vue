@@ -54,7 +54,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import jsQR from 'jsqr';
-import { decodeRoomFromText } from '../utils/room';
+import { decodeRoomFromText, decodeInviteFromText } from '../utils/room';
 import { useI18n } from '../stores/i18n';
 
 declare const BarcodeDetector: {
@@ -79,15 +79,28 @@ function submitManual() {
 }
 
 function handleScanned(text: string) {
-  const room = decodeRoomFromText(text);
+  // Unwrap nimiqpay:// deeplinks to access the embedded https URL
+  let inner = text;
+  try {
+    const parsed = new URL(text);
+    if (parsed.protocol === 'nimiqpay:') {
+      inner = parsed.searchParams.get('url') ?? text;
+    }
+  } catch { /* not a URL */ }
+
+  const room = decodeRoomFromText(inner);
   if (room) {
-    router.push({
-      name: 'pay',
-      query: { room: encodeURIComponent(JSON.stringify(room)) },
-    });
-  } else {
-    router.push({ name: 'home' });
+    router.push({ name: 'pay', query: { room: encodeURIComponent(JSON.stringify(room)) } });
+    return;
   }
+
+  const invite = decodeInviteFromText(inner);
+  if (invite) {
+    router.push({ name: 'join', query: { g: invite.groupId, t: invite.token } });
+    return;
+  }
+
+  router.push({ name: 'home' });
 }
 
 function cancel() {

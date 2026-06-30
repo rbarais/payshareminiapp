@@ -78,6 +78,46 @@ async function verifyNimiqTx(
   }
 }
 
+router.get('/settlements', requireAuth, async (req, res): Promise<void> => {
+  const { address } = (req as AuthRequest).user;
+
+  try {
+    const rows = await sql<
+      {
+        id: string;
+        group_id: string;
+        from_addr: string;
+        to_addr: string;
+        amount: string;
+        currency: string;
+        tx_hash: string | null;
+        verified_at: Date | null;
+        created_at: Date;
+      }[]
+    >`
+      SELECT id, group_id, from_addr, to_addr, amount, currency, tx_hash, verified_at, created_at
+      FROM payments
+      WHERE group_id IN (SELECT group_id FROM members WHERE address = ${address})
+      ORDER BY created_at DESC
+    `;
+
+    res.json(
+      rows.map((row) => ({
+        id: row.tx_hash ?? row.id,
+        groupId: row.group_id,
+        fromId: row.from_addr,
+        toId: row.to_addr,
+        amount: Number(row.amount),
+        currency: row.currency,
+        settledAt: row.verified_at ?? row.created_at,
+      })),
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'internal server error' });
+  }
+});
+
 router.get('/:id/settlements', requireAuth, async (req, res): Promise<void> => {
   const { address } = (req as AuthRequest).user;
   const groupId = req.params.id;

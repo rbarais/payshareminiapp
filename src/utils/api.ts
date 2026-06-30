@@ -112,6 +112,11 @@ export async function fetchGroupSettlements(groupId: string): Promise<Settlement
   return rows.map((row) => ({ ...row, settledAt: new Date(row.settledAt) }));
 }
 
+export async function fetchAllSettlements(): Promise<Settlement[]> {
+  const rows = await apiFetch<SerializedSettlement[]>('/api/groups/settlements');
+  return rows.map((row) => ({ ...row, settledAt: new Date(row.settledAt) }));
+}
+
 export async function insertSettlement(settlement: Settlement): Promise<void> {
   await apiFetch<void>(`/api/groups/${settlement.groupId}/settlements`, {
     method: 'POST',

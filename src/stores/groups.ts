@@ -25,6 +25,7 @@ import {
   fetchGroupSettlements,
   fetchGroupMembers,
   addPlaceholderMember,
+  fetchAllSettlements,
 } from '../utils/api';
 
 interface State {
@@ -351,11 +352,11 @@ export function useGroupsStore() {
         const groups = await fetchMyGroups();
         const [allExpenses, allSettlements] = await Promise.all([
           Promise.all(groups.map((group) => fetchGroupExpenses(group.id))),
-          Promise.all(groups.map((group) => fetchGroupSettlements(group.id))),
+          fetchAllSettlements(),
         ]);
         state.groups = groups;
         state.expenses = allExpenses.flat();
-        state.settlements = allSettlements.flat();
+        state.settlements = allSettlements;
       } finally {
         state.syncing = false;
       }
