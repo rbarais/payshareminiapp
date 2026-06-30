@@ -1,7 +1,7 @@
 <template>
   <nav class="bottom-nav">
     <div class="nav-item" :class="{ active: active === 'home' }" @click="go('home')">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <svg :width="sizeIconBtn" :height="sizeIconBtn" viewBox="0 0 22 22" fill="none">
         <path
           d="M3 10L11 3L19 10V19H14V14H8V19H3V10Z"
           :fill="active === 'home' ? '#F6B221' : 'none'"
@@ -13,7 +13,7 @@
       <span>{{ t('nav.home') }}</span>
     </div>
     <div class="nav-item" :class="{ active: active === 'groups' }" @click="go('groups')">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <svg :width="sizeIconBtn" :height="sizeIconBtn" viewBox="0 0 22 22" fill="none">
         <circle cx="8" cy="8.5" r="3" :stroke="iconColor('groups')" stroke-width="1.5" />
         <circle cx="15" cy="8.5" r="3" :stroke="iconColor('groups')" stroke-width="1.5" />
         <path
@@ -32,7 +32,7 @@
       <span>{{ t('nav.groups') }}</span>
     </div>
     <div class="nav-item" :class="{ active: active === 'history' }" @click="go('history')">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <svg :width="sizeIconBtn" :height="sizeIconBtn" viewBox="0 0 22 22" fill="none">
         <rect
           x="3"
           y="5"
@@ -58,7 +58,7 @@
       <span>{{ t('nav.history') }}</span>
     </div>
     <div class="nav-item" :class="{ active: active === 'scan' }" @click="go('scan')">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <svg :width="sizeIconBtn" :height="sizeIconBtn" viewBox="0 0 22 22" fill="none">
         <rect
           x="2"
           y="2"
@@ -108,6 +108,8 @@ const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'scan' }>();
 const router = useRouter();
 const toast = useToast();
 const { t } = useI18n();
+
+const sizeIconBtn = 24;
 
 // Icon color depending on the active tab.
 function iconColor(key: string): string {

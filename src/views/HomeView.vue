@@ -15,8 +15,7 @@
         <span class="section-title">{{ t('home.myGroups') }}</span>
         <span v-if="syncing" class="syncing-dot" />
         <button class="new-btn" @click="goToNewGroup">
-          <span class="new-plus">+</span>
-          <span>{{ t('home.new') }}</span>
+          <plusIcon />
         </button>
       </div>
 
@@ -82,6 +81,7 @@ import SettingsSheet from '../components/SettingsSheet.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
 import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
+import plusIcon from '../assets/svg/plus.svg'
 
 const router = useRouter();
 const session = useSession();
@@ -151,7 +151,7 @@ function goToGroup(id: string) {
 }
 
 .logo {
-  font-size: 23px;
+  font-size: 27px;
   font-weight: 700;
   color: var(--dark);
   letter-spacing: -0.7px;
@@ -183,18 +183,22 @@ function goToGroup(id: string) {
 }
 
 .new-btn {
-  background: var(--dark);
+  background-color: var(--bg-card);
   border: none;
-  border-radius: 20px;
-  padding: 6px 14px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
   color: var(--accent);
   transition: opacity 0.15s;
+  width: 36px;
+  height: 36px;
+}
+.new-btn__icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
 }
 
 .new-btn:hover {

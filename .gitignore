@@ -60,3 +60,4 @@ Thumbs.db
 docs/
 # Sentry Config File
 .env.sentry-build-plugin
+/scripts/dev-tunnel.sh

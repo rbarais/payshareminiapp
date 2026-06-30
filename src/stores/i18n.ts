@@ -1,54 +1,21 @@
-import { reactive, computed } from 'vue';
-import { getHostLanguage } from '@nimiq/mini-app-sdk';
-import { messages } from '../i18n';
-import { readPrefs, patchPrefs, type Locale } from '../utils/prefsStorage';
+import { useI18n as useVueI18n } from 'vue-i18n';
+import { i18n } from '../i18n';
+import { patchPrefs, type Locale } from '../utils/prefsStorage';
 
-function initialLocale(): Locale {
-  const stored = readPrefs().locale;
-  if (stored === 'fr' || stored === 'en') return stored;
-  let host: string;
-  try {
-    host = (getHostLanguage() || '').slice(0, 2);
-  } catch {
-    host = (navigator.language || '').slice(0, 2);
-  }
-  return host === 'en' ? 'en' : 'fr';
-}
-
-const state = reactive<{ locale: Locale }>({ locale: initialLocale() });
-
-function lookup(locale: Locale, key: string): string | undefined {
-  const value = key
-    .split('.')
-    .reduce<unknown>(
-      (currNode, keySegment) =>
-        currNode && typeof currNode === 'object'
-          ? (currNode as Record<string, unknown>)[keySegment]
-          : undefined,
-      messages[locale],
-    );
-  return typeof value === 'string' ? value : undefined;
-}
-
+// Global translator for non-component code (stores, router guards, …).
 // eslint-disable-next-line id-length
-export function t(key: string, params?: Record<string, string | number>): string {
-  const locale = state.locale; // lecture réactive → re-render au changement
-  let str = lookup(locale, key) ?? lookup('fr', key) ?? key;
-  if (params) {
-    for (const [paramName, paramValue] of Object.entries(params)) {
-      str = str.replace(new RegExp(`\\{${paramName}\\}`, 'g'), String(paramValue));
-    }
-  }
-  return str;
-}
+export const t = i18n.global.t;
 
+// Thin wrapper around vue-i18n that adds app-specific locale persistence.
+// Components keep importing { useI18n, t } from here unchanged.
 export function useI18n() {
+  const { t, locale } = useVueI18n({ useScope: 'global' });
   return {
-    locale: computed(() => state.locale),
+    locale,
     t,
-    setLocale(locale: Locale) {
-      state.locale = locale;
-      patchPrefs({ locale });
+    setLocale(next: Locale) {
+      locale.value = next;
+      patchPrefs({ locale: next });
     },
   };
 }

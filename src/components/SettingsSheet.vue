@@ -4,7 +4,9 @@
 
     <!-- Bloc wallet -->
     <div class="wallet-block">
-      <div class="identicon"><NimiqIdenticon :address="session.user.value?.id ?? ''" :size="44" /></div>
+      <div class="identicon">
+        <NimiqIdenticon :address="session.user.value?.id ?? ''" :size="44" />
+      </div>
       <div class="wallet-meta">
         <div class="wallet-name">{{ session.user.value?.name }}</div>
         <div class="wallet-addr">{{ session.walletShort.value }}</div>
@@ -157,9 +159,10 @@ const locales: { key: Locale; label: string }[] = [
 .disconnect-btn {
   width: 100%;
   margin-top: 6px;
-  background: none;
+  background-color: #FFF0F0;
   border: none;
-  padding: 12px;
+  padding: 16px;
+  border-radius: 16px;
   font-size: 14px;
   font-weight: 700;
   color: var(--red);

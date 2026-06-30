@@ -1,13 +1,13 @@
 <template>
-  <button class="group-card">
+  <div class="group-card">
     <div class="group-icon" :style="{ background: iconStyle.bg }">
       <GroupIcon :type="group.icon" :color="iconStyle.color" />
     </div>
     <div class="group-info">
       <div class="group-name">{{ group.name }}</div>
       <div class="group-meta">
-        {{ t('group.membersCount', { count: group.members.length }) }} ·
-        {{ t('group.expensesCount', { count: expenseCount }) }}
+        {{ t('group.membersCount', { count: group.members.length }, group.members.length) }} ·
+        {{ t('group.expensesCount', { count: expenseCount }, expenseCount) }}
       </div>
     </div>
     <div class="group-balance">
@@ -16,7 +16,7 @@
       </div>
       <div v-if="bal.labelKey" class="group-label">{{ t(bal.labelKey) }}</div>
     </div>
-  </button>
+  </div>
 </template>
 
 <script setup lang="ts">

@@ -59,7 +59,7 @@
           {{ perPerson.toFixed(2) }} <span class="amount-currency">NIM</span>
         </div>
         <div class="amount-sub">
-          {{ t('pay.amountSub', { participants: room?.maxParticipants ?? 0, total: room?.amount?.toFixed(2) ?? '0.00' }) }}
+          {{ t('pay.amountSub', { participants: room?.maxParticipants ?? 0, total: room?.amount?.toFixed(2) ?? '0.00' }, room?.maxParticipants ?? 0) }}
         </div>
       </div>
 

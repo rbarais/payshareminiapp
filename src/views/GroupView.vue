@@ -15,13 +15,15 @@
       </button>
       <div class="header-info">
         <div class="header-title">{{ group.name }}</div>
-        <div class="header-sub">{{ t('group.membersCount', { count: group.members.length }) }} · {{ monthLabel }}</div>
+        <div class="header-sub">
+          {{ t('group.membersCount', { count: group.members.length }, group.members.length) }} · {{ monthLabel }}
+        </div>
       </div>
       <button class="icon-btn" @click="openEditGroup">
         <svg width="16" height="16" viewBox="0 0 16 16">
-          <circle cx="8" cy="3.5" r="1.3" fill="#3D3B35" />
-          <circle cx="8" cy="8" r="1.3" fill="#3D3B35" />
-          <circle cx="8" cy="12.5" r="1.3" fill="#3D3B35" />
+          <circle cx="8" cy="3.5" r="1.3" fill="currentColor" />
+          <circle cx="8" cy="8" r="1.3" fill="currentColor" />
+          <circle cx="8" cy="12.5" r="1.3" fill="currentColor" />
         </svg>
       </button>
     </div>
@@ -45,20 +47,7 @@
         <span class="add-member-label">{{ t('group.invite') }}</span>
       </div>
       <button class="qr-btn" @click="invite">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <rect x="2" y="2" width="5" height="5" rx="1" stroke="#F6B221" stroke-width="1.4" />
-          <rect x="2" y="11" width="5" height="5" rx="1" stroke="#F6B221" stroke-width="1.4" />
-          <rect x="11" y="2" width="5" height="5" rx="1" stroke="#F6B221" stroke-width="1.4" />
-          <rect x="3.5" y="3.5" width="2" height="2" fill="#F6B221" />
-          <rect x="3.5" y="12.5" width="2" height="2" fill="#F6B221" />
-          <rect x="12.5" y="3.5" width="2" height="2" fill="#F6B221" />
-          <path
-            d="M11 11H13M15 11V13M11 15H13M15 15V13M15 13H11"
-            stroke="#F6B221"
-            stroke-width="1.4"
-            stroke-linecap="round"
-          />
-        </svg>
+        <QrCodeIcon />
       </button>
     </div>
 
@@ -121,7 +110,9 @@
     <!-- Empty expenses -->
     <div v-else class="expense-empty">
       <div class="expense-empty-text">{{ t('group.noExpenses') }}</div>
-      <button class="expense-empty-cta" @click="goToAddExpense">{{ t('group.addExpenseCta') }}</button>
+      <button class="expense-empty-cta" @click="goToAddExpense">
+        {{ t('group.addExpenseCta') }}
+      </button>
     </div>
 
     <!-- Sheet: group invite QR -->
@@ -219,7 +210,8 @@
     <BaseSheet v-if="editExpense" @close="closeEditExpense">
       <div class="sheet-title">{{ t('group.editExpenseTitle') }}</div>
       <div class="sheet-sub">
-        {{ editExpense.amount.toFixed(2) }} {{ editExpense.currency }} · {{ t('group.paidByPrefix') }}
+        {{ editExpense.amount.toFixed(2) }} {{ editExpense.currency }} ·
+        {{ t('group.paidByPrefix') }}
         {{ memberName(editExpense.paidBy) }}
       </div>
 
@@ -258,6 +250,7 @@ import SettleSheet from '../components/SettleSheet.vue';
 import BaseSheet from '../components/BaseSheet.vue';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
+import QrCodeIcon from '../assets/svg/qrCode.svg';
 
 const props = defineProps<{ id: string }>();
 
@@ -528,7 +521,7 @@ function openSettle() {
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  background: var(--dark);
+  background: var(--bg-card);
   border: none;
   display: flex;
   align-items: center;
