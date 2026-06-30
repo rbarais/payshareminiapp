@@ -138,7 +138,8 @@ export const en: typeof fr = {
     qrTitle: 'QR Code',
     qrHint: 'Share this QR to receive the payment',
     amountLabel: 'Amount to pay',
-    amountSub: '{participants} participant · {total} NIM total | {participants} participants · {total} NIM total',
+    amountSub:
+      '{participants} participant · {total} NIM total | {participants} participants · {total} NIM total',
     detailLabel: 'Details',
     total: 'Total',
     progressLabel: 'Progress',
@@ -191,7 +192,8 @@ export const en: typeof fr = {
     reason: 'Settlement · {groupName}',
   },
   scan: {
-    errHttps: 'The camera requires a secure connection (HTTPS). Open the app at https:// or paste the link manually.',
+    errHttps:
+      'The camera requires a secure connection (HTTPS). Open the app at https:// or paste the link manually.',
     errUnavailable: 'No camera available on this device.',
     errDenied: 'Camera access denied. Allow camera in browser settings.',
     errNotFound: 'No camera detected on this device.',
@@ -220,7 +222,7 @@ export const en: typeof fr = {
   join: {
     title: 'Join a group',
     loading: 'Loading…',
-    hint: "You've been invited to join a group. Which member are you?",
+    hint: "You've been invited to join group {name}. Which member are you?",
     notInList: "I'm not in the list",
     confirmHint: 'You are linking your Nimiq wallet to this group member.',
     chooseOther: '← Choose another',

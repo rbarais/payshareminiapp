@@ -136,7 +136,8 @@ export const fr = {
     qrTitle: 'QR Code',
     qrHint: 'Partage ce QR pour recevoir le paiement',
     amountLabel: 'Montant à payer',
-    amountSub: '{participants} participant · {total} NIM total | {participants} participants · {total} NIM total',
+    amountSub:
+      '{participants} participant · {total} NIM total | {participants} participants · {total} NIM total',
     detailLabel: 'Détail',
     total: 'Total',
     progressLabel: 'Avancement',
@@ -153,7 +154,8 @@ export const fr = {
     showQr: 'Afficher QR Code',
     payError: 'Paiement annulé ou échoué',
     syncError: 'Synchronisation impossible pour le moment',
-    settlementSyncError: 'Paiement confirmé sur la blockchain. Rafraîchis le groupe pour mettre à jour les soldes.',
+    settlementSyncError:
+      'Paiement confirmé sur la blockchain. Rafraîchis le groupe pour mettre à jour les soldes.',
   },
   success: {
     title: 'Paiement confirmé !',
@@ -170,7 +172,8 @@ export const fr = {
     sub: '{description} · payé par {paidBy}',
     noDebtors: 'Personne ne doit de part sur cette dépense.',
     settleTitle: 'Régler la part',
-    qrNote: "En présentiel : fais scanner ce QR avec l'appareil photo → Nimiq Pay s'ouvre sur la part à régler.",
+    qrNote:
+      "En présentiel : fais scanner ce QR avec l'appareil photo → Nimiq Pay s'ouvre sur la part à régler.",
     copyLink: 'Copier le lien',
     back: '← Choisir un autre membre',
     toastNoAddress: 'Le payeur doit avoir une adresse Nimiq pour être remboursé',
@@ -178,7 +181,7 @@ export const fr = {
     toastCopyUnavailable: 'Copie indisponible (contexte non sécurisé)',
     toastCopied: 'Lien copié — colle-le dans ta messagerie',
     toastCopyFailed: 'Impossible de copier le lien',
-    shareText: "Règle ta part « {description} » sur PayShare",
+    shareText: 'Règle ta part « {description} » sur PayShare',
   },
   settle: {
     title: 'À régler',
@@ -189,7 +192,8 @@ export const fr = {
     reason: 'Règlement · {groupName}',
   },
   scan: {
-    errHttps: "La caméra nécessite une connexion sécurisée (HTTPS). Ouvre l'app en https:// ou colle le lien manuellement.",
+    errHttps:
+      "La caméra nécessite une connexion sécurisée (HTTPS). Ouvre l'app en https:// ou colle le lien manuellement.",
     errUnavailable: 'Caméra non disponible sur cet appareil.',
     errDenied: 'Accès caméra refusé. Autorise la caméra dans les réglages du navigateur.',
     errNotFound: 'Aucune caméra détectée sur cet appareil.',
@@ -200,7 +204,8 @@ export const fr = {
   },
   login: {
     inviteTitle: 'Tu as été invité',
-    inviteSub: 'Ouvre ce lien dans Nimiq Pay pour rejoindre le groupe et régler tes dépenses partagées.',
+    inviteSub:
+      'Ouvre ce lien dans Nimiq Pay pour rejoindre le groupe et régler tes dépenses partagées.',
     openInNimiq: 'Ouvrir dans Nimiq Pay',
     inviteHint: 'Si le bouton ne fonctionne pas, copie le lien et colle-le dans Nimiq Pay.',
     connectBtn: 'Me connecter via Nimiq Pay',
@@ -218,12 +223,13 @@ export const fr = {
   join: {
     title: 'Rejoindre un groupe',
     loading: 'Chargement…',
-    hint: 'Tu as été invité à rejoindre un groupe. Qui es-tu parmi ces membres ?',
+    hint: `Tu as été invité à rejoindre le groupe {name}. Qui es-tu parmi ces membres ?`,
     notInList: 'Je ne suis pas dans la liste',
     confirmHint: 'Tu vas lier ton wallet Nimiq à ce membre du groupe.',
     chooseOther: '← Choisir un autre',
     newMemberHint: 'Tu rejoins le groupe en tant que nouveau membre.',
-    chooseNameHint: 'Tu as été invité à rejoindre un groupe. Choisis le nom visible par les autres.',
+    chooseNameHint:
+      'Tu as été invité à rejoindre un groupe. Choisis le nom visible par les autres.',
     nameLabel: 'Ton nom',
     namePlaceholder: 'Ton prénom',
     backToList: '← Choisir dans la liste',

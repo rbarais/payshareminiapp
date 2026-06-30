@@ -21,7 +21,7 @@
 
       <!-- Placeholders disponibles -->
       <template v-else-if="placeholders.length > 0 && choice === null">
-        <p class="hint">{{ t('join.hint') }}</p>
+        <p class="hint">{{ $t('join.hint', { name: groupName }) }}</p>
 
         <div class="placeholder-list">
           <button
@@ -73,11 +73,7 @@
       <template v-else>
         <div class="field-card">
           <p class="hint">
-            {{
-              placeholders.length > 0
-                ? t('join.newMemberHint')
-                : t('join.chooseNameHint')
-            }}
+            {{ placeholders.length > 0 ? t('join.newMemberHint') : t('join.chooseNameHint') }}
           </p>
           <div class="field-label" style="margin-top: 18px">{{ t('join.nameLabel') }}</div>
           <div class="name-input-wrap">
@@ -129,6 +125,7 @@ const loadingPreview = ref(true);
 const choice = ref<string | 'new' | null>(null);
 const displayName = ref(session.user.value?.name ?? '');
 const joining = ref(false);
+const groupName = ref('');
 
 onMounted(async () => {
   if (!props.groupId || !props.token) {
@@ -181,9 +178,9 @@ async function join() {
 
     const options =
       choice.value === 'new' ? { name: displayName.value.trim() } : { placeholderId: choice.value };
-
-    const { name: groupName } = await joinGroup(props.groupId, props.token, options);
-    toast.show(t('join.toastJoined', { name: groupName }), 'success');
+    const { name } = await joinGroup(props.groupId, props.token, options);
+    groupName.value = name;
+    toast.show(t('join.toastJoined', { name }), 'success');
   } catch (err) {
     if (err instanceof Error && err.message === 'API 409') {
       toast.show(t('join.toastAlreadyMember'), 'success');

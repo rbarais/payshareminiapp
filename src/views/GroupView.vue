@@ -6,7 +6,7 @@
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
           <path
             d="M10.5 4L6 8.5L10.5 13"
-            stroke="#1A1916"
+            stroke="currentColor"
             stroke-width="1.8"
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -16,7 +16,8 @@
       <div class="header-info">
         <div class="header-title">{{ group.name }}</div>
         <div class="header-sub">
-          {{ t('group.membersCount', { count: group.members.length }, group.members.length) }} · {{ monthLabel }}
+          {{ t('group.membersCount', { count: group.members.length }, group.members.length) }} ·
+          {{ monthLabel }}
         </div>
       </div>
       <button class="icon-btn" @click="openEditGroup">
@@ -30,13 +31,11 @@
 
     <!-- Members + invite -->
     <div class="members-row">
-      <InitialAvatar
-        v-for="(member, index) in group.members"
+      <NimiqIdenticon
+        v-for="member in group.members"
         :key="member.id"
-        :name="member.name"
-        :index="index"
+        :address="member.address"
         :size="36"
-        ring
       />
       <div v-if="isCreator" class="add-member-wrap">
         <button class="add-member-btn" @click="showAddMember = true">
@@ -251,6 +250,7 @@ import BaseSheet from '../components/BaseSheet.vue';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 import QrCodeIcon from '../assets/svg/qrCode.svg';
+import NimiqIdenticon from '../components/NimiqIdenticon.vue';
 
 const props = defineProps<{ id: string }>();
 
@@ -446,6 +446,7 @@ function openSettle() {
 .icon-btn {
   width: 36px;
   height: 36px;
+  color: var(--dark);
   border-radius: 50%;
   background: var(--bg-card);
   border: none;
