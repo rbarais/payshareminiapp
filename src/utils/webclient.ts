@@ -1,61 +1,32 @@
+import { initNimiq } from './nimiq';
 import { roomTag } from './room';
 
-// The Nimiq Web Client syncs a light consensus directly in the browser (P2P,
-// no central RPC, no rate limit). It is used ONLY to read the blockchain —
-// sending payments goes through the mini-app provider.
-//
-// @nimiq/core is heavy (WASM): it is loaded dynamically on the first read, and
-// a single client instance is reused for the session.
+// Transaction data read via public Nimiq JSON-RPC — no WASM, no P2P setup.
+// isConsensusEstablished() (provider) is used as a lightweight network-ready check
+// instead of spinning up a local @nimiq/core light node.
 
-let clientPromise: Promise<NimiqClient> | null = null;
+const NIMIQ_RPC_URL = 'https://rpc.nimiqwatch.com';
 
-// Minimal client type we need (avoids importing the heavy generated types).
-interface NimiqClient {
-  waitForConsensusEstablished(): Promise<void>;
-  getTransactionsByAddress(
-    address: string,
-    sinceBlockHeight?: number | null,
-    knownDetails?: unknown[] | null,
-    startAt?: string | null,
-    limit?: number | null,
-    minPeers?: number | null,
-  ): Promise<PlainTx[]>;
-}
-
-interface PlainTx {
-  transactionHash: string;
-  sender: string;
-  recipient: string;
-  value: number; // in Luna
-  timestamp?: number;
-  data?: { type: string; raw?: string };
-}
-
-async function getClient(): Promise<NimiqClient> {
-  if (!clientPromise) {
-    clientPromise = (async () => {
-      const Nimiq = await import('@nimiq/core');
-      const config = new Nimiq.ClientConfiguration();
-      config.network('MainAlbatross');
-      const client = (await Nimiq.Client.create(config.build())) as unknown as NimiqClient;
-      await client.waitForConsensusEstablished();
-      return client;
-    })();
-  }
-  return clientPromise;
+interface RpcTx {
+  hash: string;
+  from: string;
+  to: string;
+  value: number;     // Luna
+  timestamp: number; // milliseconds
+  recipientData: string; // hex-encoded
 }
 
 export interface RoomPayment {
-  from: string; // payer address (human-readable format)
-  valueNim: number; // amount in NIM
-  timestamp: number;
+  from: string;
+  valueNim: number;
+  timestamp: number; // milliseconds
   hash: string;
 }
 
 function hexToUtf8(hex: string): string {
   if (!hex) return '';
   try {
-    const bytes = hex.match(/.{1,2}/g)?.map((pair) => parseInt(pair, 16)) ?? [];
+    const bytes = (hex.match(/.{1,2}/g) ?? []).map((b) => parseInt(b, 16));
     return new TextDecoder().decode(new Uint8Array(bytes));
   } catch {
     return '';
@@ -67,39 +38,63 @@ function normalizeAddress(addr: string): string {
 }
 
 /**
- * Read the payments received by the creator for a given room.
- * Filters incoming transactions whose `data` field starts with the room's
- * unique tag. Deduplicates by payer (one share per person).
+ * Read payments received by the creator for a given room via public JSON-RPC.
+ * Filters by room tag in recipientData. Deduplicates by payer (one share per person).
  */
 export async function fetchRoomPayments(
   creatorAddress: string,
   roomId: string,
 ): Promise<RoomPayment[]> {
-  // Real Nimiq addresses only — in dev mode the address is a fake one.
   if (!creatorAddress.startsWith('NQ')) return [];
 
-  const client = await getClient();
-  const tag = roomTag(roomId);
-  const transactions = await client.getTransactionsByAddress(creatorAddress, 0, null, null, 100);
+  // Use the wallet's consensus status as a network-ready signal (instant, no P2P setup).
+  // Outside Nimiq Pay the provider is unavailable — skip the check and query anyway.
+  try {
+    const provider = await initNimiq();
+    const ready = await provider.isConsensusEstablished();
+    if (!ready) return [];
+  } catch {
+    // dev browser or provider timeout — proceed without the guard
+  }
 
+  let transactions: RpcTx[] = [];
+  try {
+    const res = await fetch(NIMIQ_RPC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getTransactionsByAddress',
+        params: { address: creatorAddress, max: 100 },
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as { result?: { data?: RpcTx[] } };
+    transactions = json.result?.data ?? [];
+  } catch {
+    return [];
+  }
+
+  const tag = roomTag(roomId);
   const recipient = normalizeAddress(creatorAddress);
   const seenSenders = new Set<string>();
   const payments: RoomPayment[] = [];
 
-  for (const transaction of transactions) {
-    if (normalizeAddress(transaction.recipient) !== recipient) continue;
-    const raw = transaction.data?.type === 'raw' ? (transaction.data.raw ?? '') : '';
-    if (!hexToUtf8(raw).startsWith(tag)) continue;
+  for (const tx of transactions) {
+    if (normalizeAddress(tx.to) !== recipient) continue;
+    if (!hexToUtf8(tx.recipientData).startsWith(tag)) continue;
 
-    const sender = normalizeAddress(transaction.sender);
-    if (seenSenders.has(sender)) continue; // keep the most recent (txs sorted descending)
+    const sender = normalizeAddress(tx.from);
+    if (seenSenders.has(sender)) continue; // keep first (RPC returns newest-first)
     seenSenders.add(sender);
 
     payments.push({
-      from: transaction.sender,
-      valueNim: transaction.value / 1e5,
-      timestamp: transaction.timestamp ?? 0,
-      hash: transaction.transactionHash,
+      from: tx.from,
+      valueNim: tx.value / 1e5,
+      timestamp: tx.timestamp,
+      hash: tx.hash,
     });
   }
 

@@ -150,12 +150,12 @@ export const en: typeof fr = {
     alreadyPaid: 'Already paid on-chain ✓',
     securityNote: 'Secured via Nimiq Pay · keys never exposed',
     devNotice: 'Dev mode — real payment happens in Nimiq Pay',
-    confirming: 'On-chain confirmation in progress…',
     processing: 'Processing…',
     payButton: 'Pay {amount} NIM',
     showQr: 'Show QR Code',
     payError: 'Payment cancelled or failed',
     syncError: 'Sync temporarily unavailable',
+    settlementSyncError: 'Payment confirmed on blockchain. Refresh the group to update balances.',
   },
   success: {
     title: 'Payment confirmed!',
@@ -235,6 +235,7 @@ export const en: typeof fr = {
     toastChooseWho: 'Choose who you are',
     toastEnterName: 'Enter your first name',
     toastInvalidInvite: 'Invalid or already used invitation',
+    toastAlreadyMember: 'You are already a member of this group',
     toastJoined: 'You joined « {name} »',
   },
 };

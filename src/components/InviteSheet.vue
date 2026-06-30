@@ -69,8 +69,10 @@ const inviteDeeplink = ref(''); // nimiqpay:// deeplink (encoded in the QR)
 const inviteLabel = ref('');
 
 function memberName(id: string): string {
-  if (id === props.userId) return t('group.you');
-  return props.group.members.find((member) => member.id === id)?.name ?? t('group.unknown');
+  const member = props.group.members.find((m) => m.id === id);
+  const norm = (a: string) => a.replace(/\s/g, '').toUpperCase();
+  if (member?.address && norm(member.address) === norm(props.userId)) return t('group.you');
+  return member?.name ?? t('group.unknown');
 }
 
 // Members who owe their share for this expense (excluding the payer).

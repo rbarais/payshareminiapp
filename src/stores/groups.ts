@@ -23,7 +23,9 @@ import {
   fetchMyGroups,
   fetchGroupExpenses,
   fetchGroupSettlements,
+  fetchGroupMembers,
   addPlaceholderMember,
+  fetchAllSettlements,
 } from '../utils/api';
 
 interface State {
@@ -103,11 +105,16 @@ function computeShares(
   }));
 }
 
+function normAddr(a: string): string {
+  return a.replace(/\s/g, '').toUpperCase();
+}
+
 // Return the current member's UUID in a group from their Nimiq address.
 function findMemberByAddress(groupId: string, nimiqAddress: string): Member | undefined {
+  const normalized = normAddr(nimiqAddress);
   return state.groups
     .find((group) => group.id === groupId)
-    ?.members.find((member) => member.address === nimiqAddress);
+    ?.members.find((member) => member.address && normAddr(member.address) === normalized);
 }
 
 // A gross debt of the current user toward a creditor (the member who paid).
@@ -328,12 +335,15 @@ export function useGroupsStore() {
       if (index !== -1) state.expenses.splice(index, 1);
     },
 
-    addSettlement(settlement: Settlement): void {
-      if (state.settlements.some((existing) => existing.id === settlement.id)) return;
+    addSettlement(settlement: Settlement): Promise<void> {
+      if (state.settlements.some((existing) => existing.id === settlement.id)) return Promise.resolve();
       state.settlements.push(settlement);
-      insertSettlement(settlement).catch((error) =>
-        console.warn('settlement backend sync failed:', error),
-      );
+      return insertSettlement(settlement).catch((error) => {
+        console.error('settlement backend sync failed:', error);
+        const idx = state.settlements.findIndex((s) => s.id === settlement.id);
+        if (idx !== -1) state.settlements.splice(idx, 1);
+        throw error;
+      });
     },
 
     async refreshAll(): Promise<void> {
@@ -342,21 +352,24 @@ export function useGroupsStore() {
         const groups = await fetchMyGroups();
         const [allExpenses, allSettlements] = await Promise.all([
           Promise.all(groups.map((group) => fetchGroupExpenses(group.id))),
-          Promise.all(groups.map((group) => fetchGroupSettlements(group.id))),
+          fetchAllSettlements(),
         ]);
         state.groups = groups;
         state.expenses = allExpenses.flat();
-        state.settlements = allSettlements.flat();
+        state.settlements = allSettlements;
       } finally {
         state.syncing = false;
       }
     },
 
     async refreshGroupExpenses(groupId: string): Promise<void> {
-      const [expenses, settlements] = await Promise.all([
+      const [members, expenses, settlements] = await Promise.all([
+        fetchGroupMembers(groupId),
         fetchGroupExpenses(groupId),
         fetchGroupSettlements(groupId),
       ]);
+      const group = state.groups.find((g) => g.id === groupId);
+      if (group) group.members = members;
       state.expenses = [
         ...state.expenses.filter((expense) => expense.groupId !== groupId),
         ...expenses,

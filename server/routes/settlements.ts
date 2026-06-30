@@ -55,11 +55,68 @@ async function verifyNimiqTx(
     const amountOk = Math.abs((tx.value as number) - expectedLunas) <= 10; // ±10 luna
     const tagOk = dataText.startsWith(`PS:settle_${groupId}`);
 
-    return recipientOk && senderOk && amountOk && tagOk ? 'valid' : 'invalid';
-  } catch {
+    const result = recipientOk && senderOk && amountOk && tagOk ? 'valid' : 'invalid';
+    if (result === 'invalid') {
+      console.error('[verifyNimiqTx] invalid', {
+        txHash,
+        recipientOk,
+        senderOk,
+        amountOk,
+        tagOk,
+        txFrom: tx.from,
+        txTo: tx.to,
+        txValue: tx.value,
+        expectedLunas,
+        dataText: dataText.slice(0, 80),
+        expectedTag: `PS:settle_${groupId}`,
+      });
+    }
+    return result;
+  } catch (err) {
+    console.error('[verifyNimiqTx] exception', { txHash, error: String(err) });
     return 'not_found';
   }
 }
+
+router.get('/settlements', requireAuth, async (req, res): Promise<void> => {
+  const { address } = (req as AuthRequest).user;
+
+  try {
+    const rows = await sql<
+      {
+        id: string;
+        group_id: string;
+        from_addr: string;
+        to_addr: string;
+        amount: string;
+        currency: string;
+        tx_hash: string | null;
+        verified_at: Date | null;
+        created_at: Date;
+      }[]
+    >`
+      SELECT id, group_id, from_addr, to_addr, amount, currency, tx_hash, verified_at, created_at
+      FROM payments
+      WHERE group_id IN (SELECT group_id FROM members WHERE address = ${address})
+      ORDER BY created_at DESC
+    `;
+
+    res.json(
+      rows.map((row) => ({
+        id: row.tx_hash ?? row.id,
+        groupId: row.group_id,
+        fromId: row.from_addr,
+        toId: row.to_addr,
+        amount: Number(row.amount),
+        currency: row.currency,
+        settledAt: row.verified_at ?? row.created_at,
+      })),
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'internal server error' });
+  }
+});
 
 router.get('/:id/settlements', requireAuth, async (req, res): Promise<void> => {
   const { address } = (req as AuthRequest).user;

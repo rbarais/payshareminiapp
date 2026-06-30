@@ -74,6 +74,11 @@ export async function insertExpense(expense: Expense): Promise<void> {
   });
 }
 
+export async function fetchGroupMembers(groupId: string): Promise<Member[]> {
+  const members = await apiFetch<SerializedMember[]>(`/api/groups/${groupId}/members`);
+  return members.map(mapMember);
+}
+
 export async function addPlaceholderMember(groupId: string, name: string): Promise<Member> {
   const member = await apiFetch<SerializedMember>(`/api/groups/${groupId}/members`, {
     method: 'POST',
@@ -104,6 +109,11 @@ export async function joinGroup(
 
 export async function fetchGroupSettlements(groupId: string): Promise<Settlement[]> {
   const rows = await apiFetch<SerializedSettlement[]>(`/api/groups/${groupId}/settlements`);
+  return rows.map((row) => ({ ...row, settledAt: new Date(row.settledAt) }));
+}
+
+export async function fetchAllSettlements(): Promise<Settlement[]> {
+  const rows = await apiFetch<SerializedSettlement[]>('/api/groups/settlements');
   return rows.map((row) => ({ ...row, settledAt: new Date(row.settledAt) }));
 }
 
