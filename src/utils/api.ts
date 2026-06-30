@@ -74,6 +74,11 @@ export async function insertExpense(expense: Expense): Promise<void> {
   });
 }
 
+export async function fetchGroupMembers(groupId: string): Promise<Member[]> {
+  const members = await apiFetch<SerializedMember[]>(`/api/groups/${groupId}/members`);
+  return members.map(mapMember);
+}
+
 export async function addPlaceholderMember(groupId: string, name: string): Promise<Member> {
   const member = await apiFetch<SerializedMember>(`/api/groups/${groupId}/members`, {
     method: 'POST',

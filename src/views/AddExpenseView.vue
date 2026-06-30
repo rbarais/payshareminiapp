@@ -261,10 +261,10 @@ const equalShare = computed(() =>
 );
 
 const pctTotal = computed(() =>
-  members.value.reduce((sum, member) => sum + (split[member.id]?.pct ?? 0), 0),
+  members.value.reduce((sum, member) => sum + (Number(split[member.id]?.pct) || 0), 0),
 );
 const amtTotal = computed(() =>
-  members.value.reduce((sum, member) => sum + (split[member.id]?.amt ?? 0), 0),
+  members.value.reduce((sum, member) => sum + (Number(split[member.id]?.amt) || 0), 0),
 );
 
 // Validation depending on the mode. Returns an error message or '' if OK.

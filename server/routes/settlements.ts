@@ -55,8 +55,25 @@ async function verifyNimiqTx(
     const amountOk = Math.abs((tx.value as number) - expectedLunas) <= 10; // ±10 luna
     const tagOk = dataText.startsWith(`PS:settle_${groupId}`);
 
-    return recipientOk && senderOk && amountOk && tagOk ? 'valid' : 'invalid';
-  } catch {
+    const result = recipientOk && senderOk && amountOk && tagOk ? 'valid' : 'invalid';
+    if (result === 'invalid') {
+      console.error('[verifyNimiqTx] invalid', {
+        txHash,
+        recipientOk,
+        senderOk,
+        amountOk,
+        tagOk,
+        txFrom: tx.from,
+        txTo: tx.to,
+        txValue: tx.value,
+        expectedLunas,
+        dataText: dataText.slice(0, 80),
+        expectedTag: `PS:settle_${groupId}`,
+      });
+    }
+    return result;
+  } catch (err) {
+    console.error('[verifyNimiqTx] exception', { txHash, error: String(err) });
     return 'not_found';
   }
 }

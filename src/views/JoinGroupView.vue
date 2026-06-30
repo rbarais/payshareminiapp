@@ -186,6 +186,12 @@ async function join() {
 
     await joinGroup(props.groupId, props.token, options);
   } catch (err) {
+    if (err instanceof Error && err.message === 'API 409') {
+      toast.show(t('join.toastAlreadyMember'), 'success');
+      router.replace({ name: 'home' });
+      joining.value = false;
+      return;
+    }
     captureError(err, 'JoinGroupView.joinGroup');
     toast.show(t('join.toastInvalidInvite'), 'error');
     joining.value = false;

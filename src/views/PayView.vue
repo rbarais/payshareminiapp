@@ -146,14 +146,8 @@
 
     <!-- Buttons -->
     <div class="actions">
-      <!-- Awaiting on-chain confirmation after payment -->
-      <div v-if="awaitingOnChain" class="confirming-banner">
-        <span class="spin-dot" />
-        <span>{{ t('pay.confirming') }}</span>
-      </div>
-
       <button
-        v-else-if="!hasPaidOnChain && !isCreator"
+        v-if="!hasPaidOnChain && !isCreator"
         class="btn-pay"
         :disabled="isPaying"
         @click="pay"
@@ -165,7 +159,7 @@
         <span>{{ isPaying ? t('pay.processing') : t('pay.payButton', { amount: perPerson.toFixed(2) }) }}</span>
       </button>
 
-      <button class="btn-qr" :disabled="awaitingOnChain" @click="showQR = true">
+      <button class="btn-qr" @click="showQR = true">
         <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
           <rect x="2" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
           <rect x="2" y="11" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
@@ -189,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import type { ShareableRoom, Settlement } from '../types';
 import { getCurrentUser, requestPayment } from '../utils/nimiq';
 import { amountPerPerson, paymentData } from '../utils/room';
@@ -201,12 +195,14 @@ import { useGroupsStore } from '../stores/groups';
 
 import { useRouter } from 'vue-router';
 import { useI18n } from '../stores/i18n';
+import { useToast } from '../stores/toast';
 
 const props = defineProps<{ room: ShareableRoom | null; groupId?: string }>();
 
 const router = useRouter();
 const session = useSession();
 const store = useGroupsStore();
+const toast = useToast();
 const { t } = useI18n();
 
 function goBack() {
@@ -222,7 +218,6 @@ function handleSuccess(amount: number, recipient: string) {
 
 const currentUser = ref<{ id: string; name: string } | null>(null);
 const isPaying = ref(false);
-const awaitingOnChain = ref(false);
 const error = ref('');
 const showQR = ref(false);
 
@@ -278,26 +273,27 @@ async function pay() {
   isPaying.value = true;
   error.value = '';
   try {
-    await requestPayment(perPerson.value, props.room.creatorId, paymentData(props.room));
+    const txHash = await requestPayment(perPerson.value, props.room.creatorId, paymentData(props.room));
 
-    if (!trackingAvailable.value) {
-      // Outside Nimiq Pay or non-NQ address: no on-chain verification possible.
-      handleSuccess(perPerson.value, props.room.creatorName);
-      return;
+    // SDK confirmed the tx — record settlement and navigate immediately.
+    if (props.groupId && currentUser.value) {
+      const settlement: Settlement = {
+        id: txHash ?? `unconfirmed_${Date.now()}`,
+        groupId: props.groupId,
+        fromId: currentUser.value.id,
+        toId: props.room.creatorId,
+        amount: props.room.amount,
+        currency: props.room.currency,
+        settledAt: new Date(),
+      };
+      try {
+        await store.addSettlement(settlement);
+      } catch {
+        toast.show(t('pay.settlementSyncError'), 'error');
+      }
     }
 
-    // On-chain available: wait for webclient.ts to confirm the tx before navigating.
-    awaitingOnChain.value = true;
-    if (pollId !== null) clearInterval(pollId);
-    pollId = setInterval(loadPayments, 3000); // aggressive polling while waiting
-    loadPayments();
-
-    // Safety net: if confirmation takes too long (slow network), navigate anyway.
-    setTimeout(() => {
-      if (!awaitingOnChain.value) return;
-      awaitingOnChain.value = false;
-      handleSuccess(perPerson.value, props.room!.creatorName);
-    }, 90_000);
+    handleSuccess(perPerson.value, props.room.creatorName);
   } catch {
     error.value = t('pay.payError');
   } finally {
@@ -305,32 +301,6 @@ async function pay() {
   }
 }
 
-// As soon as webclient.ts detects the on-chain tx: record the settlement (with the
-// real blockchain hash) and navigate to SuccessView if we were awaiting confirmation.
-watch(hasPaidOnChain, (confirmed) => {
-  if (!confirmed || !props.room || !currentUser.value) return;
-  const me = norm(currentUser.value.id);
-  const myPayment = payments.value.find((payment) => norm(payment.from) === me);
-  if (!myPayment) return;
-
-  if (props.groupId) {
-    const settlement: Settlement = {
-      id: myPayment.hash,
-      groupId: props.groupId,
-      fromId: currentUser.value.id,
-      toId: props.room.creatorId,
-      amount: props.room.amount,
-      currency: props.room.currency,
-      settledAt: new Date(myPayment.timestamp * 1000),
-    };
-    store.addSettlement(settlement);
-  }
-
-  if (awaitingOnChain.value) {
-    awaitingOnChain.value = false;
-    handleSuccess(perPerson.value, props.room.creatorName);
-  }
-});
 
 onMounted(async () => {
   // Reuse the already-connected user (avoids re-triggering the native dialog).

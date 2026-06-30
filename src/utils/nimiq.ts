@@ -115,10 +115,17 @@ export async function requestPayment(
     data: reason,
   });
 
-  if (typeof result === 'object' && 'error' in result) {
-    throw new Error(result.error.message);
+  if (typeof result === 'object' && result !== null) {
+    if ('error' in result) {
+      throw new Error(result.error.message);
+    }
+    // Some SDK versions resolve with the raw JSON-RPC error { code, message }
+    // instead of the documented ErrorResponse format.
+    if ('code' in result && 'message' in result) {
+      throw new Error((result as unknown as { message: string }).message);
+    }
   }
-  return result;
+  return result as string;
 }
 
 /** Sign a message through the provider. Returns publicKey + signature (hex). */

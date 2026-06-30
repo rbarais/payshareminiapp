@@ -4,6 +4,38 @@ import { requireAuth, type AuthRequest } from '../lib/auth.js';
 
 const router = Router();
 
+// GET /api/groups/:id/members — returns all members of a group (must be a member)
+router.get('/:id/members', requireAuth, async (req, res): Promise<void> => {
+  const { address } = (req as AuthRequest).user;
+  const groupId = req.params.id;
+
+  try {
+    const rows = await sql<{ id: string; address: string | null; name: string; joined_at: Date }[]>`
+      SELECT id, address, name, joined_at FROM members
+      WHERE group_id = ${groupId}
+        AND group_id IN (SELECT group_id FROM members WHERE address = ${address})
+      ORDER BY joined_at
+    `;
+
+    if (rows.length === 0) {
+      res.status(403).json({ error: 'not a member' });
+      return;
+    }
+
+    res.json(
+      rows.map((m) => ({
+        id: m.id,
+        address: m.address ?? undefined,
+        name: m.name,
+        joinedAt: m.joined_at,
+      })),
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'internal server error' });
+  }
+});
+
 // POST /api/groups/:id/members — the creator adds a placeholder member (without an address)
 router.post('/:id/members', requireAuth, async (req, res): Promise<void> => {
   const { address } = (req as AuthRequest).user;
