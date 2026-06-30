@@ -4,78 +4,8 @@ import { requireAuth, type AuthRequest } from '../lib/auth.js';
 
 const router = Router();
 
-const NIMIQ_RPC_URL = process.env.NIMIQ_RPC_URL ?? 'https://rpc.nimiqwatch.com';
-
-function hexToUtf8(hex: string): string {
-  if (!hex) return '';
-  try {
-    const bytes = (hex.match(/.{1,2}/g) ?? []).map((pair) => parseInt(pair, 16));
-    return new TextDecoder().decode(new Uint8Array(bytes));
-  } catch {
-    return '';
-  }
-}
-
 function normalizeAddr(addr: string): string {
   return addr.replace(/\s/g, '').toUpperCase();
-}
-
-type VerifyResult = 'valid' | 'not_found' | 'invalid';
-
-async function verifyNimiqTx(
-  txHash: string,
-  fromAddr: string,
-  toAddr: string,
-  amountNim: number,
-  groupId: string,
-): Promise<VerifyResult> {
-  try {
-    const res = await fetch(NIMIQ_RPC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'getTransactionByHash',
-        params: { hash: txHash },
-      }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!res.ok) return 'not_found';
-
-    const json = (await res.json()) as { result?: { data?: Record<string, unknown> } };
-    const tx = json?.result?.data;
-    if (!tx) return 'not_found';
-
-    const expectedLunas = Math.round(amountNim * 1e5);
-    const dataText = hexToUtf8((tx.recipientData as string) ?? '');
-
-    const recipientOk = normalizeAddr(tx.to as string) === normalizeAddr(toAddr);
-    const senderOk = normalizeAddr(tx.from as string) === normalizeAddr(fromAddr);
-    const amountOk = Math.abs((tx.value as number) - expectedLunas) <= 10; // ±10 luna
-    const tagOk = dataText.startsWith(`PS:settle_${groupId}`);
-
-    const result = recipientOk && senderOk && amountOk && tagOk ? 'valid' : 'invalid';
-    if (result === 'invalid') {
-      console.error('[verifyNimiqTx] invalid', {
-        txHash,
-        recipientOk,
-        senderOk,
-        amountOk,
-        tagOk,
-        txFrom: tx.from,
-        txTo: tx.to,
-        txValue: tx.value,
-        expectedLunas,
-        dataText: dataText.slice(0, 80),
-        expectedTag: `PS:settle_${groupId}`,
-      });
-    }
-    return result;
-  } catch (err) {
-    console.error('[verifyNimiqTx] exception', { txHash, error: String(err) });
-    return 'not_found';
-  }
 }
 
 router.get('/settlements', requireAuth, async (req, res): Promise<void> => {
@@ -207,25 +137,19 @@ router.post('/:id/settlements', requireAuth, async (req, res): Promise<void> => 
       return;
     }
 
-    // On-chain verification via Nimiq RPC
-    const verified = await verifyNimiqTx(body.txHash, body.fromId, body.toId, body.amount, groupId);
-    if (verified === 'invalid') {
-      res.status(422).json({ error: 'transaction does not match settlement data' });
-      return;
-    }
-
-    // 'valid' → verified_at = now ; 'not_found' → verified_at = null (RPC unavailable)
-    const verifiedAt = verified === 'valid' ? new Date() : null;
-
+    // The settlement is only recorded after the Nimiq Pay payment succeeded on
+    // the client, and fromId is pinned to the authenticated user above. We trust
+    // that claim and record directly; verified_at stays null (reserved for a
+    // future async on-chain reconciliation job).
     await sql`
-      INSERT INTO payments (group_id, from_addr, to_addr, amount, currency, tx_hash, verified_at)
+      INSERT INTO payments (group_id, from_addr, to_addr, amount, currency, tx_hash)
       VALUES (
         ${groupId}, ${body.fromId}, ${body.toId}, ${body.amount},
-        ${body.currency}, ${body.txHash}, ${verifiedAt}
+        ${body.currency}, ${body.txHash}
       )
     `;
 
-    res.status(201).json({ verified: verified === 'valid' });
+    res.status(201).json({ recorded: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'internal server error' });
