@@ -36,8 +36,6 @@ export const fr = {
     credited: 'on te doit',
     settled: 'Soldé ✓',
     invite: 'Inviter',
-    youOwe: 'Tu dois',
-    settle: 'Régler →',
     owedToYou: 'On te doit',
     settledTitle: 'Groupe soldé ✓',
     settledSub: 'Aucune dette en cours',

@@ -38,8 +38,6 @@ export const en: typeof fr = {
     credited: 'you are owed',
     settled: 'Settled ✓',
     invite: 'Invite',
-    youOwe: 'You owe',
-    settle: 'Settle →',
     owedToYou: 'You are owed',
     settledTitle: 'Group settled ✓',
     settledSub: 'No pending debts',

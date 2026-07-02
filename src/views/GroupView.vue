@@ -314,6 +314,14 @@ function onSelectExpense(expense: Expense) {
     inviteExpense.value = expense;
     return;
   }
+  // Cap at the creditor's remaining debt: legacy unallocated payments reduce
+  // the total owed without marking individual expenses settled.
+  const debt = debts.value.find((entry) => entry.creditor.id === expense.paidBy);
+  const payable = Math.min(status.open, debt?.remaining ?? 0);
+  if (payable < 0.005) {
+    inviteExpense.value = expense;
+    return;
+  }
   const payee = group.value?.members.find((member) => member.id === expense.paidBy);
   if (!payee?.address?.startsWith('NQ')) {
     toast.show(t('invite.toastNoAddress'), 'error');
@@ -327,11 +335,11 @@ function onSelectExpense(expense: Expense) {
     id: expense.id,
     creatorId: payee.address,
     creatorName: payee.name,
-    amount: status.open,
+    amount: payable,
     currency: 'NIM',
     reason: expense.description,
     maxParticipants: 1,
-    allocations: [{ expenseId: expense.id, amount: status.open }],
+    allocations: [{ expenseId: expense.id, amount: payable }],
   };
   router.push({
     name: 'pay',

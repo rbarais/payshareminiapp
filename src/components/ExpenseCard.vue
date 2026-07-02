@@ -33,7 +33,7 @@
     <div class="bar-bg">
       <div
         class="bar-fill"
-        :style="{ width: fillPct + '%', background: isMine ? '#198060' : '#F6B221' }"
+        :style="{ width: fillPct + '%', background: isMine || settled ? '#198060' : '#F6B221' }"
       />
     </div>
   </div>
