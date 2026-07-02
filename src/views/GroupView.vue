@@ -103,7 +103,9 @@
         :user-share="userShare(exp.id)"
         :paid-by-name="memberName(exp.paidBy)"
         :is-mine="exp.paidBy === myMemberId"
-        @select="inviteExpense = exp"
+        :settled="shareStatus(exp.id)?.settled ?? false"
+        :tx-hash="shareStatus(exp.id)?.txHash ?? null"
+        @select="onSelectExpense(exp)"
         @edit="openEditExpense(exp)"
       />
     </div>
@@ -227,7 +229,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import type { Expense, GroupIcon } from '../types';
+import type { Expense, GroupIcon, ShareableRoom } from '../types';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
@@ -298,6 +300,43 @@ function memberName(id: string): string {
 function userShare(expenseId: string): number {
   const expense = expenses.value.find((entry) => entry.id === expenseId);
   return expense?.shares.find((share) => share.memberId === myMemberId.value)?.amount ?? 0;
+}
+
+function shareStatus(expenseId: string) {
+  return store.myShareStatus(props.id, expenseId, userId.value);
+}
+
+// Click on an expense: pay my open share directly; otherwise (payer, settled,
+// or no share) fall back to the invite sheet, as before.
+function onSelectExpense(expense: Expense) {
+  const status = shareStatus(expense.id);
+  if (!status || status.settled) {
+    inviteExpense.value = expense;
+    return;
+  }
+  const payee = group.value?.members.find((member) => member.id === expense.paidBy);
+  if (!payee?.address?.startsWith('NQ')) {
+    toast.show(t('invite.toastNoAddress'), 'error');
+    return;
+  }
+  if (expense.currency !== 'NIM') {
+    toast.show(t('invite.toastNimOnly'), 'error');
+    return;
+  }
+  const room: ShareableRoom = {
+    id: expense.id,
+    creatorId: payee.address,
+    creatorName: payee.name,
+    amount: status.open,
+    currency: 'NIM',
+    reason: expense.description,
+    maxParticipants: 1,
+    allocations: [{ expenseId: expense.id, amount: status.open }],
+  };
+  router.push({
+    name: 'pay',
+    query: { room: encodeURIComponent(JSON.stringify(room)), groupId: props.id },
+  });
 }
 
 function eurApprox(nim: number): string {

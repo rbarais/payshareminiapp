@@ -71,6 +71,7 @@ export const en: typeof fr = {
     unknown: 'Unknown',
     paidByMeta: 'Paid by',
     youPaid: 'you paid',
+    expenseSettled: 'Settled ✓',
     editExpenseAriaLabel: 'Edit expense',
     groupUpdated: 'Group updated',
     expenseUpdated: 'Expense updated',

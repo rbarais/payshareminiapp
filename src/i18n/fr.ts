@@ -69,6 +69,7 @@ export const fr = {
     unknown: 'Inconnu',
     paidByMeta: 'Payé par',
     youPaid: 'tu as payé',
+    expenseSettled: 'Réglé ✓',
     editExpenseAriaLabel: 'Modifier la dépense',
     groupUpdated: 'Groupe mis à jour',
     expenseUpdated: 'Dépense mise à jour',

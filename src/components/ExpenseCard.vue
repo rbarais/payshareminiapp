@@ -18,9 +18,16 @@
       </button>
       <div class="expense-right">
         <div class="expense-total">{{ expense.amount.toFixed(2) }} {{ expense.currency }}</div>
-        <div class="expense-share" :style="{ color: isMine ? '#198060' : '#CC3C3C' }">
-          {{ isMine ? t('group.youPaid') : `−${userShare.toFixed(2)} ${expense.currency}` }}
+        <div class="expense-share" :style="{ color: isMine || settled ? '#198060' : '#CC3C3C' }">
+          {{
+            isMine
+              ? t('group.youPaid')
+              : settled
+                ? t('group.expenseSettled')
+                : `−${userShare.toFixed(2)} ${expense.currency}`
+          }}
         </div>
+        <div v-if="settled && txHash" class="expense-proof">#{{ txHash.slice(0, 8) }}…</div>
       </div>
     </div>
     <div class="bar-bg">
@@ -45,6 +52,8 @@ const props = defineProps<{
   userShare: number;
   paidByName: string;
   isMine: boolean;
+  settled?: boolean;
+  txHash?: string | null;
 }>();
 defineEmits<{ select: []; edit: [] }>();
 
@@ -139,5 +148,12 @@ const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.am
 .bar-fill {
   height: 100%;
   border-radius: 2px;
+}
+
+.expense-proof {
+  font-size: 9px;
+  color: var(--text);
+  margin-top: 1px;
+  font-family: monospace;
 }
 </style>
