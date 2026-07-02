@@ -43,6 +43,7 @@ export const en: typeof fr = {
     owedToYou: 'You are owed',
     settledTitle: 'Group settled ✓',
     settledSub: 'No pending debts',
+    toSettle: 'To settle',
     expenses: 'Expenses',
     addExpense: '+ Add',
     noExpenses: 'No expenses yet',
@@ -184,12 +185,10 @@ export const en: typeof fr = {
     shareText: 'Settle your share « {description} » on PayShare',
   },
   settle: {
-    title: 'To settle',
-    sub: 'One payment per person who paid for you',
-    settleBtn: 'Settle →',
+    payAll: 'Settle all',
     needsConnect: 'Needs to connect',
-    close: 'Close',
     reason: 'Settlement · {groupName}',
+    perExpenseSettled: 'Settled ✓',
   },
   scan: {
     errHttps:

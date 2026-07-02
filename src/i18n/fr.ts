@@ -41,6 +41,7 @@ export const fr = {
     owedToYou: 'On te doit',
     settledTitle: 'Groupe soldé ✓',
     settledSub: 'Aucune dette en cours',
+    toSettle: 'À rembourser',
     expenses: 'Dépenses',
     addExpense: '+ Ajouter',
     noExpenses: "Aucune dépense pour l'instant",
@@ -184,12 +185,10 @@ export const fr = {
     shareText: 'Règle ta part « {description} » sur PayShare',
   },
   settle: {
-    title: 'À régler',
-    sub: 'Un paiement par personne qui a avancé pour toi',
-    settleBtn: 'Régler →',
+    payAll: 'Tout rembourser',
     needsConnect: 'Doit se connecter',
-    close: 'Fermer',
     reason: 'Règlement · {groupName}',
+    perExpenseSettled: 'Réglé ✓',
   },
   scan: {
     errHttps:

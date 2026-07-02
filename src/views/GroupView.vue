@@ -50,14 +50,16 @@
       </button>
     </div>
 
-    <!-- Gross debt: what you owe (per-creditor detail in the sheet) -->
-    <div v-if="grossDebt > 0.005" class="debt-card">
-      <div>
-        <div class="debt-who">{{ t('group.youOwe') }}</div>
-        <div class="debt-amount">{{ grossDebt.toFixed(2) }} NIM</div>
-        <div v-if="eurApprox(grossDebt)" class="eur-approx">{{ eurApprox(grossDebt) }}</div>
+    <!-- What you owe: one card per creditor, pay everything in one tx -->
+    <div v-if="debts.length" class="tosettle-section">
+      <div class="tosettle-header">
+        <span class="tosettle-title">{{ t('group.toSettle') }}</span>
+        <span class="tosettle-total">
+          {{ grossDebt.toFixed(2) }} NIM
+          <template v-if="eurApprox(grossDebt)"> · {{ eurApprox(grossDebt) }}</template>
+        </span>
       </div>
-      <button class="settle-btn" @click="openSettle">{{ t('group.settle') }}</button>
+      <CreditorList :group="group" :debts="debts" />
     </div>
 
     <!-- Gross credit: what others owe you (can coexist with the debt) -->
@@ -125,15 +127,6 @@
       <button class="sheet-copy" @click="copyInviteLink">{{ t('group.copyInviteLink') }}</button>
       <p class="invite-qr-note">{{ t('group.inviteQrNote') }}</p>
     </BaseSheet>
-
-    <!-- Sheet: settle your debts (one payment per creditor) -->
-    <SettleSheet
-      v-if="showSettleSheet"
-      :group="group"
-      :user-id="userId"
-      :debts="debts"
-      @close="showSettleSheet = false"
-    />
 
     <!-- Sheet: invite to pay a share -->
     <InviteSheet
@@ -244,7 +237,7 @@ import ExpenseCard from '../components/ExpenseCard.vue';
 import { captureError } from '../utils/errors';
 import { eurRate, fetchRate } from '../utils/rate';
 import InviteSheet from '../components/InviteSheet.vue';
-import SettleSheet from '../components/SettleSheet.vue';
+import CreditorList from '../components/CreditorList.vue';
 import BaseSheet from '../components/BaseSheet.vue';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
@@ -416,13 +409,6 @@ async function confirmAddMember() {
   }
 }
 
-// ── Settlement: sheet listing the creditors (one payment per person) ────────
-const showSettleSheet = ref(false);
-
-function openSettle() {
-  if (!debts.value.length) return;
-  showSettleSheet.value = true;
-}
 </script>
 
 <style scoped>
@@ -535,45 +521,28 @@ function openSettle() {
 }
 
 /* Balance cards */
-.debt-card {
+.tosettle-section {
   margin: 0 18px 14px;
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-  border-radius: 16px;
-  padding: 14px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   flex-shrink: 0;
 }
 
-.debt-who {
-  font-size: 11px;
-  color: var(--red);
-  font-weight: 600;
-  margin-bottom: 3px;
-}
-.debt-amount {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--red);
-  letter-spacing: -0.5px;
+.tosettle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
 }
 
-.settle-btn {
-  background: var(--red);
-  border: none;
-  border-radius: 14px;
-  padding: 12px 18px;
+.tosettle-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.tosettle-total {
   font-size: 12px;
   font-weight: 700;
-  color: #fff;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.settle-btn:hover {
-  opacity: 0.85;
+  color: var(--red);
 }
 
 .credit-card {

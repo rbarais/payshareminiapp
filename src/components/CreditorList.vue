@@ -1,48 +1,47 @@
 <template>
-  <BaseSheet @close="emit('close')">
-    <div class="sheet-title">{{ t('settle.title') }}</div>
-    <div class="sheet-sub">{{ t('settle.sub') }}</div>
-
-    <div class="creditor-list">
-      <div v-for="debt in debts" :key="debt.creditor.id" class="creditor">
-        <div class="creditor-head">
-          <InitialAvatar :name="debt.creditor.name" :size="34" />
-          <div class="creditor-info">
-            <div class="creditor-name">{{ debt.creditor.name }}</div>
-            <div class="creditor-amount">{{ debt.remaining.toFixed(2) }} NIM</div>
-          </div>
-          <button v-if="canSettle(debt)" class="settle-btn" @click="settle(debt)">{{ t('settle.settleBtn') }}</button>
-          <span v-else class="settle-disabled">{{ t('settle.needsConnect') }}</span>
+  <div class="creditor-list">
+    <div v-for="debt in debts" :key="debt.creditor.id" class="creditor">
+      <div class="creditor-head">
+        <InitialAvatar :name="debt.creditor.name" :size="34" />
+        <div class="creditor-info">
+          <div class="creditor-name">{{ debt.creditor.name }}</div>
+          <div class="creditor-amount">{{ debt.remaining.toFixed(2) }} NIM</div>
         </div>
+        <button v-if="canSettle(debt)" class="settle-btn" @click="payAll(debt)">
+          {{ t('settle.payAll') }}
+        </button>
+        <span v-else class="settle-disabled">{{ t('settle.needsConnect') }}</span>
+      </div>
 
-        <div class="expense-detail">
-          <div v-for="item in debt.expenses" :key="item.expense.id" class="detail-row">
-            <span class="detail-desc">{{ item.expense.description }}</span>
-            <span class="detail-share">{{ item.share.toFixed(2) }} NIM</span>
-          </div>
+      <div class="expense-detail">
+        <div
+          v-for="item in debt.expenses"
+          :key="item.expense.id"
+          class="detail-row"
+          :class="{ settled: item.settled }"
+        >
+          <span class="detail-desc">{{ item.expense.description }}</span>
+          <span v-if="item.settled" class="detail-settled">{{
+            t('settle.perExpenseSettled')
+          }}</span>
+          <span v-else class="detail-share">{{ item.open.toFixed(2) }} NIM</span>
         </div>
       </div>
     </div>
-
-    <button class="sheet-back" @click="emit('close')">{{ t('settle.close') }}</button>
-  </BaseSheet>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import type { Group, ShareableRoom } from '../types';
 import type { CreditorDebt } from '../stores/groups';
-import BaseSheet from './BaseSheet.vue';
+import { buildAllocations } from '../utils/allocations';
 import InitialAvatar from './InitialAvatar.vue';
 import { useI18n } from '../stores/i18n';
 
-const props = defineProps<{
-  group: Group;
-  userId: string;
-  debts: CreditorDebt[];
-}>();
-
-const emit = defineEmits<{ (e: 'close'): void }>();
+// Per-creditor cards shown at the top of GroupView: one "pay everything"
+// payment per creditor, with the per-expense breakdown underneath.
+const props = defineProps<{ group: Group; debts: CreditorDebt[] }>();
 
 const router = useRouter();
 const { t } = useI18n();
@@ -52,8 +51,12 @@ function canSettle(debt: CreditorDebt): boolean {
   return !!debt.creditor.address?.startsWith('NQ');
 }
 
-function settle(debt: CreditorDebt) {
+function payAll(debt: CreditorDebt) {
   if (!canSettle(debt)) return;
+
+  const openItems = debt.expenses
+    .filter((item) => !item.settled)
+    .map((item) => ({ expenseId: item.expense.id, open: item.open }));
 
   const room: ShareableRoom = {
     id: `settle_${props.group.id}_${debt.creditor.id.slice(-8)}`,
@@ -63,9 +66,9 @@ function settle(debt: CreditorDebt) {
     currency: 'NIM',
     reason: t('settle.reason', { groupName: props.group.name }),
     maxParticipants: 1,
+    allocations: buildAllocations(openItems, debt.remaining),
   };
 
-  emit('close');
   router.push({
     name: 'pay',
     query: { room: encodeURIComponent(JSON.stringify(room)), groupId: props.group.id },
@@ -74,26 +77,15 @@ function settle(debt: CreditorDebt) {
 </script>
 
 <style scoped>
-.sheet-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--dark);
-}
-.sheet-sub {
-  font-size: 12px;
-  color: var(--text);
-  margin-top: 2px;
-  margin-bottom: 16px;
-}
-
 .creditor-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .creditor {
-  border: 1px solid var(--border-subtle);
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
   border-radius: 16px;
   padding: 12px 14px;
 }
@@ -151,7 +143,7 @@ function settle(debt: CreditorDebt) {
 .expense-detail {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--red-border);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -163,6 +155,10 @@ function settle(debt: CreditorDebt) {
   font-size: 12px;
 }
 
+.detail-row.settled {
+  opacity: 0.55;
+}
+
 .detail-desc {
   color: var(--text-mid);
 }
@@ -170,16 +166,8 @@ function settle(debt: CreditorDebt) {
   color: var(--dark);
   font-weight: 500;
 }
-
-.sheet-back {
-  width: 100%;
-  margin-top: 16px;
-  background: none;
-  border: none;
-  padding: 10px;
-  font-size: 13px;
-  color: var(--text-mid);
-  cursor: pointer;
-  font-family: inherit;
+.detail-settled {
+  color: var(--green);
+  font-weight: 600;
 }
 </style>
