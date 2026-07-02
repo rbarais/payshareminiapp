@@ -62,6 +62,12 @@ export interface Group {
 // Will be wired to the Expense model during the invite flow (Phase 4).
 // ─────────────────────────────────────────────────────────────────────────
 
+// One expense share (partially) covered by a settlement.
+export interface SettlementAllocation {
+  expenseId: string;
+  amount: number;
+}
+
 // On-chain settlement of a net balance within a group.
 export interface Settlement {
   id: string; // on-chain transaction hash
@@ -70,6 +76,9 @@ export interface Settlement {
   toId: string; // creditor address (the one who received)
   amount: number;
   currency: string;
+  // Expense shares this payment settles. Empty = legacy unallocated payment,
+  // deducted from the per-creditor total only (never linked back to expenses).
+  allocations: SettlementAllocation[];
   settledAt: Date;
 }
 
@@ -81,6 +90,8 @@ export interface ShareableRoom {
   currency: string;
   reason: string;
   maxParticipants: number;
+  // Present when the payment settles identified group-expense shares.
+  allocations?: SettlementAllocation[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────
