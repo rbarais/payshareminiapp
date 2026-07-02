@@ -240,7 +240,6 @@ import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import { useI18n } from '../stores/i18n';
 import { buildInviteUrl, buildInviteDeeplink } from '../utils/room';
-import InitialAvatar from '../components/InitialAvatar.vue';
 import ExpenseCard from '../components/ExpenseCard.vue';
 import { captureError } from '../utils/errors';
 import { eurRate, fetchRate } from '../utils/rate';
