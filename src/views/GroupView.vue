@@ -447,7 +447,6 @@ async function confirmAddMember() {
     addingMember.value = false;
   }
 }
-
 </script>
 
 <style scoped>
