@@ -109,12 +109,20 @@ export async function joinGroup(
 
 export async function fetchGroupSettlements(groupId: string): Promise<Settlement[]> {
   const rows = await apiFetch<SerializedSettlement[]>(`/api/groups/${groupId}/settlements`);
-  return rows.map((row) => ({ ...row, settledAt: new Date(row.settledAt) }));
+  return rows.map((row) => ({
+    ...row,
+    allocations: row.allocations ?? [],
+    settledAt: new Date(row.settledAt),
+  }));
 }
 
 export async function fetchAllSettlements(): Promise<Settlement[]> {
   const rows = await apiFetch<SerializedSettlement[]>('/api/groups/settlements');
-  return rows.map((row) => ({ ...row, settledAt: new Date(row.settledAt) }));
+  return rows.map((row) => ({
+    ...row,
+    allocations: row.allocations ?? [],
+    settledAt: new Date(row.settledAt),
+  }));
 }
 
 export async function insertSettlement(settlement: Settlement): Promise<void> {
@@ -126,6 +134,7 @@ export async function insertSettlement(settlement: Settlement): Promise<void> {
       amount: settlement.amount,
       currency: settlement.currency,
       txHash: settlement.id,
+      allocations: settlement.allocations,
       settledAt: settlement.settledAt.toISOString(),
     }),
   });
