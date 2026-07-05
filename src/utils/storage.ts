@@ -59,6 +59,7 @@ export function saveExpenses(expenses: Expense[]): void {
 export function loadSettlements(): Settlement[] {
   return load<SerializedSettlement, Settlement>(SETTLEMENTS_KEY, (settlement) => ({
     ...settlement,
+    allocations: settlement.allocations ?? [], // legacy cached settlements
     settledAt: new Date(settlement.settledAt),
   }));
 }

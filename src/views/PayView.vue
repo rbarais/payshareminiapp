@@ -284,6 +284,7 @@ async function pay() {
         toId: props.room.creatorId,
         amount: props.room.amount,
         currency: props.room.currency,
+        allocations: props.room.allocations ?? [],
         settledAt: new Date(),
       };
       try {

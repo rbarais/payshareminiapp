@@ -17,6 +17,21 @@
       </div>
     </div>
 
+    <!-- Nom -->
+    <div class="field-label">{{ t('settings.yourName') }}</div>
+    <div class="name-row">
+      <input
+        v-model="nameDraft"
+        class="name-input"
+        type="text"
+        :maxlength="24"
+        @keyup.enter="saveName"
+      />
+      <button class="save-btn" :disabled="!nameChanged" @click="saveName">
+        {{ t('settings.saveName') }}
+      </button>
+    </div>
+
     <!-- Thème -->
     <div class="field-label">{{ t('settings.theme') }}</div>
     <div class="segmented">
@@ -52,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import BaseSheet from './BaseSheet.vue';
 import NimiqIdenticon from './NimiqIdenticon.vue';
 import { useSession } from '../stores/session';
@@ -63,8 +79,23 @@ defineEmits<{ close: []; disconnect: [] }>();
 
 const session = useSession();
 
-const { theme, setTheme } = usePrefs();
+const { theme, setTheme, displayName, setDisplayName } = usePrefs();
 const { locale, setLocale, t } = useI18n();
+
+const currentName = () => displayName.value || session.user.value?.name || '';
+const nameDraft = ref(currentName());
+const nameChanged = computed(() => {
+  const clean = nameDraft.value.trim();
+  return clean.length > 0 && clean !== currentName();
+});
+
+function saveName() {
+  const clean = nameDraft.value.trim();
+  if (!clean) return;
+  setDisplayName(clean);
+  session.setName(clean);
+  nameDraft.value = clean;
+}
 
 const themes: { key: Theme; label: string }[] = [
   { key: 'light', label: 'settings.themeLight' },
@@ -133,6 +164,41 @@ const locales: { key: Locale; label: string }[] = [
   letter-spacing: 0.08em;
   font-weight: 700;
   margin: 0 0 8px;
+}
+.name-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.name-input {
+  flex: 1;
+  border: 1.5px solid var(--border-subtle);
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--dark);
+  box-sizing: border-box;
+}
+.name-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.save-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #fff;
+  background: var(--accent);
+  cursor: pointer;
+}
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 .segmented {
   display: flex;
