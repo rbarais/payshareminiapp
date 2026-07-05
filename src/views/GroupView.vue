@@ -101,10 +101,12 @@
         :key="exp.id"
         :expense="exp"
         :user-share="userShare(exp.id)"
+        :progress="expenseProgress(exp)"
         :paid-by-name="memberName(exp.paidBy)"
         :is-mine="exp.paidBy === myMemberId"
         :settled="shareStatus(exp.id)?.settled ?? false"
         :tx-hash="shareStatus(exp.id)?.txHash ?? null"
+        :clickable="!store.expenseFullySettled(props.id, exp.id)"
         @select="onSelectExpense(exp)"
         @edit="openEditExpense(exp)"
       />
@@ -304,6 +306,18 @@ function userShare(expenseId: string): number {
 
 function shareStatus(expenseId: string) {
   return store.myShareStatus(props.id, expenseId, userId.value);
+}
+
+// Real settlement progress (0..1) shown by the card's bar. For the payer, how
+// much of the expense has been reimbursed; for a debtor, how much of their
+// own share is paid.
+function expenseProgress(expense: Expense): number {
+  if (expense.paidBy === myMemberId.value) {
+    return store.expenseSettledRatio(props.id, expense.id);
+  }
+  const status = shareStatus(expense.id);
+  if (!status || status.share <= 0) return 0;
+  return Math.max(0, Math.min(1, (status.share - status.open) / status.share));
 }
 
 // Click on an expense: pay my open share directly; otherwise (payer, settled,

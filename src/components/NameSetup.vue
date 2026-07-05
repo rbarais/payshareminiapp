@@ -10,7 +10,6 @@
         v-model="name"
         class="input"
         type="text"
-        :maxlength="24"
         :placeholder="t('nameSetup.placeholder')"
         @keyup.enter="submit"
       />

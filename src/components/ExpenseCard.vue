@@ -1,5 +1,9 @@
 <template>
-  <div class="expense-card" @click="$emit('select')">
+  <div
+    class="expense-card"
+    :class="{ 'not-clickable': !clickable }"
+    @click="clickable && $emit('select')"
+  >
     <div class="expense-top">
       <div class="expense-left">
         <div class="expense-title">{{ expense.description }}</div>
@@ -46,15 +50,21 @@ import { useI18n } from '../stores/i18n';
 
 // Card for an expense within a group. Clicking opens the pay invitation;
 // the pencil emits `edit`. Derived values (share, payer) are provided by the
-// parent, which knows the group context and the current user.
-const props = defineProps<{
-  expense: Expense;
-  userShare: number;
-  paidByName: string;
-  isMine: boolean;
-  settled?: boolean;
-  txHash?: string | null;
-}>();
+// parent, which knows the group context and the current user. `clickable` is
+// false once there is nothing left to do on the card (my share fully settled).
+const props = withDefaults(
+  defineProps<{
+    expense: Expense;
+    userShare: number;
+    progress?: number; // settlement progress shown by the bar, 0..1
+    paidByName: string;
+    isMine: boolean;
+    settled?: boolean;
+    txHash?: string | null;
+    clickable?: boolean;
+  }>(),
+  { clickable: true, progress: 0 },
+);
 defineEmits<{ select: []; edit: [] }>();
 
 const { t, locale } = useI18n();
@@ -66,7 +76,10 @@ const dateLabel = computed(() =>
   }),
 );
 
-const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.amount) * 100));
+// The bar shows the real settlement progress (0..1) computed by the parent:
+// for a debtor, how much of their share is paid; for the payer, how much of
+// the expense has been reimbursed to them.
+const fillPct = computed(() => Math.max(0, Math.min(100, props.progress * 100)));
 </script>
 
 <style scoped>
@@ -82,6 +95,14 @@ const fillPct = computed(() => Math.min(100, (props.userShare / props.expense.am
 
 .expense-card:active {
   transform: scale(0.99);
+}
+
+.expense-card.not-clickable {
+  cursor: default;
+}
+
+.expense-card.not-clickable:active {
+  transform: none;
 }
 
 .expense-top {

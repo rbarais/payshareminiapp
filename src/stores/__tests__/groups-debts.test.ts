@@ -135,7 +135,7 @@ describe('grossDebtsForUser with allocations', () => {
     expect(store.grossDebtsForUser('g1', ME)).toHaveLength(0);
   });
 
-  it('deducts legacy unallocated settlements from the total only', async () => {
+  it('spreads a legacy unallocated settlement across expenses, oldest first', async () => {
     seed([
       {
         id: 'tx-legacy',
@@ -151,8 +151,31 @@ describe('grossDebtsForUser with allocations', () => {
     const store = await freshStore();
     const debts = store.grossDebtsForUser('g1', ME);
     expect(debts[0].remaining).toBe(4);
-    // Accepted spec divergence: expenses stay visually open for legacy payments.
-    expect(debts[0].expenses.map((i) => i.settled)).toEqual([false, false]);
+    // The legacy payment (5) fully covers the oldest expense (e1, share 5);
+    // e2 stays open. Each expense now reflects the payment.
+    const resto = debts[0].expenses.find((i) => i.expense.id === 'e1')!;
+    expect(resto.settled).toBe(true);
+    expect(resto.txHash).toBe('tx-legacy');
+    const essence = debts[0].expenses.find((i) => i.expense.id === 'e2')!;
+    expect(essence.settled).toBe(false);
+    expect(essence.open).toBe(4);
+  });
+
+  it('drops the creditor when a legacy settlement covers everything', async () => {
+    seed([
+      {
+        id: 'tx-legacy',
+        groupId: 'g1',
+        fromId: ME,
+        toId: MARIE,
+        amount: 9,
+        currency: 'NIM',
+        allocations: [],
+        settledAt: '2026-07-02T00:00:00.000Z',
+      },
+    ]);
+    const store = await freshStore();
+    expect(store.grossDebtsForUser('g1', ME)).toHaveLength(0);
   });
 });
 
@@ -190,6 +213,28 @@ describe('myShareStatus', () => {
     });
   });
 
+  it('returns settled from a legacy unallocated settlement', async () => {
+    seed([
+      {
+        id: 'tx-legacy',
+        groupId: 'g1',
+        fromId: ME,
+        toId: MARIE,
+        amount: 5,
+        currency: 'NIM',
+        allocations: [],
+        settledAt: '2026-07-02T00:00:00.000Z',
+      },
+    ]);
+    const store = await freshStore();
+    expect(store.myShareStatus('g1', 'e1', ME)).toEqual({
+      share: 5,
+      open: 0,
+      settled: true,
+      txHash: 'tx-legacy',
+    });
+  });
+
   it('returns null for the payer of the expense', async () => {
     seed();
     const store = await freshStore();
@@ -200,5 +245,95 @@ describe('myShareStatus', () => {
     seed();
     const store = await freshStore();
     expect(store.myShareStatus('g1', 'e1', 'NQ99ZZZZ')).toBeNull();
+  });
+});
+
+describe('expenseFullySettled', () => {
+  it('is false while a debtor still owes their share', async () => {
+    seed();
+    const store = await freshStore();
+    expect(store.expenseFullySettled('g1', 'e1')).toBe(false);
+  });
+
+  it('is true once every debtor share is covered (allocated)', async () => {
+    seed([
+      {
+        id: 'tx1',
+        groupId: 'g1',
+        fromId: ME,
+        toId: MARIE,
+        amount: 5,
+        currency: 'NIM',
+        allocations: [{ expenseId: 'e1', amount: 5 }],
+        settledAt: '2026-07-02T00:00:00.000Z',
+      },
+    ]);
+    const store = await freshStore();
+    expect(store.expenseFullySettled('g1', 'e1')).toBe(true);
+    expect(store.expenseFullySettled('g1', 'e2')).toBe(false);
+  });
+
+  it('is true once a legacy payment covers the debtor share', async () => {
+    seed([
+      {
+        id: 'tx-legacy',
+        groupId: 'g1',
+        fromId: ME,
+        toId: MARIE,
+        amount: 5,
+        currency: 'NIM',
+        allocations: [],
+        settledAt: '2026-07-02T00:00:00.000Z',
+      },
+    ]);
+    const store = await freshStore();
+    // The legacy payment (5) covers the oldest expense e1 in full.
+    expect(store.expenseFullySettled('g1', 'e1')).toBe(true);
+    expect(store.expenseFullySettled('g1', 'e2')).toBe(false);
+  });
+});
+
+describe('expenseSettledRatio', () => {
+  it('is 0 when nothing has been reimbursed', async () => {
+    seed();
+    const store = await freshStore();
+    expect(store.expenseSettledRatio('g1', 'e1')).toBe(0);
+  });
+
+  it('is 1 once the debtor share is fully allocated', async () => {
+    seed([
+      {
+        id: 'tx1',
+        groupId: 'g1',
+        fromId: ME,
+        toId: MARIE,
+        amount: 5,
+        currency: 'NIM',
+        allocations: [{ expenseId: 'e1', amount: 5 }],
+        settledAt: '2026-07-02T00:00:00.000Z',
+      },
+    ]);
+    const store = await freshStore();
+    expect(store.expenseSettledRatio('g1', 'e1')).toBe(1);
+    expect(store.expenseSettledRatio('g1', 'e2')).toBe(0);
+  });
+
+  it('reflects a partial reimbursement', async () => {
+    seed([
+      {
+        id: 'tx-legacy',
+        groupId: 'g1',
+        fromId: ME,
+        toId: MARIE,
+        amount: 3,
+        currency: 'NIM',
+        allocations: [],
+        settledAt: '2026-07-02T00:00:00.000Z',
+      },
+    ]);
+    const store = await freshStore();
+    // Legacy 3 applied to e1 (share 5) → 3/5 reimbursed; e2 untouched.
+    expect(store.expenseSettledRatio('g1', 'e1')).toBeCloseTo(0.6, 5);
+    expect(store.expenseSettledRatio('g1', 'e2')).toBe(0);
   });
 });
