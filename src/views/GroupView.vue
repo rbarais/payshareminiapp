@@ -50,14 +50,16 @@
       </button>
     </div>
 
-    <!-- Gross debt: what you owe (per-creditor detail in the sheet) -->
-    <div v-if="grossDebt > 0.005" class="debt-card">
-      <div>
-        <div class="debt-who">{{ t('group.youOwe') }}</div>
-        <div class="debt-amount">{{ grossDebt.toFixed(2) }} NIM</div>
-        <div v-if="eurApprox(grossDebt)" class="eur-approx">{{ eurApprox(grossDebt) }}</div>
+    <!-- What you owe: one card per creditor, pay everything in one tx -->
+    <div v-if="debts.length" class="tosettle-section">
+      <div class="tosettle-header">
+        <span class="tosettle-title">{{ t('group.toSettle') }}</span>
+        <span class="tosettle-total">
+          {{ grossDebt.toFixed(2) }} NIM
+          <template v-if="eurApprox(grossDebt)"> · {{ eurApprox(grossDebt) }}</template>
+        </span>
       </div>
-      <button class="settle-btn" @click="openSettle">{{ t('group.settle') }}</button>
+      <CreditorList :group="group" :debts="debts" />
     </div>
 
     <!-- Gross credit: what others owe you (can coexist with the debt) -->
@@ -99,9 +101,13 @@
         :key="exp.id"
         :expense="exp"
         :user-share="userShare(exp.id)"
+        :progress="expenseProgress(exp)"
         :paid-by-name="memberName(exp.paidBy)"
         :is-mine="exp.paidBy === myMemberId"
-        @select="inviteExpense = exp"
+        :settled="shareStatus(exp.id)?.settled ?? false"
+        :tx-hash="shareStatus(exp.id)?.txHash ?? null"
+        :clickable="!store.expenseFullySettled(props.id, exp.id)"
+        @select="onSelectExpense(exp)"
         @edit="openEditExpense(exp)"
       />
     </div>
@@ -125,15 +131,6 @@
       <button class="sheet-copy" @click="copyInviteLink">{{ t('group.copyInviteLink') }}</button>
       <p class="invite-qr-note">{{ t('group.inviteQrNote') }}</p>
     </BaseSheet>
-
-    <!-- Sheet: settle your debts (one payment per creditor) -->
-    <SettleSheet
-      v-if="showSettleSheet"
-      :group="group"
-      :user-id="userId"
-      :debts="debts"
-      @close="showSettleSheet = false"
-    />
 
     <!-- Sheet: invite to pay a share -->
     <InviteSheet
@@ -234,18 +231,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import type { Expense, GroupIcon } from '../types';
+import type { Expense, GroupIcon, ShareableRoom } from '../types';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import { useI18n } from '../stores/i18n';
 import { buildInviteUrl, buildInviteDeeplink } from '../utils/room';
-import InitialAvatar from '../components/InitialAvatar.vue';
 import ExpenseCard from '../components/ExpenseCard.vue';
 import { captureError } from '../utils/errors';
 import { eurRate, fetchRate } from '../utils/rate';
 import InviteSheet from '../components/InviteSheet.vue';
-import SettleSheet from '../components/SettleSheet.vue';
+import CreditorList from '../components/CreditorList.vue';
 import BaseSheet from '../components/BaseSheet.vue';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
@@ -306,6 +302,63 @@ function memberName(id: string): string {
 function userShare(expenseId: string): number {
   const expense = expenses.value.find((entry) => entry.id === expenseId);
   return expense?.shares.find((share) => share.memberId === myMemberId.value)?.amount ?? 0;
+}
+
+function shareStatus(expenseId: string) {
+  return store.myShareStatus(props.id, expenseId, userId.value);
+}
+
+// Real settlement progress (0..1) shown by the card's bar. For the payer, how
+// much of the expense has been reimbursed; for a debtor, how much of their
+// own share is paid.
+function expenseProgress(expense: Expense): number {
+  if (expense.paidBy === myMemberId.value) {
+    return store.expenseSettledRatio(props.id, expense.id);
+  }
+  const status = shareStatus(expense.id);
+  if (!status || status.share <= 0) return 0;
+  return Math.max(0, Math.min(1, (status.share - status.open) / status.share));
+}
+
+// Click on an expense: pay my open share directly; otherwise (payer, settled,
+// or no share) fall back to the invite sheet, as before.
+function onSelectExpense(expense: Expense) {
+  const status = shareStatus(expense.id);
+  if (!status || status.settled) {
+    inviteExpense.value = expense;
+    return;
+  }
+  // Cap at the creditor's remaining debt: legacy unallocated payments reduce
+  // the total owed without marking individual expenses settled.
+  const debt = debts.value.find((entry) => entry.creditor.id === expense.paidBy);
+  const payable = Math.min(status.open, debt?.remaining ?? 0);
+  if (payable < 0.005) {
+    inviteExpense.value = expense;
+    return;
+  }
+  const payee = group.value?.members.find((member) => member.id === expense.paidBy);
+  if (!payee?.address?.startsWith('NQ')) {
+    toast.show(t('invite.toastNoAddress'), 'error');
+    return;
+  }
+  if (expense.currency !== 'NIM') {
+    toast.show(t('invite.toastNimOnly'), 'error');
+    return;
+  }
+  const room: ShareableRoom = {
+    id: expense.id,
+    creatorId: payee.address,
+    creatorName: payee.name,
+    amount: payable,
+    currency: 'NIM',
+    reason: expense.description,
+    maxParticipants: 1,
+    allocations: [{ expenseId: expense.id, amount: payable }],
+  };
+  router.push({
+    name: 'pay',
+    query: { room: encodeURIComponent(JSON.stringify(room)), groupId: props.id },
+  });
 }
 
 function eurApprox(nim: number): string {
@@ -415,14 +468,6 @@ async function confirmAddMember() {
   } finally {
     addingMember.value = false;
   }
-}
-
-// ── Settlement: sheet listing the creditors (one payment per person) ────────
-const showSettleSheet = ref(false);
-
-function openSettle() {
-  if (!debts.value.length) return;
-  showSettleSheet.value = true;
 }
 </script>
 
@@ -536,45 +581,28 @@ function openSettle() {
 }
 
 /* Balance cards */
-.debt-card {
+.tosettle-section {
   margin: 0 18px 14px;
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-  border-radius: 16px;
-  padding: 14px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   flex-shrink: 0;
 }
 
-.debt-who {
-  font-size: 11px;
-  color: var(--red);
-  font-weight: 600;
-  margin-bottom: 3px;
-}
-.debt-amount {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--red);
-  letter-spacing: -0.5px;
+.tosettle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
 }
 
-.settle-btn {
-  background: var(--red);
-  border: none;
-  border-radius: 14px;
-  padding: 12px 18px;
+.tosettle-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.tosettle-total {
   font-size: 12px;
   font-weight: 700;
-  color: #fff;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.settle-btn:hover {
-  opacity: 0.85;
+  color: var(--red);
 }
 
 .credit-card {

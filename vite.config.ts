@@ -4,27 +4,6 @@ import { defineConfig, loadEnv } from 'vite';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import svgLoader from 'vite-svg-loader';
 
-export default defineConfig({
-  // Le plugin Nimiq configure WASM + workers requis par le Web Client (@nimiq/core)
-  plugins: [
-    vue(),
-    nimiq(),
-    sentryVitePlugin({
-      org: 'payshare',
-      project: 'sentry-payshare',
-      sourcemaps: {
-        filesToDeleteAfterUpload: ['./dist/assets/*.map'],
-      },
-      telemetry: false,
-    }),
-  ],
-  build: {
-    sourcemap: 'hidden',
-  },
-  server: {
-    port: 5173,
-    host: true,
-  },
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   // Cible du proxy /api en dev : le backend Vercel déjà déployé.

@@ -8,6 +8,25 @@ function normalizeAddr(addr: string): string {
   return addr.replace(/\s/g, '').toUpperCase();
 }
 
+interface AllocationInput {
+  expenseId: string;
+  amount: number;
+}
+
+function parseAllocations(raw: unknown): AllocationInput[] | null {
+  if (raw == null) return [];
+  if (!Array.isArray(raw)) return null;
+  const valid = raw.every(
+    (entry): entry is AllocationInput =>
+      typeof entry === 'object' &&
+      entry !== null &&
+      typeof (entry as AllocationInput).expenseId === 'string' &&
+      typeof (entry as AllocationInput).amount === 'number' &&
+      (entry as AllocationInput).amount > 0,
+  );
+  return valid ? (raw as AllocationInput[]) : null;
+}
+
 router.get('/settlements', requireAuth, async (req, res): Promise<void> => {
   const { address } = (req as AuthRequest).user;
 
@@ -21,11 +40,12 @@ router.get('/settlements', requireAuth, async (req, res): Promise<void> => {
         amount: string;
         currency: string;
         tx_hash: string | null;
+        allocations: { expenseId: string; amount: number }[] | null;
         verified_at: Date | null;
         created_at: Date;
       }[]
     >`
-      SELECT id, group_id, from_addr, to_addr, amount, currency, tx_hash, verified_at, created_at
+      SELECT id, group_id, from_addr, to_addr, amount, currency, tx_hash, allocations, verified_at, created_at
       FROM payments
       WHERE group_id IN (SELECT group_id FROM members WHERE address = ${address})
       ORDER BY created_at DESC
@@ -39,6 +59,7 @@ router.get('/settlements', requireAuth, async (req, res): Promise<void> => {
         toId: row.to_addr,
         amount: Number(row.amount),
         currency: row.currency,
+        allocations: row.allocations ?? [],
         settledAt: row.verified_at ?? row.created_at,
       })),
     );
@@ -70,11 +91,12 @@ router.get('/:id/settlements', requireAuth, async (req, res): Promise<void> => {
         amount: string;
         currency: string;
         tx_hash: string | null;
+        allocations: { expenseId: string; amount: number }[] | null;
         verified_at: Date | null;
         created_at: Date;
       }[]
     >`
-      SELECT id, group_id, from_addr, to_addr, amount, currency, tx_hash, verified_at, created_at
+      SELECT id, group_id, from_addr, to_addr, amount, currency, tx_hash, allocations, verified_at, created_at
       FROM payments
       WHERE group_id = ${groupId}
       ORDER BY created_at DESC
@@ -88,6 +110,7 @@ router.get('/:id/settlements', requireAuth, async (req, res): Promise<void> => {
         toId: row.to_addr,
         amount: Number(row.amount),
         currency: row.currency,
+        allocations: row.allocations ?? [],
         settledAt: row.verified_at ?? row.created_at,
       })),
     );
@@ -117,6 +140,7 @@ router.post('/:id/settlements', requireAuth, async (req, res): Promise<void> => 
       currency: string;
       txHash: string;
       settledAt?: string;
+      allocations?: unknown;
     };
 
     if (!body.fromId || !body.toId || body.amount == null || !body.currency || !body.txHash) {
@@ -125,6 +149,12 @@ router.post('/:id/settlements', requireAuth, async (req, res): Promise<void> => 
     }
     if (normalizeAddr(body.fromId) !== normalizeAddr(address)) {
       res.status(403).json({ error: 'fromId must match authenticated user' });
+      return;
+    }
+
+    const allocations = parseAllocations(body.allocations);
+    if (allocations === null) {
+      res.status(400).json({ error: 'malformed allocations' });
       return;
     }
 
@@ -142,10 +172,10 @@ router.post('/:id/settlements', requireAuth, async (req, res): Promise<void> => 
     // that claim and record directly; verified_at stays null (reserved for a
     // future async on-chain reconciliation job).
     await sql`
-      INSERT INTO payments (group_id, from_addr, to_addr, amount, currency, tx_hash)
+      INSERT INTO payments (group_id, from_addr, to_addr, amount, currency, tx_hash, allocations)
       VALUES (
         ${groupId}, ${body.fromId}, ${body.toId}, ${body.amount},
-        ${body.currency}, ${body.txHash}
+        ${body.currency}, ${body.txHash}, ${sql.json(allocations)}
       )
     `;
 

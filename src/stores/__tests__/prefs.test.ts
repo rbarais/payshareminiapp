@@ -40,3 +40,23 @@ describe('prefs (thème)', () => {
     expect(JSON.parse(localStorage.getItem('payshare_prefs')!).theme).toBe('dark');
   });
 });
+
+describe('prefs (displayName)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.resetModules();
+  });
+
+  it('setDisplayName met à jour l\'état réactif et persiste', async () => {
+    const { usePrefs } = await import('../prefs');
+    const { setDisplayName, displayName } = usePrefs();
+    setDisplayName('Alice');
+    expect(displayName.value).toBe('Alice');
+    expect(JSON.parse(localStorage.getItem('payshare_prefs')!).displayName).toBe('Alice');
+  });
+
+  it('displayName démarre vide quand rien n\'est stocké', async () => {
+    const { usePrefs } = await import('../prefs');
+    expect(usePrefs().displayName.value).toBe('');
+  });
+});

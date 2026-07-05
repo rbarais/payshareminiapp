@@ -118,19 +118,74 @@ function findMemberByAddress(groupId: string, nimiqAddress: string): Member | un
 }
 
 // A gross debt of the current user toward a creditor (the member who paid).
-// owed = sum of my shares on this creditor's expenses; paid = on-chain
-// settlements already sent to this creditor; remaining = what is left to settle.
+// Each expense item carries its own open/settled state, derived from the
+// settlement allocations.
+export interface CreditorDebtItem {
+  expense: Expense;
+  share: number; // my frozen share on this expense
+  open: number; // share minus allocated payments (≥ 0)
+  settled: boolean; // open < 0.005
+  txHash: string | null; // settlement that completed this share, when settled
+}
+
 export interface CreditorDebt {
   creditor: Member;
-  expenses: { expense: Expense; share: number }[];
+  expenses: CreditorDebtItem[];
   owed: number;
   paid: number;
   remaining: number;
 }
 
-// Gross debts (no netting) of the user, grouped by creditor.
+// Per-expense totals allocated by the member's settlements in a group.
+// txHash keeps the last settlement that touched the share (proof reference).
+function allocationIndex(
+  groupId: string,
+  fromAddress: string,
+): Map<string, { allocated: number; txHash: string }> {
+  const index = new Map<string, { allocated: number; txHash: string }>();
+  for (const settlement of state.settlements) {
+    if (settlement.groupId !== groupId || settlement.fromId !== fromAddress) continue;
+    for (const allocation of settlement.allocations) {
+      const entry = index.get(allocation.expenseId) ?? { allocated: 0, txHash: settlement.id };
+      entry.allocated = round2(entry.allocated + allocation.amount);
+      entry.txHash = settlement.id;
+      index.set(allocation.expenseId, entry);
+    }
+  }
+  return index;
+}
+
+// Spread a lump-sum "legacy" settlement (paid via the per-creditor "pay all"
+// button, with no per-expense allocations) across a creditor's still-open
+// expenses, oldest first, marking each settled once fully covered.
+function distributeLegacy(
+  items: CreditorDebtItem[],
+  legacyPaid: number,
+  legacyTx: string | null,
+): void {
+  let remaining = legacyPaid;
+  if (remaining < 0.005) return;
+  const ordered = [...items].sort(
+    (a, b) => a.expense.createdAt.getTime() - b.expense.createdAt.getTime(),
+  );
+  for (const item of ordered) {
+    if (remaining < 0.005) break;
+    if (item.open < 0.005) continue;
+    const applied = Math.min(item.open, remaining);
+    item.open = round2(item.open - applied);
+    remaining = round2(remaining - applied);
+    if (item.open < 0.005) {
+      item.settled = true;
+      if (item.txHash == null) item.txHash = legacyTx;
+    }
+  }
+}
+
+// Full per-creditor breakdown of what the user owes, including creditors whose
+// debt is fully settled (callers filter as needed). Per-expense open/settled
+// reflect BOTH explicit allocations and legacy (unallocated) payments.
 // memberId = current member UUID; nimiqAddress = their address (for settlements).
-function grossDebtsForMember(
+function creditorBreakdown(
   groupId: string,
   memberId: string,
   nimiqAddress?: string,
@@ -150,29 +205,60 @@ function grossDebtsForMember(
     byCreditor.set(expense.paidBy, list);
   }
 
+  const allocated = allocationIndex(groupId, myAddress);
   const debts: CreditorDebt[] = [];
-  for (const [creditorId, expenses] of byCreditor) {
+  for (const [creditorId, items] of byCreditor) {
     const creditor = group.members.find((member) => member.id === creditorId);
     if (!creditor) continue;
-    const owed = round2(expenses.reduce((sum, item) => sum + item.share, 0));
-    // Settlements already sent to this creditor (indexed by Nimiq address).
-    let paid = 0;
+    const detailed: CreditorDebtItem[] = items.map(({ expense, share }) => {
+      const entry = allocated.get(expense.id);
+      const open = round2(Math.max(0, share - (entry?.allocated ?? 0)));
+      const settled = open < 0.005;
+      return { expense, share, open, settled, txHash: settled ? (entry?.txHash ?? null) : null };
+    });
+
+    // Legacy settlements (no allocations): spread them across the still-open
+    // expenses so the per-expense view stays consistent with the total.
+    let legacyPaid = 0;
+    let legacyTx: string | null = null;
     if (creditor.address) {
       for (const settlement of state.settlements) {
         if (
           settlement.groupId === groupId &&
           settlement.fromId === myAddress &&
-          settlement.toId === creditor.address
+          settlement.toId === creditor.address &&
+          settlement.allocations.length === 0
         ) {
-          paid += settlement.amount;
+          legacyPaid = round2(legacyPaid + settlement.amount);
+          legacyTx = settlement.id;
         }
       }
     }
-    const remaining = round2(Math.max(0, owed - paid));
-    if (remaining < 0.005) continue;
-    debts.push({ creditor, expenses, owed, paid: round2(paid), remaining });
+    distributeLegacy(detailed, legacyPaid, legacyTx);
+
+    const owed = round2(detailed.reduce((sum, item) => sum + item.share, 0));
+    const remaining = round2(detailed.reduce((sum, item) => sum + item.open, 0));
+    debts.push({
+      creditor,
+      expenses: detailed,
+      owed,
+      paid: round2(owed - remaining),
+      remaining,
+    });
   }
   return debts;
+}
+
+// Gross debts (no netting) of the user, grouped by creditor. Fully-settled
+// creditors are dropped.
+function grossDebtsForMember(
+  groupId: string,
+  memberId: string,
+  nimiqAddress?: string,
+): CreditorDebt[] {
+  return creditorBreakdown(groupId, memberId, nimiqAddress).filter(
+    (debt) => debt.remaining >= 0.005,
+  );
 }
 
 // What others owe me (gross): their shares on MY expenses, minus settlements
@@ -236,6 +322,85 @@ export function useGroupsStore() {
     // Current member UUID in a group (empty string if not linked yet).
     myMemberId: (groupId: string, nimiqAddress: string): string =>
       findMemberByAddress(groupId, nimiqAddress)?.id ?? '',
+
+    // Open/settled state of the current user's share on one expense.
+    // null when not a member, not a debtor, or payer of the expense.
+    myShareStatus: (
+      groupId: string,
+      expenseId: string,
+      nimiqAddress: string,
+    ): { share: number; open: number; settled: boolean; txHash: string | null } | null => {
+      const member = findMemberByAddress(groupId, nimiqAddress);
+      if (!member) return null;
+      const expense = state.expenses.find(
+        (entry) => entry.id === expenseId && entry.groupId === groupId,
+      );
+      if (!expense || expense.paidBy === member.id) return null;
+      const share = expense.shares.find((entry) => entry.memberId === member.id)?.amount ?? 0;
+      if (share <= 0) return null;
+      // Reuse the per-creditor breakdown so legacy (unallocated) payments settle
+      // individual expenses the same way they do in the creditor list.
+      const creditor = creditorBreakdown(groupId, member.id, nimiqAddress).find(
+        (debt) => debt.creditor.id === expense.paidBy,
+      );
+      const item = creditor?.expenses.find((entry) => entry.expense.id === expenseId);
+      if (!item) return { share, open: round2(share), settled: false, txHash: null };
+      return { share: item.share, open: item.open, settled: item.settled, txHash: item.txHash };
+    },
+
+    // True when every debtor's share on an expense is fully settled (nobody
+    // owes anything on it anymore) — used to disable interaction on the card.
+    // A placeholder payer/debtor (no Nimiq address) can never be fully settled.
+    expenseFullySettled: (groupId: string, expenseId: string): boolean => {
+      const expense = state.expenses.find(
+        (entry) => entry.id === expenseId && entry.groupId === groupId,
+      );
+      const group = state.groups.find((entry) => entry.id === groupId);
+      if (!expense || !group) return false;
+      const payer = group.members.find((member) => member.id === expense.paidBy);
+      if (!payer?.address) return false;
+      for (const share of expense.shares) {
+        if (share.memberId === expense.paidBy || share.amount <= 0.005) continue;
+        const debtor = group.members.find((member) => member.id === share.memberId);
+        if (!debtor?.address) return false; // placeholder debtor can't have paid
+        const creditor = creditorBreakdown(groupId, debtor.id, debtor.address).find(
+          (debt) => debt.creditor.id === expense.paidBy,
+        );
+        const item = creditor?.expenses.find((entry) => entry.expense.id === expenseId);
+        const open = item ? item.open : share.amount;
+        if (open >= 0.005) return false;
+      }
+      return true;
+    },
+
+    // Fraction (0..1) of an expense reimbursed to the payer across all debtors —
+    // real settlement progress. 1 when fully settled, 0 when nothing is paid.
+    expenseSettledRatio: (groupId: string, expenseId: string): number => {
+      const expense = state.expenses.find(
+        (entry) => entry.id === expenseId && entry.groupId === groupId,
+      );
+      const group = state.groups.find((entry) => entry.id === groupId);
+      if (!expense || !group) return 0;
+      const payer = group.members.find((member) => member.id === expense.paidBy);
+      let owed = 0;
+      let open = 0;
+      for (const share of expense.shares) {
+        if (share.memberId === expense.paidBy || share.amount <= 0) continue;
+        owed += share.amount;
+        const debtor = group.members.find((member) => member.id === share.memberId);
+        if (!debtor?.address || !payer?.address) {
+          open += share.amount; // can't be settled on-chain (placeholder)
+          continue;
+        }
+        const creditor = creditorBreakdown(groupId, debtor.id, debtor.address).find(
+          (debt) => debt.creditor.id === expense.paidBy,
+        );
+        const item = creditor?.expenses.find((entry) => entry.expense.id === expenseId);
+        open += item ? item.open : share.amount;
+      }
+      if (owed <= 0.005) return 1;
+      return Math.max(0, Math.min(1, round2(owed - open) / owed));
+    },
 
     async createGroup(params: {
       name: string;
