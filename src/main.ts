@@ -22,15 +22,27 @@ if (import.meta.env.VITE_SENTRY_DSN) {
       // fix. The rejection IS already caught and shown to the user in PayView,
       // so we drop the duplicate unhandledrejection event here.
       const isNimiqSdkRejection = event.exception?.values?.some(
-        (v) =>
-          v.type === 'UnhandledRejection' &&
-          typeof v.value === 'string' &&
-          v.value.includes('Failed to send payment transaction'),
+        (exception) =>
+          exception.type === 'UnhandledRejection' &&
+          typeof exception.value === 'string' &&
+          exception.value.includes('Failed to send payment transaction'),
       );
       return isNimiqSdkRejection ? null : event;
     },
   });
 }
+
+// Track the real visible viewport height in a CSS var so the fixed app shell
+// shrinks to fit above the on-screen keyboard. `svh`/`dvh` don't account for
+// the keyboard, which would otherwise leave a blank (black, in dark mode) strip
+// below the fold when an input is focused.
+function syncViewportHeight() {
+  const height = window.visualViewport?.height ?? window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', `${height}px`);
+}
+syncViewportHeight();
+window.visualViewport?.addEventListener('resize', syncViewportHeight);
+window.addEventListener('resize', syncViewportHeight);
 
 app.use(i18n);
 app.use(router);

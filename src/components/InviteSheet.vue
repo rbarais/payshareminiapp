@@ -4,7 +4,9 @@
     <template v-if="!inviteDeeplink">
       <div class="sheet-title">{{ t('invite.title') }}</div>
       <div class="sheet-sub">
-        {{ t('invite.sub', { description: expense.description, paidBy: memberName(expense.paidBy) }) }}
+        {{
+          t('invite.sub', { description: expense.description, paidBy: memberName(expense.paidBy) })
+        }}
       </div>
 
       <div v-if="debtorsOf(expense).length" class="debtor-list">
@@ -69,9 +71,11 @@ const inviteDeeplink = ref(''); // nimiqpay:// deeplink (encoded in the QR)
 const inviteLabel = ref('');
 
 function memberName(id: string): string {
-  const member = props.group.members.find((m) => m.id === id);
-  const norm = (a: string) => a.replace(/\s/g, '').toUpperCase();
-  if (member?.address && norm(member.address) === norm(props.userId)) return t('group.you');
+  const member = props.group.members.find((member) => member.id === id);
+  const norm = (address: string) => address.replace(/\s/g, '').toUpperCase();
+  if (member?.address && norm(member.address) === norm(props.userId)) {
+    return t('group.you');
+  }
   return member?.name ?? t('group.unknown');
 }
 

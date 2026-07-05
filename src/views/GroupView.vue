@@ -240,7 +240,6 @@ import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import { useI18n } from '../stores/i18n';
 import { buildInviteUrl, buildInviteDeeplink } from '../utils/room';
-import InitialAvatar from '../components/InitialAvatar.vue';
 import ExpenseCard from '../components/ExpenseCard.vue';
 import { captureError } from '../utils/errors';
 import { eurRate, fetchRate } from '../utils/rate';
@@ -276,7 +275,7 @@ const grossCredit = computed(() => store.grossCreditForUser(props.id, userId.val
 // Redirect if the group does not exist (invalid / deleted id).
 onMounted(async () => {
   if (!group.value) {
-    router.replace({ name: 'home' });
+    await router.replace({ name: 'home' });
     return;
   }
   // Refresh the group's expenses from Supabase on open.
@@ -286,7 +285,7 @@ onMounted(async () => {
     captureError(err, 'GroupView.refreshGroupExpenses');
     toast.show(t('error.syncFailed'), 'error');
   }
-  fetchRate();
+  await fetchRate();
 });
 
 const monthLabel = computed(() =>

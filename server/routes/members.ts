@@ -23,11 +23,11 @@ router.get('/:id/members', requireAuth, async (req, res): Promise<void> => {
     }
 
     res.json(
-      rows.map((m) => ({
-        id: m.id,
-        address: m.address ?? undefined,
-        name: m.name,
-        joinedAt: m.joined_at,
+      rows.map((member) => ({
+        id: member.id,
+        address: member.address ?? undefined,
+        name: member.name,
+        joinedAt: member.joined_at,
       })),
     );
   } catch (err) {

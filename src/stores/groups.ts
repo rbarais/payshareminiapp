@@ -105,8 +105,8 @@ function computeShares(
   }));
 }
 
-function normAddr(a: string): string {
-  return a.replace(/\s/g, '').toUpperCase();
+function normAddr(addr: string): string {
+  return addr.replace(/\s/g, '').toUpperCase();
 }
 
 // Return the current member's UUID in a group from their Nimiq address.
@@ -340,7 +340,7 @@ export function useGroupsStore() {
       state.settlements.push(settlement);
       return insertSettlement(settlement).catch((error) => {
         console.error('settlement backend sync failed:', error);
-        const idx = state.settlements.findIndex((s) => s.id === settlement.id);
+        const idx = state.settlements.findIndex((existing) => existing.id === settlement.id);
         if (idx !== -1) state.settlements.splice(idx, 1);
         throw error;
       });
@@ -368,7 +368,7 @@ export function useGroupsStore() {
         fetchGroupExpenses(groupId),
         fetchGroupSettlements(groupId),
       ]);
-      const group = state.groups.find((g) => g.id === groupId);
+      const group = state.groups.find((item) => item.id === groupId);
       if (group) group.members = members;
       state.expenses = [
         ...state.expenses.filter((expense) => expense.groupId !== groupId),

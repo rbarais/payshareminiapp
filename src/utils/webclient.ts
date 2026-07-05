@@ -26,7 +26,7 @@ export interface RoomPayment {
 function hexToUtf8(hex: string): string {
   if (!hex) return '';
   try {
-    const bytes = (hex.match(/.{1,2}/g) ?? []).map((b) => parseInt(b, 16));
+    const bytes = (hex.match(/.{1,2}/g) ?? []).map((byte) => parseInt(byte, 16));
     return new TextDecoder().decode(new Uint8Array(bytes));
   } catch {
     return '';
@@ -57,7 +57,7 @@ export async function fetchRoomPayments(
     // dev browser or provider timeout — proceed without the guard
   }
 
-  let transactions: RpcTx[] = [];
+  let transactions: RpcTx[];
   try {
     const res = await fetch(NIMIQ_RPC_URL, {
       method: 'POST',
