@@ -3,6 +3,7 @@ export type Locale = 'fr' | 'en';
 export interface Prefs {
   theme?: Theme;
   locale?: Locale;
+  displayName?: string;
 }
 
 const KEY = 'payshare_prefs';

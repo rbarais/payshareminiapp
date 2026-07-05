@@ -86,7 +86,15 @@ export const en: typeof fr = {
     themeDark: 'Dark',
     themeAuto: 'Auto',
     language: 'Language',
+    yourName: 'Your name',
+    saveName: 'Save',
     disconnect: 'Sign out',
+  },
+  nameSetup: {
+    title: 'What should we call you?',
+    subtitle: 'This name is visible to the other members of your groups.',
+    placeholder: 'Your first name or nickname',
+    continue: 'Continue',
   },
   toast: {
     memberAdded: '{name} added',

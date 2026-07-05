@@ -1,5 +1,6 @@
 import { init } from '@nimiq/mini-app-sdk';
 import type { NimiqProvider } from '@nimiq/mini-app-sdk';
+import { readPrefs } from './prefsStorage';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Nimiq provider initialization.
@@ -55,11 +56,6 @@ export async function getNimiqAddress(): Promise<string> {
   return accounts[0];
 }
 
-/** User name — placeholder, the provider does not expose a name. */
-export async function getNimiqUserName(): Promise<string> {
-  return 'Nimiq User';
-}
-
 /**
  * Get the current user's address + name.
  *
@@ -72,7 +68,7 @@ export async function getCurrentUser(): Promise<{ id: string; name: string }> {
   if (!provider) {
     return {
       id: 'dev_' + Math.random().toString(36).slice(2, 11),
-      name: 'Dev User',
+      name: readPrefs().displayName || 'Dev User',
     };
   }
 
@@ -81,7 +77,7 @@ export async function getCurrentUser(): Promise<{ id: string; name: string }> {
     throw new Error(accounts.error.message);
   }
   const address = accounts[0];
-  const name = await getNimiqUserName();
+  const name = readPrefs().displayName ?? '';
   return { id: address, name: name || 'User ' + address.slice(0, 6) };
 }
 

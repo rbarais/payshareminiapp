@@ -84,7 +84,15 @@ export const fr = {
     themeDark: 'Sombre',
     themeAuto: 'Auto',
     language: 'Langue',
+    yourName: 'Ton nom',
+    saveName: 'Enregistrer',
     disconnect: 'Se déconnecter',
+  },
+  nameSetup: {
+    title: "Comment tu veux qu'on t'appelle ?",
+    subtitle: 'Ce nom sera visible par les autres membres de tes groupes.',
+    placeholder: 'Ton prénom ou pseudo',
+    continue: 'Continuer',
   },
   toast: {
     memberAdded: '{name} ajouté',

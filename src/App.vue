@@ -1,5 +1,6 @@
 <template>
   <LoginView v-if="!showApp" />
+  <NameSetup v-else-if="needsName" />
   <template v-else>
     <router-view
       style="flex: 1; min-height: 0; overflow: hidden"
@@ -25,13 +26,16 @@ import { useSession } from './stores/session';
 import { useToast } from './stores/toast';
 import { t } from './stores/i18n';
 import LoginView from './views/LoginView.vue';
+import NameSetup from './components/NameSetup.vue';
 import ToastHost from './components/ToastHost.vue';
 import BottomNav from './components/BottomNav.vue';
+import { usePrefs } from './stores/prefs';
 
 const router = useRouter();
 const route = useRoute();
 const session = useSession();
 const toast = useToast();
+const { displayName } = usePrefs();
 
 const NAV_ROUTES = new Set(['home', 'groups']);
 const showNav = computed(() => NAV_ROUTES.has(route.name as string));
@@ -41,6 +45,9 @@ const navActive = computed(() => (route.name as string) as 'home' | 'groups' | '
 // indeed inside Nimiq Pay) AND the user is connected. If init() fails, we stay
 // on the login screen, even with a cached session.
 const showApp = computed(() => session.isLoggedIn.value && session.isNimiqApp.value === true);
+
+// Once in the app, force the name-setup screen until a display name is chosen.
+const needsName = computed(() => showApp.value && !displayName.value);
 
 // Replay any deeplink (?r=… payment, ?g=&t= invitation) as soon as we enter
 // the app.

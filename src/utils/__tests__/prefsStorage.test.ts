@@ -18,4 +18,9 @@ describe('prefsStorage', () => {
     localStorage.setItem('payshare_prefs', '{not json');
     expect(readPrefs()).toEqual({});
   });
+
+  it('persiste et relit displayName', () => {
+    patchPrefs({ displayName: 'Thomas' });
+    expect(readPrefs().displayName).toBe('Thomas');
+  });
 });

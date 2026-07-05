@@ -1,7 +1,10 @@
 import { reactive, computed } from 'vue';
 import { readPrefs, patchPrefs, type Theme } from '../utils/prefsStorage';
 
-const state = reactive<{ theme: Theme }>({ theme: readPrefs().theme ?? 'auto' });
+const state = reactive<{ theme: Theme; displayName: string }>({
+  theme: readPrefs().theme ?? 'auto',
+  displayName: readPrefs().displayName ?? '',
+});
 
 let listenerInstalled = false;
 
@@ -36,6 +39,11 @@ export function usePrefs() {
       state.theme = theme;
       patchPrefs({ theme });
       applyTheme();
+    },
+    displayName: computed(() => state.displayName),
+    setDisplayName(name: string) {
+      state.displayName = name;
+      patchPrefs({ displayName: name });
     },
   };
 }

@@ -131,6 +131,13 @@ export function useSession() {
       }
     },
 
+    /** Update the current user's display name (session + localStorage). */
+    setName(name: string): void {
+      if (!state.user) return;
+      state.user = { ...state.user, name };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(state.user));
+    },
+
     /** Clear the local session (never touches the wallet keys). */
     disconnect(): void {
       state.user = null;
