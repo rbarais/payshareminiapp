@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="header">
       <div class="logo">PayShare</div>
-      <WalletBadge :address="userId" @open="showSettings = true" />
+      <WalletBadge :address="userId" @open="emit('open-settings')" />
     </div>
 
     <!-- Content -->
@@ -58,30 +58,23 @@
       </div>
     </div>
 
-    <SettingsSheet
-      v-if="showSettings"
-      @close="showSettings = false"
-      @disconnect="
-        showSettings = false;
-        disconnect();
-      "
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import GroupCard from '../components/GroupCard.vue';
 import WalletBadge from '../components/WalletBadge.vue';
-import SettingsSheet from '../components/SettingsSheet.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
 import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
 import plusIcon from '../assets/svg/plus.svg'
+
+const emit = defineEmits<{ 'open-settings': [] }>();
 
 const router = useRouter();
 const session = useSession();
@@ -115,13 +108,6 @@ const groups = computed(() =>
 // Aggregated global balance (gross): what others owe you vs what you owe.
 const credited = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossCredit, 0));
 const owed = computed(() => groups.value.reduce((sum, entry) => sum + entry.grossDebt, 0));
-
-const showSettings = ref(false);
-
-function disconnect() {
-  session.disconnect();
-  router.replace({ name: 'home' });
-}
 
 function goToNewGroup() {
   router.push({ name: 'newGroup' });

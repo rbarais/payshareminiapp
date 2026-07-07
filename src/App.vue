@@ -7,20 +7,32 @@
       @new-group="router.push({ name: 'newGroup' })"
       @open-group="router.push({ name: 'group' })"
       @open-scanner="router.push({ name: 'scan' })"
+      @open-settings="showSettings = true"
       @back="router.back()"
       @add-expense="router.push({ name: 'addExpense' })"
       @pay="router.push({ name: 'pay' })"
       @scanned="handleScanned"
       @success="handlePaySuccess"
     />
-    <BottomNav v-if="showNav" :active="navActive" />
+    <BottomNav v-if="showNav" :active="navActive" @open-settings="showSettings = true" />
+    <SettingsSheet v-if="showSettings" @close="showSettings = false" @disconnect="askDisconnect" />
+    <ConfirmDialog
+      v-if="showDisconnectConfirm"
+      :title="t('settings.disconnectConfirmTitle')"
+      :body="t('settings.disconnectConfirmBody')"
+      :confirm-label="t('settings.disconnect')"
+      :cancel-label="t('common.cancel')"
+      danger
+      @confirm="confirmDisconnect"
+      @cancel="showDisconnectConfirm = false"
+    />
   </template>
   <ToastHost />
 </template>
 
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router';
-import { onMounted, watch, computed } from 'vue';
+import { onMounted, watch, computed, ref } from 'vue';
 import { decodeRoomFromUrl, decodeRoomFromText, decodeInviteFromText } from './utils/room';
 import { useSession } from './stores/session';
 import { useToast } from './stores/toast';
@@ -29,6 +41,8 @@ import LoginView from './views/LoginView.vue';
 import NameSetup from './components/NameSetup.vue';
 import ToastHost from './components/ToastHost.vue';
 import BottomNav from './components/BottomNav.vue';
+import SettingsSheet from './components/SettingsSheet.vue';
+import ConfirmDialog from './components/ConfirmDialog.vue';
 import { usePrefs } from './stores/prefs';
 
 const router = useRouter();
@@ -39,7 +53,23 @@ const { displayName } = usePrefs();
 
 const NAV_ROUTES = new Set(['home', 'groups']);
 const showNav = computed(() => NAV_ROUTES.has(route.name as string));
-const navActive = computed(() => (route.name as string) as 'home' | 'groups' | 'history' | 'scan');
+const navActive = computed(
+  () => route.name as unknown as 'home' | 'groups' | 'history' | 'profile',
+);
+
+const showSettings = ref(false);
+const showDisconnectConfirm = ref(false);
+
+function askDisconnect() {
+  showSettings.value = false;
+  showDisconnectConfirm.value = true;
+}
+
+function confirmDisconnect() {
+  showDisconnectConfirm.value = false;
+  session.disconnect();
+  router.replace({ name: 'home' });
+}
 
 // The app is only reachable once the Nimiq provider has initialized (we are
 // indeed inside Nimiq Pay) AND the user is connected. If init() fails, we stay
