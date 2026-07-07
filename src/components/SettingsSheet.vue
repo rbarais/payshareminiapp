@@ -72,12 +72,14 @@ import BaseSheet from './BaseSheet.vue';
 import NimiqIdenticon from './NimiqIdenticon.vue';
 import { useSession } from '../stores/session';
 import { usePrefs } from '../stores/prefs';
+import { useToast } from '../stores/toast';
 import { useI18n } from '../stores/i18n';
 import type { Theme, Locale } from '../utils/prefsStorage';
 
 defineEmits<{ close: []; disconnect: [] }>();
 
 const session = useSession();
+const toast = useToast();
 
 const { theme, setTheme, displayName, setDisplayName } = usePrefs();
 const { locale, setLocale, t } = useI18n();
@@ -95,6 +97,7 @@ function saveName() {
   setDisplayName(clean);
   session.setName(clean);
   nameDraft.value = clean;
+  toast.show(t('settings.nameSaved'), 'success');
 }
 
 const themes: { key: Theme; label: string }[] = [
