@@ -57,43 +57,17 @@
       </svg>
       <span>{{ t('nav.history') }}</span>
     </div>
-    <div class="nav-item" :class="{ active: active === 'scan' }" @click="go('scan')">
+    <div class="nav-item" :class="{ active: active === 'profile' }" @click="go('profile')">
       <svg :width="sizeIconBtn" :height="sizeIconBtn" viewBox="0 0 22 22" fill="none">
-        <rect
-          x="2"
-          y="2"
-          width="6"
-          height="6"
-          rx="1"
-          :stroke="iconColor('scan')"
-          stroke-width="1.5"
-        />
-        <rect
-          x="2"
-          y="14"
-          width="6"
-          height="6"
-          rx="1"
-          :stroke="iconColor('scan')"
-          stroke-width="1.5"
-        />
-        <rect
-          x="14"
-          y="2"
-          width="6"
-          height="6"
-          rx="1"
-          :stroke="iconColor('scan')"
-          stroke-width="1.5"
-        />
+        <circle cx="11" cy="8" r="3.5" :stroke="iconColor('profile')" stroke-width="1.5" />
         <path
-          d="M14 14H16M20 14V16M14 18H16M20 18V16M20 16H14"
-          :stroke="iconColor('scan')"
+          d="M4 20C4 16.69 7.13 14 11 14C14.87 14 18 16.69 18 20"
+          :stroke="iconColor('profile')"
           stroke-width="1.5"
           stroke-linecap="round"
         />
       </svg>
-      <span>{{ t('nav.scan') }}</span>
+      <span>{{ t('nav.profile') }}</span>
     </div>
   </nav>
 </template>
@@ -103,7 +77,8 @@ import { useRouter } from 'vue-router';
 import { useToast } from '../stores/toast';
 import { useI18n } from '../stores/i18n';
 
-const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'scan' }>();
+const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'profile' }>();
+const emit = defineEmits<{ 'open-settings': [] }>();
 
 const router = useRouter();
 const toast = useToast();
@@ -116,10 +91,10 @@ function iconColor(key: string): string {
   return props.active === key ? '#F6B221' : 'currentColor';
 }
 
-function go(key: 'home' | 'groups' | 'history' | 'scan') {
+function go(key: 'home' | 'groups' | 'history' | 'profile') {
   if (key === 'home') router.push({ name: 'home' });
   else if (key === 'groups') router.push({ name: 'groups' });
-  else if (key === 'scan') router.push({ name: 'scan' });
+  else if (key === 'profile') emit('open-settings');
   else toast.show(t('toast.historyComingSoon'), 'info'); // Phase 5
 }
 </script>
