@@ -1,9 +1,11 @@
 import { initNimiq } from './nimiq';
 import { roomTag } from './room';
-
-// Transaction data read via public Nimiq JSON-RPC — no WASM, no P2P setup.
-// isConsensusEstablished() (provider) is used as a lightweight network-ready check
-// instead of spinning up a local @nimiq/core light node.
+import { captureError } from './errors.ts';
+// Chain data (room payments + NIM balance) is read via public Nimiq JSON-RPC —
+// no WASM, no P2P setup. We tried the @nimiq/core web client (light node) for
+// the balance, but its P2P consensus never establishes inside the Nimiq Pay
+// WebView (always timed out), so we read the balance over JSON-RPC instead.
+// isConsensusEstablished() (provider) is used as a lightweight network-ready check.
 
 const NIMIQ_RPC_URL = 'https://rpc.nimiqwatch.com';
 
@@ -11,7 +13,7 @@ interface RpcTx {
   hash: string;
   from: string;
   to: string;
-  value: number;     // Luna
+  value: number; // Luna
   timestamp: number; // milliseconds
   recipientData: string; // hex-encoded
 }
@@ -35,6 +37,35 @@ function hexToUtf8(hex: string): string {
 
 function normalizeAddress(addr: string): string {
   return addr.replace(/\s/g, '').toUpperCase();
+}
+
+/**
+ * Read an account's NIM balance via public JSON-RPC (`getAccountByAddress`),
+ * the same lightweight path as fetchRoomPayments. Returns the balance in NIM,
+ * or null on failure / non-Nimiq address.
+ */
+export async function fetchNimBalance(address: string): Promise<number | null> {
+  if (!address || !normalizeAddress(address).startsWith('NQ')) return null;
+  try {
+    const res = await fetch(NIMIQ_RPC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getAccountByAddress',
+        params: { address },
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { result?: { data?: { balance?: number } } };
+    const luna = json.result?.data?.balance;
+    return typeof luna === 'number' ? luna / 1e5 : null;
+  } catch (error) {
+    captureError(error, 'fetchNimBalance');
+    return null;
+  }
 }
 
 /**

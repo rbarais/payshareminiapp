@@ -57,7 +57,6 @@
         <button class="empty-cta" @click="goToNewGroup">{{ t('home.emptyCta') }}</button>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -72,7 +71,7 @@ import WalletBadge from '../components/WalletBadge.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
 import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
-import plusIcon from '../assets/svg/plus.svg'
+import plusIcon from '../assets/svg/plus.svg';
 
 const emit = defineEmits<{ 'open-settings': [] }>();
 

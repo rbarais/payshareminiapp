@@ -63,22 +63,49 @@ export async function getNimiqAddress(): Promise<string> {
  * testing. INSIDE Nimiq Pay, propagates errors (e.g. access dialog refused)
  * instead of hiding them.
  */
-export async function getCurrentUser(): Promise<{ id: string; name: string }> {
+export async function getCurrentUser(): Promise<{ id: string; name: string; addresses: string[] }> {
   const provider = await getProvider();
   if (!provider) {
     return {
       id: 'dev_' + Math.random().toString(36).slice(2, 11),
       name: readPrefs().displayName || 'Dev User',
+      addresses: [],
     };
   }
 
   const accounts = await provider.listAccounts();
+
   if (typeof accounts === 'object' && 'error' in accounts) {
     throw new Error(accounts.error.message);
   }
   const address = accounts[0];
   const name = readPrefs().displayName ?? '';
-  return { id: address, name: name || 'User ' + address.slice(0, 6) };
+  return { id: address, name: name || 'User ' + address.slice(0, 6), addresses: accounts };
+}
+
+/**
+ * Read the network consensus state. Returns null outside Nimiq Pay (dev browser)
+ * or if the provider call fails, so callers can show a "connecting" state.
+ */
+export async function getConsensusEstablished(): Promise<boolean | null> {
+  const provider = await getProvider();
+  if (!provider) return null;
+  try {
+    return await provider.isConsensusEstablished();
+  } catch {
+    return null;
+  }
+}
+
+/** Current Nimiq block height, or null outside Nimiq Pay / on failure. */
+export async function getBlockNumber(): Promise<number | null> {
+  const provider = await getProvider();
+  if (!provider) return null;
+  try {
+    return await provider.getBlockNumber();
+  } catch {
+    return null;
+  }
 }
 
 /** Truncate a Nimiq address for display: "NQ48 8CKH…BA76". */

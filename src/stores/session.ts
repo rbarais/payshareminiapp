@@ -17,6 +17,7 @@ import { t } from './i18n';
 interface User {
   id: string; // Nimiq address
   name: string;
+  addresses: string[];
 }
 
 interface SessionState {

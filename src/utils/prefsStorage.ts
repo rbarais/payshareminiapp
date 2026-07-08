@@ -1,5 +1,5 @@
 export type Theme = 'light' | 'dark' | 'auto';
-export type Locale = 'fr' | 'en';
+export type Locale = 'fr' | 'en' | 'de' | 'es';
 export interface Prefs {
   theme?: Theme;
   locale?: Locale;

@@ -31,6 +31,10 @@ defineEmits<{ close: [] }>();
   border-radius: 24px 24px 0 0;
   padding: 10px 20px 30px;
   animation: sheet-up 0.22s ease;
+  /* Cap the sheet to the viewport and scroll internally when content is tall. */
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes sheet-up {
