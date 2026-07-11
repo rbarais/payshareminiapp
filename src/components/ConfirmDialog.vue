@@ -14,6 +14,8 @@
 </template>
 
 <script setup lang="ts">
+import { useModalBack } from '../composables/modalBack';
+
 // Boîte de dialogue de confirmation générique (overlay centré).
 withDefaults(
   defineProps<{
@@ -26,6 +28,9 @@ withDefaults(
   { body: undefined, danger: false },
 );
 const emit = defineEmits<{ confirm: []; cancel: [] }>();
+
+// The hardware / browser back button dismisses the dialog (same as cancel).
+useModalBack(() => emit('cancel'));
 </script>
 
 <style scoped>

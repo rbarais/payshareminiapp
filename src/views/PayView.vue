@@ -192,6 +192,7 @@ import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
+import { useModalBackWhen } from '../composables/modalBack';
 
 import { useRouter } from 'vue-router';
 import { useI18n } from '../stores/i18n';
@@ -220,6 +221,10 @@ const currentUser = ref<{ id: string; name: string } | null>(null);
 const isPaying = ref(false);
 const error = ref('');
 const showQR = ref(false);
+// The back button closes the QR overlay instead of leaving the pay screen.
+useModalBackWhen(showQR, () => {
+  showQR.value = false;
+});
 
 const payments = ref<RoomPayment[]>([]);
 const syncing = ref(false);

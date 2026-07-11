@@ -191,6 +191,7 @@ import { useToast } from '../stores/toast';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
+import { useModalBackWhen } from '../composables/modalBack';
 
 const route = useRoute();
 const router = useRouter();
@@ -217,6 +218,10 @@ const amount = ref<number | null>(null);
 const currency = ref('NIM');
 const paidBy = ref('');
 const showPayerMenu = ref(false);
+// The back button closes the payer dropdown instead of leaving the screen.
+useModalBackWhen(showPayerMenu, () => {
+  showPayerMenu.value = false;
+});
 const mode = ref<SplitMode>('equal');
 
 // Per-member split state: inclusion (equal), percentage (%), amount (fixed).

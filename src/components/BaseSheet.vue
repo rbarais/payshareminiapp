@@ -8,9 +8,14 @@
 </template>
 
 <script setup lang="ts">
+import { useModalBack } from '../composables/modalBack';
+
 // Reusable bottom-sheet: dark overlay + animated sheet + handle.
 // Clicking the overlay (outside the sheet) emits `close`.
-defineEmits<{ close: [] }>();
+const emit = defineEmits<{ close: [] }>();
+
+// The hardware / browser back button closes the sheet instead of navigating.
+useModalBack(() => emit('close'));
 </script>
 
 <style scoped>

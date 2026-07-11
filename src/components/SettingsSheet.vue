@@ -218,7 +218,7 @@ import { usePrefs } from '../stores/prefs';
 import { useToast } from '../stores/toast';
 import { useI18n } from '../stores/i18n';
 import { getConsensusEstablished, getBlockNumber } from '../utils/nimiq';
-import { fetchNimBalance } from '../utils/webclient';
+import { fetchNimBalanceTotal } from '../utils/webclient';
 import { eurRate, fetchRate } from '../utils/rate';
 import type { Theme, Locale } from '../utils/prefsStorage';
 
@@ -275,11 +275,11 @@ const nimEurLabel = computed(() => {
 });
 
 onMounted(async () => {
-  const address = session.user.value?.id ?? '';
+  const addresses = session.user.value?.addresses ?? [];
   const [established, height, balance] = await Promise.all([
     getConsensusEstablished(),
     getBlockNumber(),
-    fetchNimBalance(address),
+    fetchNimBalanceTotal(addresses),
     fetchRate(),
   ]);
   consensus.value = established;

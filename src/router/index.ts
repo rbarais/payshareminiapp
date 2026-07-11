@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router';
+import { handleModalBack } from '../composables/modalBack';
 import HomeView from '../views/HomeView.vue';
 import GroupsView from '../views/GroupsView.vue';
 import GroupView from '../views/GroupView.vue';
@@ -93,6 +94,10 @@ if (typeof window !== 'undefined') {
   });
 
   window.addEventListener('popstate', (event) => {
+    // Overlays (sheets, dialogs, dropdowns) get the back press first: they
+    // close themselves instead of letting the app navigate or quit.
+    if (handleModalBack()) return;
+
     const currentRoute = router.currentRoute.value;
 
     // Block ONLY if we are on home AND at the root of the history

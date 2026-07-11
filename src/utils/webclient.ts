@@ -69,6 +69,26 @@ export async function fetchNimBalance(address: string): Promise<number | null> {
 }
 
 /**
+ * Total NIM balance across all of the user's addresses.
+ *
+ * Nimiq Pay exposes several addresses per user (`listAccounts()`): a "local"
+ * balance (the regular wallet, directly spendable) and a "remote" balance held
+ * in a cashlink/HTLC used to pay where BTC Lightning is accepted. Reading only
+ * the first address under-reports the real holdings, so we sum every address.
+ *
+ * Returns the summed balance in NIM, or null only if none could be read
+ * (empty list or every lookup failed). Addresses that fail individually are
+ * skipped so a single transient error does not hide the whole balance.
+ */
+export async function fetchNimBalanceTotal(addresses: string[]): Promise<number | null> {
+  if (!addresses.length) return null;
+  const results = await Promise.all(addresses.map((address) => fetchNimBalance(address)));
+  const readable = results.filter((balance): balance is number => balance !== null);
+  if (!readable.length) return null;
+  return readable.reduce((sum, balance) => sum + balance, 0);
+}
+
+/**
  * Read payments received by the creator for a given room via public JSON-RPC.
  * Filters by room tag in recipientData. Deduplicates by payer (one share per person).
  */
