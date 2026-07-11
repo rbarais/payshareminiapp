@@ -67,9 +67,7 @@ export function buildActivityFeed(
   for (const expense of expenses) {
     const group = groupById.get(expense.groupId);
     if (!group) continue;
-    const myMember = group.members.find(
-      (entry) => entry.address && normAddr(entry.address) === me,
-    );
+    const myMember = group.members.find((entry) => entry.address && normAddr(entry.address) === me);
     if (!myMember) continue;
     const iPaid = expense.paidBy === myMember.id;
     const myShare = expense.shares.find((share) => share.memberId === myMember.id)?.amount ?? 0;
