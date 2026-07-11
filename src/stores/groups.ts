@@ -27,6 +27,7 @@ import {
   addPlaceholderMember,
   fetchAllSettlements,
 } from '../utils/api';
+import { buildActivityFeed, type ActivityEvent } from '../utils/history';
 
 interface State {
   groups: Group[];
@@ -166,7 +167,7 @@ function distributeLegacy(
   let remaining = legacyPaid;
   if (remaining < 0.005) return;
   const ordered = [...items].sort(
-    (a, b) => a.expense.createdAt.getTime() - b.expense.createdAt.getTime(),
+    (first, second) => first.expense.createdAt.getTime() - second.expense.createdAt.getTime(),
   );
   for (const item of ordered) {
     if (remaining < 0.005) break;
@@ -292,6 +293,10 @@ export function useGroupsStore() {
       state.expenses
         .filter((expense) => expense.groupId === groupId)
         .sort((first, second) => second.createdAt.getTime() - first.createdAt.getTime()),
+
+    // Unified activity feed (settlements + expenses) concerning the user.
+    activityFeed: (nimiqAddress: string): ActivityEvent[] =>
+      buildActivityFeed(state.groups, state.expenses, state.settlements, nimiqAddress),
 
     // Gross debts of the user (by Nimiq address), grouped by creditor.
     grossDebtsForUser: (groupId: string, nimiqAddress: string): CreditorDebt[] => {
@@ -501,7 +506,8 @@ export function useGroupsStore() {
     },
 
     addSettlement(settlement: Settlement): Promise<void> {
-      if (state.settlements.some((existing) => existing.id === settlement.id)) return Promise.resolve();
+      if (state.settlements.some((existing) => existing.id === settlement.id))
+        return Promise.resolve();
       state.settlements.push(settlement);
       return insertSettlement(settlement).catch((error) => {
         console.error('settlement backend sync failed:', error);
