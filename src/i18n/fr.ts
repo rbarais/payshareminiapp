@@ -12,6 +12,24 @@ export const fr = {
     history: 'Historique',
     profile: 'Profil',
   },
+  history: {
+    title: 'Historique',
+    filterAll: 'Tous',
+    filterSent: 'Envoyé',
+    filterReceived: 'Reçu',
+    today: "Aujourd'hui",
+    yesterday: 'Hier',
+    paidTo: 'Payé à {name}',
+    receivedFrom: 'Reçu de {name}',
+    expenseAdded: 'Dépense ajoutée',
+    viaNimiqPay: 'via Nimiq Pay',
+    nExpenses: '{n} dépenses',
+    justNow: "à l'instant",
+    minutesAgo: 'il y a {n} min',
+    empty: "Aucune activité pour l'instant",
+    emptySent: 'Aucun paiement envoyé',
+    emptyReceived: 'Aucun paiement reçu',
+  },
   home: {
     myGroups: 'Mes groupes',
     new: 'Nouveau',
@@ -108,7 +126,6 @@ export const fr = {
   },
   toast: {
     memberAdded: '{name} ajouté',
-    historyComingSoon: 'Historique — bientôt disponible',
   },
   error: {
     syncFailed: 'Synchronisation impossible',

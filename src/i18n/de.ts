@@ -14,6 +14,24 @@ export const de: typeof fr = {
     history: 'Verlauf',
     profile: 'Profil',
   },
+  history: {
+    title: 'Verlauf',
+    filterAll: 'Alle',
+    filterSent: 'Gesendet',
+    filterReceived: 'Erhalten',
+    today: 'Heute',
+    yesterday: 'Gestern',
+    paidTo: 'An {name} gezahlt',
+    receivedFrom: 'Von {name} erhalten',
+    expenseAdded: 'Ausgabe hinzugefügt',
+    viaNimiqPay: 'über Nimiq Pay',
+    nExpenses: '{n} Ausgaben',
+    justNow: 'gerade eben',
+    minutesAgo: 'vor {n} Min.',
+    empty: 'Noch keine Aktivität',
+    emptySent: 'Keine Zahlungen gesendet',
+    emptyReceived: 'Keine Zahlungen erhalten',
+  },
   home: {
     myGroups: 'Meine Gruppen',
     new: 'Neu',
@@ -110,7 +128,6 @@ export const de: typeof fr = {
   },
   toast: {
     memberAdded: '{name} hinzugefügt',
-    historyComingSoon: 'Verlauf — bald verfügbar',
   },
   error: {
     syncFailed: 'Synchronisierung fehlgeschlagen',

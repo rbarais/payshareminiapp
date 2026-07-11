@@ -14,6 +14,24 @@ export const es: typeof fr = {
     history: 'Historial',
     profile: 'Perfil',
   },
+  history: {
+    title: 'Historial',
+    filterAll: 'Todos',
+    filterSent: 'Enviado',
+    filterReceived: 'Recibido',
+    today: 'Hoy',
+    yesterday: 'Ayer',
+    paidTo: 'Pagado a {name}',
+    receivedFrom: 'Recibido de {name}',
+    expenseAdded: 'Gasto añadido',
+    viaNimiqPay: 'vía Nimiq Pay',
+    nExpenses: '{n} gastos',
+    justNow: 'ahora mismo',
+    minutesAgo: 'hace {n} min',
+    empty: 'Sin actividad todavía',
+    emptySent: 'Ningún pago enviado',
+    emptyReceived: 'Ningún pago recibido',
+  },
   home: {
     myGroups: 'Mis grupos',
     new: 'Nuevo',
@@ -110,7 +128,6 @@ export const es: typeof fr = {
   },
   toast: {
     memberAdded: '{name} añadido',
-    historyComingSoon: 'Historial — disponible pronto',
   },
   error: {
     syncFailed: 'Error de sincronización',
