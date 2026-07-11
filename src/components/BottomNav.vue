@@ -74,14 +74,12 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { useToast } from '../stores/toast';
 import { useI18n } from '../stores/i18n';
 
 const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'profile' }>();
 const emit = defineEmits<{ 'open-settings': [] }>();
 
 const router = useRouter();
-const toast = useToast();
 const { t } = useI18n();
 
 const sizeIconBtn = 24;
@@ -94,8 +92,8 @@ function iconColor(key: string): string {
 function go(key: 'home' | 'groups' | 'history' | 'profile') {
   if (key === 'home') router.push({ name: 'home' });
   else if (key === 'groups') router.push({ name: 'groups' });
-  else if (key === 'profile') emit('open-settings');
-  else toast.show(t('toast.historyComingSoon'), 'info'); // Phase 5
+  else if (key === 'history') router.push({ name: 'history' });
+  else emit('open-settings');
 }
 </script>
 

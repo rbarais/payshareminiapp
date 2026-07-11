@@ -7,6 +7,7 @@ import PayView from '../views/PayView.vue';
 import SuccessView from '../views/SuccessView.vue';
 import NewGroupView from '../views/NewGroupView.vue';
 import JoinGroupView from '../views/JoinGroupView.vue';
+import HistoryView from '../views/HistoryView.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -18,6 +19,11 @@ const routes: RouteRecordRaw[] = [
     path: '/groups',
     name: 'groups',
     component: GroupsView,
+  },
+  {
+    path: '/history',
+    name: 'history',
+    component: HistoryView,
   },
   {
     path: '/group/:id',

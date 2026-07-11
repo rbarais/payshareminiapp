@@ -51,7 +51,7 @@ const session = useSession();
 const toast = useToast();
 const { displayName } = usePrefs();
 
-const NAV_ROUTES = new Set(['home', 'groups']);
+const NAV_ROUTES = new Set(['home', 'groups', 'history']);
 const showNav = computed(() => NAV_ROUTES.has(route.name as string));
 const navActive = computed(
   () => route.name as unknown as 'home' | 'groups' | 'history' | 'profile',
