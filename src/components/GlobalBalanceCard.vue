@@ -15,14 +15,20 @@
         <span>{{ showEur ? 'NIM' : 'EUR' }}</span>
       </button>
     </div>
-    <div class="balance-row">
-      <div>
-        <div class="balance-label">{{ t('home.credited') }}</div>
-        <div class="balance-amount">{{ creditedStr }}</div>
+    <div class="balance-main">
+      <div class="balance-net">
+        <div class="balance-net-label">{{ t('home.net') }}</div>
+        <div class="balance-net-amount">{{ netStr }}</div>
       </div>
-      <div class="balance-right">
-        <div class="balance-label">{{ t('home.owed') }}</div>
-        <div class="balance-amount">{{ owedStr }}</div>
+      <div class="balance-detail">
+        <div class="balance-detail-col">
+          <div class="balance-detail-label">{{ t('home.credited') }}</div>
+          <div class="balance-detail-amount">{{ creditedStr }}</div>
+        </div>
+        <div class="balance-detail-col">
+          <div class="balance-detail-label">{{ t('home.owed') }}</div>
+          <div class="balance-detail-amount">{{ owedStr }}</div>
+        </div>
       </div>
     </div>
   </div>
@@ -54,6 +60,14 @@ const creditedStr = computed(() =>
 const owedStr = computed(() =>
   showEur.value ? eur(props.owed) : '−' + props.owed.toFixed(1) + ' NIM',
 );
+
+// Net balance = what you're owed minus what you owe.
+const net = computed(() => props.credited - props.owed);
+const netStr = computed(() => {
+  if (showEur.value) return eur(net.value);
+  const sign = net.value < 0 ? '−' : '+';
+  return sign + Math.abs(net.value).toFixed(1) + ' NIM';
+});
 </script>
 
 <style scoped>
@@ -98,26 +112,57 @@ const owedStr = computed(() =>
   background: rgba(0, 0, 0, 0.18);
 }
 
-.balance-row {
+.balance-main {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
 }
 
-.balance-right {
-  text-align: right;
+.balance-net {
+  flex-shrink: 0;
 }
 
-.balance-label {
-  font-size: 10px;
+.balance-net-label {
+  font-size: 9px;
+  font-weight: 600;
   color: rgba(0, 0, 0, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   margin-bottom: 3px;
 }
 
-.balance-amount {
-  font-size: 21px;
+.balance-net-amount {
+  font-size: 24px;
   font-weight: 700;
   color: var(--dark);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.8px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.balance-detail {
+  display: flex;
+  gap: 14px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.balance-detail-col {
+  text-align: right;
+}
+
+.balance-detail-label {
+  font-size: 9px;
+  color: rgba(0, 0, 0, 0.4);
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.balance-detail-amount {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.65);
+  white-space: nowrap;
 }
 </style>

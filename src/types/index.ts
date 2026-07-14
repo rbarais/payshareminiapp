@@ -6,8 +6,21 @@
 // The blockchain stays the source of truth for actual payments.
 // ─────────────────────────────────────────────────────────────────────────
 
-// Group icon/category (see design: person / home / car / list)
-export type GroupIcon = 'person' | 'home' | 'car' | 'list';
+// Group icon/category (repris des maquettes/proto : 12 catégories).
+// Les 4 premières valeurs restent inchangées pour les groupes déjà stockés.
+export type GroupIcon =
+  | 'person'
+  | 'home'
+  | 'car'
+  | 'list'
+  | 'food'
+  | 'sport'
+  | 'shopping'
+  | 'travel'
+  | 'beach'
+  | 'birthday'
+  | 'work'
+  | 'cafe';
 
 // A group member — identified by a stable UUID (DB primary key).
 // A placeholder has no Nimiq address yet (it has not joined yet).
