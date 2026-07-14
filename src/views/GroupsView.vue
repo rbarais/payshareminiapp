@@ -8,10 +8,22 @@
       </button>
     </div>
 
+    <div v-if="groups.length" class="filters">
+      <button
+        v-for="option in filters"
+        :key="option"
+        class="pill"
+        :class="{ active: filter === option }"
+        @click="filter = option"
+      >
+        {{ filterLabel(option) }}
+      </button>
+    </div>
+
     <div class="content">
-      <div v-if="groups.length" class="group-list">
+      <div v-if="filteredGroups.length" class="group-list">
         <GroupCard
-          v-for="entry in groups"
+          v-for="entry in filteredGroups"
           :key="entry.group.id"
           :group="entry.group"
           :expense-count="entry.expenseCount"
@@ -19,6 +31,10 @@
           :gross-credit="entry.grossCredit"
           @click="goToGroup(entry.group.id)"
         />
+      </div>
+
+      <div v-else-if="groups.length" class="empty-filtered">
+        {{ t('groups.emptyFiltered') }}
       </div>
 
       <div v-else class="empty">
@@ -45,22 +61,26 @@
         <button class="empty-cta" @click="goToNewGroup">{{ t('groups.emptyCta') }}</button>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useI18n } from '../stores/i18n';
 import GroupCard from '../components/GroupCard.vue';
 
+type Filter = 'all' | 'active' | 'settled';
+
 const router = useRouter();
 const session = useSession();
 const store = useGroupsStore();
 const { t } = useI18n();
+
+const filters: Filter[] = ['all', 'active', 'settled'];
+const filter = ref<Filter>('all');
 
 const userId = computed(() => session.user.value?.id ?? '');
 
@@ -72,6 +92,22 @@ const groups = computed(() =>
     grossCredit: store.grossCreditForUser(group.id, userId.value),
   })),
 );
+
+// A group is settled when neither a debt nor a credit remains (same ~0
+// threshold as GroupView); active groups still have an open balance.
+const filteredGroups = computed(() => {
+  if (filter.value === 'all') return groups.value;
+  return groups.value.filter((entry) => {
+    const settled = entry.grossDebt <= 0.005 && entry.grossCredit <= 0.005;
+    return filter.value === 'settled' ? settled : !settled;
+  });
+});
+
+function filterLabel(option: Filter): string {
+  if (option === 'active') return t('groups.filterActive');
+  if (option === 'settled') return t('groups.filterSettled');
+  return t('groups.filterAll');
+}
 
 function goToNewGroup() {
   router.push({ name: 'newGroup' });
@@ -126,6 +162,31 @@ function goToGroup(id: string) {
   margin-top: -1px;
 }
 
+.filters {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 12px;
+  flex-shrink: 0;
+}
+
+.pill {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 20px;
+  background: var(--bg-card);
+  color: var(--text);
+}
+
+.pill.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .content {
   flex: 1;
   padding: 0 18px 16px;
@@ -133,6 +194,14 @@ function goToGroup(id: string) {
   flex-direction: column;
   overflow-y: auto;
   min-height: 0;
+}
+
+.empty-filtered {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-mid);
 }
 
 .group-list {

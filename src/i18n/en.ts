@@ -17,7 +17,7 @@ export const en: typeof fr = {
   history: {
     title: 'History',
     filterAll: 'All',
-    filterSent: 'Sent',
+    filterSent: 'Paid',
     filterReceived: 'Received',
     today: 'Today',
     yesterday: 'Yesterday',
@@ -29,7 +29,7 @@ export const en: typeof fr = {
     justNow: 'just now',
     minutesAgo: '{n} min ago',
     empty: 'No activity yet',
-    emptySent: 'No payments sent',
+    emptySent: 'No payments made',
     emptyReceived: 'No payments received',
   },
   home: {
@@ -45,6 +45,10 @@ export const en: typeof fr = {
   groups: {
     title: 'My groups',
     new: 'New',
+    filterAll: 'All',
+    filterActive: 'Active',
+    filterSettled: 'Settled',
+    emptyFiltered: 'No group in this filter',
     emptyTitle: 'No group here',
     emptySub: 'Create a group or join one via QR code',
     emptyCta: '+ New group',
@@ -200,7 +204,7 @@ export const en: typeof fr = {
     subtitle: '{amount} NIM sent to {recipient}',
     txLabel: 'Transaction',
     txConfirmed: 'Confirmed ✓',
-    txHash: 'Block #4 218 756 · via Nimiq Pay',
+    txHash: 'Block #4 218 756',
     txVia: 'Via Nimiq Pay',
     txTime: '~2s',
     backBtn: '← Back to home',
