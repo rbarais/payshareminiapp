@@ -1,30 +1,9 @@
 <template>
   <div v-if="group" class="screen">
     <!-- Top bar -->
-    <div class="top-bar">
-      <button class="icon-btn gray" @click="goBack">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path
-            d="M2 2L12 12M12 2L2 12"
-            stroke="#3D3B35"
-            stroke-width="1.8"
-            stroke-linecap="round"
-          />
-        </svg>
-      </button>
-      <span class="bar-title">{{ t('addExpense.title') }}</span>
-      <button class="icon-btn accent" @click="create">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path
-            d="M2 7L5.5 10.5L12 3"
-            stroke="#1A1916"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-    </div>
+    <ScreenHeader :title="t('addExpense.title')" close @back="goBack">
+      <button class="icon-btn accent" @click="create"><CheckIcon /></button>
+    </ScreenHeader>
 
     <!-- Amount -->
     <div class="amount-section">
@@ -46,13 +25,18 @@
     <div class="form-area">
       <!-- Description -->
       <div class="field-card">
-        <div class="field-label">{{ t('addExpense.descriptionLabel') }}</div>
-        <input v-model="description" class="field-input" type="text" :placeholder="t('addExpense.descriptionPlaceholder')" />
+        <div class="form-label">{{ t('addExpense.descriptionLabel') }}</div>
+        <input
+          v-model="description"
+          class="field-input"
+          type="text"
+          :placeholder="t('addExpense.descriptionPlaceholder')"
+        />
       </div>
 
       <!-- Amount input -->
       <div class="field-card">
-        <div class="field-label">{{ t('addExpense.amountLabel') }}</div>
+        <div class="form-label">{{ t('addExpense.amountLabel') }}</div>
         <input
           v-model.number="amount"
           class="field-input"
@@ -68,18 +52,10 @@
       <div class="field-card payer-card">
         <div class="payer-head" @click="showPayerMenu = !showPayerMenu">
           <div>
-            <div class="field-label">{{ t('addExpense.paidByLabel') }}</div>
+            <div class="form-label">{{ t('addExpense.paidByLabel') }}</div>
             <div class="payer-name">{{ memberName(paidBy) }}</div>
           </div>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M5 7L8 10L11 7"
-              stroke="#8B8880"
-              stroke-width="1.6"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          <ChevronDownIcon class="payer-chevron" />
         </div>
         <div v-if="showPayerMenu" class="payer-menu">
           <button
@@ -96,7 +72,7 @@
 
       <!-- Split -->
       <div class="field-card">
-        <div class="field-label">{{ t('addExpense.splitBetweenLabel') }}</div>
+        <div class="form-label">{{ t('addExpense.splitBetweenLabel') }}</div>
 
         <!-- Mode tabs -->
         <div class="mode-tabs">
@@ -129,7 +105,8 @@
           </button>
         </div>
         <div v-if="mode === 'equal' && amount" class="share-info">
-          {{ t('addExpense.shareInfoPrefix') }} <strong>{{ equalShare.toFixed(2) }} {{ currency }}</strong>
+          {{ t('addExpense.shareInfoPrefix') }}
+          <strong>{{ equalShare.toFixed(2) }} {{ currency }}</strong>
         </div>
 
         <!-- % / Amounts -->
@@ -189,6 +166,9 @@ import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import InitialAvatar from '../components/InitialAvatar.vue';
+import ScreenHeader from '../components/ScreenHeader.vue';
+import CheckIcon from '../assets/svg/check.svg';
+import ChevronDownIcon from '../assets/svg/chevronDown.svg';
 import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
 import { useModalBackWhen } from '../composables/modalBack';
@@ -346,42 +326,6 @@ function goBack() {
 </script>
 
 <style scoped>
-.screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-}
-
-.top-bar {
-  padding: 10px 18px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.bar-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--dark);
-}
-
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.icon-btn.gray {
-  background: var(--border);
-}
 .icon-btn.accent {
   background: var(--accent);
 }
@@ -445,12 +389,8 @@ function goBack() {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.field-label {
-  font-size: 10px;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+/* Labels compacts dans les cartes du formulaire */
+.form-label {
   margin-bottom: 5px;
 }
 
@@ -467,7 +407,7 @@ function goBack() {
 }
 
 .field-input::placeholder {
-  color: #c8c5bf;
+  color: var(--text-faint);
 }
 
 /* Payer */
@@ -485,6 +425,9 @@ function goBack() {
   font-size: 14px;
   font-weight: 500;
   color: var(--dark);
+}
+.payer-chevron {
+  color: var(--text);
 }
 
 .payer-menu {
@@ -645,42 +588,9 @@ function goBack() {
   color: var(--green);
 }
 
-.error-msg {
-  font-size: 13px;
-  color: var(--red);
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-  border-radius: 12px;
-  padding: 10px 14px;
-}
-
 /* CTA */
 .cta-area {
   padding: 14px 18px 28px;
   flex-shrink: 0;
-}
-
-.btn-primary {
-  display: block;
-  width: 100%;
-  background: var(--accent);
-  border: none;
-  border-radius: 16px;
-  padding: 17px;
-  text-align: center;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--dark);
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity 0.15s;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.btn-primary:hover:not(:disabled) {
-  opacity: 0.9;
 }
 </style>

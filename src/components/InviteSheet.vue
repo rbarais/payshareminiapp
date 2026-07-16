@@ -1,14 +1,7 @@
 <template>
-  <BaseSheet @close="$emit('close')">
+  <BaseSheet :title="sheetTitle" :subtitle="sheetSub" @close="$emit('close')">
     <!-- Step 1: choose the debtor -->
     <template v-if="!inviteDeeplink">
-      <div class="sheet-title">{{ t('invite.title') }}</div>
-      <div class="sheet-sub">
-        {{
-          t('invite.sub', { description: expense.description, paidBy: memberName(expense.paidBy) })
-        }}
-      </div>
-
       <div v-if="debtorsOf(expense).length" class="debtor-list">
         <button
           v-for="share in debtorsOf(expense)"
@@ -20,15 +13,7 @@
             <div class="debtor-name">{{ memberName(share.memberId) }}</div>
             <div class="debtor-amount">{{ share.amount.toFixed(2) }} {{ expense.currency }}</div>
           </div>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M6 3L11 8L6 13"
-              stroke="#8B8880"
-              stroke-width="1.6"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          <ChevronRightIcon class="chevron" />
         </button>
       </div>
       <div v-else class="sheet-empty">{{ t('invite.noDebtors') }}</div>
@@ -36,26 +21,25 @@
 
     <!-- Step 2: QR (in person) + sharing the https link (remote) -->
     <template v-else>
-      <div class="sheet-title">{{ t('invite.settleTitle') }}</div>
-      <div class="sheet-sub">{{ inviteLabel }}</div>
       <div class="qr-box">
         <QRCodeGenerator :url="inviteDeeplink" :size="200" />
       </div>
       <div class="sheet-note">{{ t('invite.qrNote') }}</div>
-      <button class="sheet-copy" @click="shareInvite">{{ t('invite.copyLink') }}</button>
-      <button class="sheet-back" @click="backToDebtors">{{ t('invite.back') }}</button>
+      <button class="btn-primary" @click="shareInvite">{{ t('invite.copyLink') }}</button>
+      <button class="btn-ghost" @click="backToDebtors">{{ t('invite.back') }}</button>
     </template>
   </BaseSheet>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import type { Expense, Group, ShareableRoom } from '../types';
 import { useToast } from '../stores/toast';
 import { useI18n } from '../stores/i18n';
 import { encodeShareUrl, buildInviteDeeplink } from '../utils/room';
 import BaseSheet from './BaseSheet.vue';
 import QRCodeGenerator from './QRCodeGenerator.vue';
+import ChevronRightIcon from '../assets/svg/chevronRight.svg';
 
 // Invitation to pay one's share (backend-free version): pick a debtor, then
 // generate a QR (nimiqpay:// deeplink resolved by the camera, reliable in
@@ -69,6 +53,19 @@ const { t } = useI18n();
 const inviteHttps = ref(''); // clickable https URL (to share)
 const inviteDeeplink = ref(''); // nimiqpay:// deeplink (encoded in the QR)
 const inviteLabel = ref('');
+
+// Sheet header depending on the step (debtor choice vs QR/link).
+const sheetTitle = computed(() =>
+  inviteDeeplink.value ? t('invite.settleTitle') : t('invite.title'),
+);
+const sheetSub = computed(() =>
+  inviteDeeplink.value
+    ? inviteLabel.value
+    : t('invite.sub', {
+        description: props.expense.description,
+        paidBy: memberName(props.expense.paidBy),
+      }),
+);
 
 function memberName(id: string): string {
   const member = props.group.members.find((member) => member.id === id);
@@ -147,18 +144,6 @@ async function shareInvite() {
 </script>
 
 <style scoped>
-.sheet-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--dark);
-}
-.sheet-sub {
-  font-size: 12px;
-  color: var(--text);
-  margin-top: 2px;
-  margin-bottom: 14px;
-}
-
 .debtor-list {
   display: flex;
   flex-direction: column;
@@ -188,6 +173,10 @@ async function shareInvite() {
   font-weight: 600;
   color: var(--dark);
 }
+.chevron {
+  color: var(--text);
+  flex-shrink: 0;
+}
 .debtor-amount {
   font-size: 12px;
   color: var(--text);
@@ -213,31 +202,5 @@ async function shareInvite() {
   display: flex;
   justify-content: center;
   margin: 16px 0 4px;
-}
-
-.sheet-copy {
-  width: 100%;
-  margin-top: 14px;
-  background: var(--accent);
-  border: none;
-  border-radius: 14px;
-  padding: 14px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--dark);
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.sheet-back {
-  width: 100%;
-  margin-top: 8px;
-  background: none;
-  border: none;
-  padding: 10px;
-  font-size: 13px;
-  color: var(--text-mid);
-  cursor: pointer;
-  font-family: inherit;
 }
 </style>

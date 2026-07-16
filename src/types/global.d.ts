@@ -1,1 +1,1 @@
-declare module '@nimiq/identicons/dist/identicons.bundle.min.js'
+declare module '@nimiq/identicons/dist/identicons.bundle.min.js';

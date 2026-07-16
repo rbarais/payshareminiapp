@@ -187,15 +187,7 @@
           </svg>
           <span>{{ t('settings.about') }}</span>
         </div>
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path
-            d="M5 3L9 7L5 11"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+        <ChevronRightIcon width="13" height="13" aria-hidden="true" />
       </button>
       <div class="list-row static">
         <span class="version-label">{{ t('settings.version') }}</span>
@@ -213,6 +205,7 @@
 import { ref, computed, onMounted } from 'vue';
 import BaseSheet from './BaseSheet.vue';
 import NimiqIdenticon from './NimiqIdenticon.vue';
+import ChevronRightIcon from '../assets/svg/chevronRight.svg';
 import { useSession } from '../stores/session';
 import { usePrefs } from '../stores/prefs';
 import { useToast } from '../stores/toast';
@@ -480,7 +473,7 @@ function comingSoon() {
   font-size: 13px;
   font-weight: 700;
   font-family: inherit;
-  color: #fff;
+  color: var(--dark);
   background: var(--accent);
   cursor: pointer;
 }

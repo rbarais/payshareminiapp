@@ -150,7 +150,6 @@
       </div>
     </div>
   </div>
-
 </template>
 
 <script setup lang="ts">
@@ -175,9 +174,24 @@ function openInNimiqPay() {
 const phase = ref<'idle' | 'connecting' | 'connected'>('idle');
 
 const features = computed(() => [
-  { title: t('login.feature1Title'), sub: t('login.feature1Sub'), tint: 'rgba(246,178,33,0.14)', icon: 'people' },
-  { title: t('login.feature2Title'), sub: t('login.feature2Sub'), tint: 'rgba(33,184,126,0.14)', icon: 'flash' },
-  { title: t('login.feature3Title'), sub: t('login.feature3Sub'), tint: 'rgba(100,130,255,0.14)', icon: 'shield' },
+  {
+    title: t('login.feature1Title'),
+    sub: t('login.feature1Sub'),
+    tint: 'rgba(246,178,33,0.14)',
+    icon: 'people',
+  },
+  {
+    title: t('login.feature2Title'),
+    sub: t('login.feature2Sub'),
+    tint: 'rgba(33,184,126,0.14)',
+    icon: 'flash',
+  },
+  {
+    title: t('login.feature3Title'),
+    sub: t('login.feature3Sub'),
+    tint: 'rgba(100,130,255,0.14)',
+    icon: 'shield',
+  },
 ]);
 
 async function connect() {

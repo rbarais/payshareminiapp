@@ -26,8 +26,18 @@ export function grossBalanceView(
   credit: number,
 ): { amount: string; amountKey: string; color: string; labelKey: string } {
   if (debt > 0.005)
-    return { amount: `−${debt.toFixed(1)} NIM`, amountKey: '', color: '#CC3C3C', labelKey: 'group.owed' };
+    return {
+      amount: `−${debt.toFixed(1)} NIM`,
+      amountKey: '',
+      color: '#CC3C3C',
+      labelKey: 'group.owed',
+    };
   if (credit > 0.005)
-    return { amount: `+${credit.toFixed(1)} NIM`, amountKey: '', color: '#198060', labelKey: 'group.credited' };
+    return {
+      amount: `+${credit.toFixed(1)} NIM`,
+      amountKey: '',
+      color: '#198060',
+      labelKey: 'group.credited',
+    };
   return { amount: '', amountKey: 'group.settled', color: '#8B8880', labelKey: '' };
 }

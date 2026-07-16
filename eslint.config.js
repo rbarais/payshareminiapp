@@ -63,10 +63,10 @@ export default tseslint.config(
       'vue/block-order': [
         'error',
         {
-          order: ['template', 'script', 'style']
-        }
-      ]
-    }
+          order: ['template', 'script', 'style'],
+        },
+      ],
+    },
   },
   configPrettier,
 );

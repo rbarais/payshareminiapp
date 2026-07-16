@@ -26,14 +26,11 @@
         :type="modelValue"
         :color="GROUP_ICON_STYLE[modelValue].color"
       />
-      <svg v-else width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <path d="M9 3V15M3 9H15" stroke="#6B6860" stroke-width="1.8" stroke-linecap="round" />
-      </svg>
+      <PlusIcon v-else width="18" height="18" class="more-icon" />
     </button>
   </div>
 
-  <BaseSheet v-if="sheetOpen" @close="sheetOpen = false">
-    <div class="sheet-title">{{ t('groupIcons.pickerTitle') }}</div>
+  <BaseSheet v-if="sheetOpen" :title="t('groupIcons.pickerTitle')" @close="sheetOpen = false">
     <div class="icon-grid">
       <button
         v-for="type in TYPES"
@@ -59,6 +56,7 @@ import { GROUP_ICON_STYLE } from '../utils/groupUi';
 import { useI18n } from '../stores/i18n';
 import GroupIconGlyph from './GroupIcon.vue';
 import BaseSheet from './BaseSheet.vue';
+import PlusIcon from '../assets/svg/plus.svg';
 
 // Group icon picker (v-model). Reused for both creation and editing.
 // Repris du proto : 4 icônes inline + un « + » qui ouvre une modale avec les 12.
@@ -118,11 +116,8 @@ function select(type: GroupIcon) {
   transform: scale(1.05);
 }
 
-.sheet-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--dark);
-  margin-bottom: 16px;
+.more-icon {
+  color: var(--text-mid);
 }
 
 .icon-grid {

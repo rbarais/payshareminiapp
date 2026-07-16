@@ -11,6 +11,8 @@
   --red-border: #f8d8d8;
   --text: #8b8880;
   --text-mid: #6b6860;
+  --text-faint: #c8c5bf;
+  --green-border: #c6efe0;
   --border: #edecea;
   --border-subtle: #f0eee9;
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.05);
@@ -37,6 +39,8 @@
   --red-border: #4a2a2a;
   --text: #8b8880;
   --text-mid: #a8a49c;
+  --text-faint: #55534d;
+  --green-border: #23493a;
   --border: #2a2930;
   --border-subtle: #232228;
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
@@ -84,4 +88,158 @@ button {
 }
 input {
   font-family: inherit;
+}
+
+/* ── Primitives UI partagées ─────────────────────────────────────────────────
+   Couche globale volontairement minimale : les écrans gardent leurs styles
+   spécifiques en scoped, seuls les patterns répétés partout vivent ici. */
+
+/* Racine d'un écran routé : colonne pleine hauteur sur fond app */
+.screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* Bouton icône rond 36px (headers, petites actions) */
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--dark);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.icon-btn:hover {
+  opacity: 0.8;
+}
+
+/* Bouton principal (CTA accent pleine largeur) */
+.btn-primary {
+  display: block;
+  width: 100%;
+  background: var(--accent);
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dark);
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+/* Bouton texte discret (annuler / retour) */
+.btn-ghost {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 10px;
+  font-size: 13px;
+  color: var(--text-mid);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Espacement des CTA dans les bottom-sheets (BaseSheet) */
+.sheet .btn-primary {
+  margin-top: 14px;
+}
+.sheet .btn-ghost {
+  margin-top: 8px;
+}
+
+/* Pilules (filtres, petites actions) : .accent = jaune, .dark = sombre */
+.pill {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 20px;
+  background: var(--bg-card);
+  color: var(--text);
+  transition: opacity 0.15s;
+}
+.pill:hover {
+  opacity: 0.85;
+}
+.pill.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 700;
+}
+.pill.accent {
+  background: var(--accent);
+  color: var(--dark);
+  font-weight: 700;
+  padding: 6px 14px;
+}
+.pill.dark {
+  background: var(--dark);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+}
+
+/* Formulaires : label uppercase + champ bordé */
+.form-label {
+  font-size: 10px;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.form-input {
+  width: 100%;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dark);
+  background: var(--bg-card);
+  outline: none;
+  font-family: inherit;
+}
+.form-input::placeholder {
+  color: var(--text);
+}
+.form-input:focus {
+  border-color: var(--accent);
+}
+
+/* Message d'erreur inline */
+.error-msg {
+  font-size: 13px;
+  color: var(--red);
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  text-align: center;
 }

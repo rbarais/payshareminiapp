@@ -86,7 +86,9 @@ function handleScanned(text: string) {
     if (parsed.protocol === 'nimiqpay:') {
       inner = parsed.searchParams.get('url') ?? text;
     }
-  } catch { /* not a URL */ }
+  } catch {
+    /* not a URL */
+  }
 
   const room = decodeRoomFromText(inner);
   if (room) {
@@ -117,9 +119,7 @@ async function start() {
   error.value = '';
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    error.value = !window.isSecureContext
-      ? t('scan.errHttps')
-      : t('scan.errUnavailable');
+    error.value = !window.isSecureContext ? t('scan.errHttps') : t('scan.errUnavailable');
     return;
   }
 

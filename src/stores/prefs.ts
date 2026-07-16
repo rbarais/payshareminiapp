@@ -9,10 +9,7 @@ const state = reactive<{ theme: Theme; displayName: string }>({
 let listenerInstalled = false;
 
 function systemDark(): boolean {
-  return (
-    typeof matchMedia === 'function' &&
-    matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
 function resolve(theme: Theme): 'light' | 'dark' {

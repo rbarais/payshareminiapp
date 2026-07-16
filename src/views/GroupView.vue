@@ -1,33 +1,9 @@
 <template>
   <div v-if="group" class="screen">
     <!-- Header -->
-    <div class="header">
-      <button class="icon-btn" @click="goBack">
-        <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-          <path
-            d="M10.5 4L6 8.5L10.5 13"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-      <div class="header-info">
-        <div class="header-title">{{ group.name }}</div>
-        <div class="header-sub">
-          {{ t('group.membersCount', { count: group.members.length }, group.members.length) }} ·
-          {{ monthLabel }}
-        </div>
-      </div>
-      <button class="icon-btn" @click="openEditGroup">
-        <svg width="16" height="16" viewBox="0 0 16 16">
-          <circle cx="8" cy="3.5" r="1.3" fill="currentColor" />
-          <circle cx="8" cy="8" r="1.3" fill="currentColor" />
-          <circle cx="8" cy="12.5" r="1.3" fill="currentColor" />
-        </svg>
-      </button>
-    </div>
+    <ScreenHeader :title="group.name" :subtitle="headerSub" @back="goBack">
+      <button class="icon-btn" @click="openEditGroup"><DotsIcon /></button>
+    </ScreenHeader>
 
     <!-- Members + invite -->
     <div class="members-row">
@@ -39,9 +15,7 @@
       />
       <div v-if="isCreator" class="add-member-wrap">
         <button class="add-member-btn" @click="showAddMember = true">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M7 2V12M2 7H12" stroke="#8B8880" stroke-width="1.8" stroke-linecap="round" />
-          </svg>
+          <PlusIcon />
         </button>
         <span class="add-member-label">{{ t('group.invite') }}</span>
       </div>
@@ -72,15 +46,7 @@
     <!-- Settled: neither debt nor credit -->
     <div v-if="grossDebt <= 0.005 && grossCredit <= 0.005" class="settled-card">
       <div class="settled-icon">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path
-            d="M4 9L7.5 12.5L14 6"
-            stroke="white"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+        <CheckIcon width="16" height="16" />
       </div>
       <div>
         <div class="settled-title">{{ t('group.settledTitle') }}</div>
@@ -91,7 +57,7 @@
     <!-- Expenses header -->
     <div class="expenses-header">
       <span class="expenses-title">{{ t('group.expenses') }}</span>
-      <button class="add-btn" @click="goToAddExpense">{{ t('group.addExpense') }}</button>
+      <button class="pill accent" @click="goToAddExpense">{{ t('group.addExpense') }}</button>
     </div>
 
     <!-- Expense list -->
@@ -121,14 +87,17 @@
     </div>
 
     <!-- Sheet: group invite QR -->
-    <BaseSheet v-if="showInviteQR" @close="showInviteQR = false">
-      <div class="sheet-title">{{ t('group.inviteSheetTitle') }}</div>
-      <div class="sheet-sub">{{ t('group.inviteSheetSub') }}</div>
+    <BaseSheet
+      v-if="showInviteQR"
+      :title="t('group.inviteSheetTitle')"
+      :subtitle="t('group.inviteSheetSub')"
+      @close="showInviteQR = false"
+    >
       <div class="invite-qr-box">
         <QRCodeGenerator :url="inviteQrDeeplink" :size="200" />
       </div>
       <p class="invite-qr-hint">{{ t('group.inviteQrHint') }}</p>
-      <button class="sheet-copy" @click="copyInviteLink">{{ t('group.copyInviteLink') }}</button>
+      <button class="btn-primary" @click="copyInviteLink">{{ t('group.copyInviteLink') }}</button>
       <p class="invite-qr-note">{{ t('group.inviteQrNote') }}</p>
     </BaseSheet>
 
@@ -142,57 +111,58 @@
     />
 
     <!-- Sheet: edit the group (name + icon) -->
-    <BaseSheet v-if="editGroupOpen" @close="editGroupOpen = false">
-      <div class="sheet-title">{{ t('group.editSheetTitle') }}</div>
-      <div class="sheet-sub">{{ t('group.editSheetSub') }}</div>
-
-      <div class="edit-label">{{ t('group.iconLabel') }}</div>
+    <BaseSheet
+      v-if="editGroupOpen"
+      :title="t('group.editSheetTitle')"
+      :subtitle="t('group.editSheetSub')"
+      @close="editGroupOpen = false"
+    >
+      <div class="form-label">{{ t('group.iconLabel') }}</div>
       <GroupIconPicker v-model="editGroupIcon" />
 
-      <div class="edit-label">{{ t('group.nameLabel') }}</div>
+      <div class="form-label">{{ t('group.nameLabel') }}</div>
       <input
         v-model="editGroupName"
-        class="edit-input"
+        class="form-input"
         type="text"
         :placeholder="t('group.groupNamePlaceholder')"
         @keyup.enter="saveGroup"
       />
 
-      <button class="sheet-copy" :disabled="!editGroupName.trim()" @click="saveGroup">
+      <button class="btn-primary" :disabled="!editGroupName.trim()" @click="saveGroup">
         {{ t('common.save') }}
       </button>
-      <button class="sheet-back" @click="editGroupOpen = false">{{ t('common.cancel') }}</button>
+      <button class="btn-ghost" @click="editGroupOpen = false">{{ t('common.cancel') }}</button>
     </BaseSheet>
 
     <!-- Sheet: add a placeholder member (creator only) -->
     <BaseSheet
       v-if="showAddMember"
+      :title="t('group.addMemberTitle')"
+      :subtitle="t('group.addMemberSub')"
       @close="
         showAddMember = false;
         addMemberName = '';
       "
     >
-      <div class="sheet-title">{{ t('group.addMemberTitle') }}</div>
-      <div class="sheet-sub">{{ t('group.addMemberSub') }}</div>
-
-      <div class="edit-label">{{ t('group.firstNameLabel') }}</div>
+      <div class="form-label">{{ t('group.firstNameLabel') }}</div>
       <input
         v-model="addMemberName"
-        class="edit-input"
+        class="form-input"
         type="text"
         :placeholder="t('group.firstNamePlaceholder')"
         @keyup.enter="confirmAddMember"
       />
 
       <button
-        class="sheet-copy"
+        class="btn-primary"
         :disabled="!addMemberName.trim() || addingMember"
         @click="confirmAddMember"
       >
         {{ addingMember ? t('group.adding') : t('common.add') }}
       </button>
       <button
-        class="sheet-back"
+        class="btn-ghost"
         @click="
           showAddMember = false;
           addMemberName = '';
@@ -203,27 +173,25 @@
     </BaseSheet>
 
     <!-- Sheet: edit an expense description -->
-    <BaseSheet v-if="editExpense" @close="closeEditExpense">
-      <div class="sheet-title">{{ t('group.editExpenseTitle') }}</div>
-      <div class="sheet-sub">
-        {{ editExpense.amount.toFixed(2) }} {{ editExpense.currency }} ·
-        {{ t('group.paidByPrefix') }}
-        {{ memberName(editExpense.paidBy) }}
-      </div>
-
-      <div class="edit-label">{{ t('group.descriptionLabel') }}</div>
+    <BaseSheet
+      v-if="editExpense"
+      :title="t('group.editExpenseTitle')"
+      :subtitle="editExpenseSub"
+      @close="closeEditExpense"
+    >
+      <div class="form-label">{{ t('group.descriptionLabel') }}</div>
       <input
         v-model="editExpenseDesc"
-        class="edit-input"
+        class="form-input"
         type="text"
         :placeholder="t('group.expenseDescPlaceholder')"
         @keyup.enter="saveExpense"
       />
 
-      <button class="sheet-copy" :disabled="!editExpenseDesc.trim()" @click="saveExpense">
+      <button class="btn-primary" :disabled="!editExpenseDesc.trim()" @click="saveExpense">
         {{ t('common.save') }}
       </button>
-      <button class="sheet-back" @click="closeEditExpense">{{ t('common.cancel') }}</button>
+      <button class="btn-ghost" @click="closeEditExpense">{{ t('common.cancel') }}</button>
     </BaseSheet>
   </div>
 </template>
@@ -239,13 +207,17 @@ import { useI18n } from '../stores/i18n';
 import { buildInviteUrl, buildInviteDeeplink } from '../utils/room';
 import ExpenseCard from '../components/ExpenseCard.vue';
 import { captureError } from '../utils/errors';
-import { eurRate, fetchRate } from '../utils/rate';
+import { fetchRate, eurApprox } from '../utils/rate';
 import InviteSheet from '../components/InviteSheet.vue';
 import CreditorList from '../components/CreditorList.vue';
 import BaseSheet from '../components/BaseSheet.vue';
+import ScreenHeader from '../components/ScreenHeader.vue';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 import QrCodeIcon from '../assets/svg/qrCode.svg';
+import DotsIcon from '../assets/svg/dots.svg';
+import PlusIcon from '../assets/svg/plus.svg';
+import CheckIcon from '../assets/svg/check.svg';
 import NimiqIdenticon from '../components/NimiqIdenticon.vue';
 
 const props = defineProps<{ id: string }>();
@@ -293,6 +265,11 @@ const monthLabel = computed(() =>
       })
     : '',
 );
+
+const headerSub = computed(() => {
+  const members = group.value?.members.length ?? 0;
+  return `${t('group.membersCount', { count: members }, members)} · ${monthLabel.value}`;
+});
 
 function memberName(id: string): string {
   if (id === myMemberId.value) return t('group.you');
@@ -361,11 +338,6 @@ function onSelectExpense(expense: Expense) {
   });
 }
 
-function eurApprox(nim: number): string {
-  if (eurRate.value == null) return '';
-  return '≈ ' + (nim * eurRate.value).toFixed(2) + ' €';
-}
-
 // ── Invitation to join the group (QR + link) ────────────────────────────────
 const showInviteQR = ref(false);
 const inviteHttpsUrl = ref('');
@@ -422,6 +394,12 @@ function saveGroup() {
 const editExpense = ref<Expense | null>(null);
 const editExpenseDesc = ref('');
 
+const editExpenseSub = computed(() => {
+  const expense = editExpense.value;
+  if (!expense) return '';
+  return `${expense.amount.toFixed(2)} ${expense.currency} · ${t('group.paidByPrefix')} ${memberName(expense.paidBy)}`;
+});
+
 function openEditExpense(expense: Expense) {
   editExpense.value = expense;
   editExpenseDesc.value = expense.description;
@@ -472,55 +450,6 @@ async function confirmAddMember() {
 </script>
 
 <style scoped>
-.screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  overflow: hidden;
-}
-
-.header {
-  padding: 8px 18px 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  color: var(--dark);
-  border-radius: 50%;
-  background: var(--bg-card);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-}
-
-.header-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.header-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--dark);
-  letter-spacing: -0.3px;
-}
-
-.header-sub {
-  font-size: 11px;
-  color: var(--text);
-  margin-top: 1px;
-}
-
 /* Members */
 .members-row {
   padding: 0 18px 16px;
@@ -544,7 +473,8 @@ async function confirmAddMember() {
   height: 36px;
   border-radius: 50%;
   background: var(--border);
-  border: 1.5px dashed #a09890;
+  border: 1.5px dashed var(--text);
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -558,7 +488,7 @@ async function confirmAddMember() {
 
 .add-member-label {
   font-size: 9px;
-  color: var(--muted, #8b8880);
+  color: var(--text);
   font-weight: 500;
 }
 
@@ -568,6 +498,7 @@ async function confirmAddMember() {
   height: 36px;
   border-radius: 12px;
   background: var(--bg-card);
+  color: var(--accent);
   border: none;
   display: flex;
   align-items: center;
@@ -608,7 +539,7 @@ async function confirmAddMember() {
 .credit-card {
   margin: 0 18px 14px;
   background: var(--green-bg);
-  border: 1px solid #c6efe0;
+  border: 1px solid var(--green-border);
   border-radius: 16px;
   padding: 14px 16px;
   flex-shrink: 0;
@@ -629,8 +560,8 @@ async function confirmAddMember() {
 
 .settled-card {
   margin: 0 18px 14px;
-  background: #e8f8f2;
-  border: 1px solid #c6efe0;
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
   border-radius: 16px;
   padding: 14px 16px;
   display: flex;
@@ -644,6 +575,7 @@ async function confirmAddMember() {
   height: 36px;
   border-radius: 50%;
   background: var(--green);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -676,22 +608,6 @@ async function confirmAddMember() {
   font-size: 15px;
   font-weight: 600;
   color: var(--dark);
-}
-
-.add-btn {
-  background: var(--accent);
-  border: none;
-  border-radius: 20px;
-  padding: 5px 13px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--dark);
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.add-btn:hover {
-  opacity: 0.85;
 }
 
 .expense-list {
@@ -753,75 +669,9 @@ async function confirmAddMember() {
   opacity: 0.7;
 }
 
-/* Edit sheets (content inside BaseSheet) */
-.sheet-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--dark);
-}
-.sheet-sub {
-  font-size: 12px;
-  color: var(--text);
-  margin-top: 2px;
-  margin-bottom: 14px;
-}
-
-.edit-label {
-  font-size: 10px;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+/* Edit sheets: les labels gardent l'espacement d'origine */
+.form-label {
   margin: 14px 0 10px;
-}
-
-.edit-input {
-  width: 100%;
-  border: 1.5px solid var(--border-subtle);
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text);
-  background: var(--bg-card);
-  outline: none;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.edit-input::placeholder {
-  color: var(--text);
-}
-
-.sheet-copy {
-  width: 100%;
-  margin-top: 14px;
-  background: var(--accent);
-  border: none;
-  border-radius: 14px;
-  padding: 14px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--dark);
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.sheet-copy:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.sheet-back {
-  width: 100%;
-  margin-top: 8px;
-  background: none;
-  border: none;
-  padding: 10px;
-  font-size: 13px;
-  color: var(--text-mid);
-  cursor: pointer;
-  font-family: inherit;
 }
 
 .eur-approx {

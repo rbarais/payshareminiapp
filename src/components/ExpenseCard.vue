@@ -7,22 +7,20 @@
     <div class="expense-top">
       <div class="expense-left">
         <div class="expense-title">{{ expense.description }}</div>
-        <div class="expense-meta">{{ t('group.paidByMeta') }} {{ paidByName }} · {{ dateLabel }}</div>
+        <div class="expense-meta">
+          {{ t('group.paidByMeta') }} {{ paidByName }} · {{ dateLabel }}
+        </div>
       </div>
-      <button class="exp-edit-btn" :aria-label="t('group.editExpenseAriaLabel')" @click.stop="$emit('edit')">
-        <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
-          <path
-            d="M2 13L5 10M9 2L13 6L6.5 12.5L2.5 12.5L2.5 8.5L9 2Z"
-            stroke="#8B8880"
-            stroke-width="1.3"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+      <button
+        class="exp-edit-btn"
+        :aria-label="t('group.editExpenseAriaLabel')"
+        @click.stop="$emit('edit')"
+      >
+        <PencilIcon />
       </button>
       <div class="expense-right">
         <div class="expense-total">{{ expense.amount.toFixed(2) }} {{ expense.currency }}</div>
-        <div class="expense-share" :style="{ color: isMine || settled ? '#198060' : '#CC3C3C' }">
+        <div class="expense-share" :class="isMine || settled ? 'ok' : 'due'">
           {{
             isMine
               ? t('group.youPaid')
@@ -35,10 +33,7 @@
       </div>
     </div>
     <div class="bar-bg">
-      <div
-        class="bar-fill"
-        :style="{ width: fillPct + '%', background: isMine || settled ? '#198060' : '#F6B221' }"
-      />
+      <div class="bar-fill" :class="{ ok: isMine || settled }" :style="{ width: fillPct + '%' }" />
     </div>
   </div>
 </template>
@@ -47,6 +42,7 @@
 import { computed } from 'vue';
 import type { Expense } from '../types';
 import { useI18n } from '../stores/i18n';
+import PencilIcon from '../assets/svg/pencil.svg';
 
 // Card for an expense within a group. Clicking opens the pay invitation;
 // the pencil emits `edit`. Derived values (share, payer) are provided by the
@@ -134,6 +130,7 @@ const fillPct = computed(() => Math.max(0, Math.min(100, props.progress * 100)))
   border-radius: 8px;
   border: none;
   background: var(--bg);
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -160,6 +157,12 @@ const fillPct = computed(() => Math.max(0, Math.min(100, props.progress * 100)))
   font-size: 10px;
   margin-top: 1px;
 }
+.expense-share.ok {
+  color: var(--green);
+}
+.expense-share.due {
+  color: var(--red);
+}
 
 .bar-bg {
   height: 3px;
@@ -169,6 +172,10 @@ const fillPct = computed(() => Math.max(0, Math.min(100, props.progress * 100)))
 .bar-fill {
   height: 100%;
   border-radius: 2px;
+  background: var(--accent);
+}
+.bar-fill.ok {
+  background: var(--green);
 }
 
 .expense-proof {

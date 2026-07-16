@@ -8,12 +8,12 @@
       <p class="subtitle">{{ t('nameSetup.subtitle') }}</p>
       <input
         v-model="name"
-        class="input"
+        class="form-input name-field"
         type="text"
         :placeholder="t('nameSetup.placeholder')"
         @keyup.enter="submit"
       />
-      <button class="continue-btn" :disabled="!canSubmit" @click="submit">
+      <button class="btn-primary" :disabled="!canSubmit" @click="submit">
         {{ t('nameSetup.continue') }}
       </button>
     </div>
@@ -77,36 +77,7 @@ function submit() {
   color: var(--text);
   margin: 0 0 24px;
 }
-.input {
-  width: 100%;
-  border: 1.5px solid var(--border-subtle);
-  background: var(--bg-card);
-  border-radius: 14px;
-  padding: 14px;
-  font-size: 15px;
-  font-family: inherit;
-  color: var(--dark);
+.name-field {
   margin-bottom: 16px;
-  box-sizing: border-box;
-}
-.input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.continue-btn {
-  width: 100%;
-  border: none;
-  border-radius: 16px;
-  padding: 16px;
-  font-size: 15px;
-  font-weight: 700;
-  font-family: inherit;
-  color: #fff;
-  background: var(--accent);
-  cursor: pointer;
-}
-.continue-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 </style>

@@ -1,21 +1,7 @@
 <template>
   <!-- QR modal -->
   <div v-if="showQR" class="screen">
-    <div class="top-bar">
-      <button class="icon-btn" @click="showQR = false">
-        <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-          <path
-            d="M10.5 4L6 8.5L10.5 13"
-            stroke="#1A1916"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-      <span class="bar-title">{{ t('pay.qrTitle') }}</span>
-      <div style="width: 36px" />
-    </div>
+    <ScreenHeader :title="t('pay.qrTitle')" @back="showQR = false" />
     <div class="qr-center">
       <div class="qr-desc">{{ room?.reason }}</div>
       <div class="qr-amount">{{ perPerson.toFixed(2) }} NIM</div>
@@ -28,21 +14,7 @@
 
   <!-- Pay screen -->
   <div v-else class="screen">
-    <div class="top-bar">
-      <button class="icon-btn" @click="goBack">
-        <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-          <path
-            d="M10.5 4L6 8.5L10.5 13"
-            stroke="#1A1916"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-      <span class="bar-title">{{ t('pay.title') }}</span>
-      <div style="width: 36px" />
-    </div>
+    <ScreenHeader :title="t('pay.title')" @back="goBack" />
 
     <div class="scroll">
       <!-- Recipient -->
@@ -54,18 +26,27 @@
 
       <!-- Amount -->
       <div class="amount-block">
-        <div class="amount-label">{{ t('pay.amountLabel') }}</div>
+        <div class="form-label">{{ t('pay.amountLabel') }}</div>
         <div class="amount-big">
           {{ perPerson.toFixed(2) }} <span class="amount-currency">NIM</span>
         </div>
         <div class="amount-sub">
-          {{ t('pay.amountSub', { participants: room?.maxParticipants ?? 0, total: room?.amount?.toFixed(2) ?? '0.00' }, room?.maxParticipants ?? 0) }}
+          {{
+            t(
+              'pay.amountSub',
+              {
+                participants: room?.maxParticipants ?? 0,
+                total: room?.amount?.toFixed(2) ?? '0.00',
+              },
+              room?.maxParticipants ?? 0,
+            )
+          }}
         </div>
       </div>
 
       <!-- Breakdown -->
       <div v-if="room" class="detail-card">
-        <div class="detail-label">{{ t('pay.detailLabel') }}</div>
+        <div class="form-label">{{ t('pay.detailLabel') }}</div>
         <div class="detail-row">
           <span class="detail-item">{{ room.reason }}</span>
           <span class="detail-val">{{ perPerson.toFixed(2) }} NIM</span>
@@ -92,9 +73,13 @@
           <span
             ><strong>{{ collected.toFixed(2) }}</strong> / {{ room?.amount.toFixed(2) }} NIM</span
           >
-          <span>{{ t('pay.paidCount', { paid: payersCount, total: room?.maxParticipants ?? 0 }) }}</span>
+          <span>{{
+            t('pay.paidCount', { paid: payersCount, total: room?.maxParticipants ?? 0 })
+          }}</span>
         </div>
-        <p v-if="remaining > 0" class="remaining">{{ t('pay.remaining', { amount: remaining.toFixed(2) }) }}</p>
+        <p v-if="remaining > 0" class="remaining">
+          {{ t('pay.remaining', { amount: remaining.toFixed(2) }) }}
+        </p>
         <p v-else class="remaining done">{{ t('pay.collected') }}</p>
         <p v-if="loadError" class="load-error">{{ loadError }}</p>
       </div>
@@ -107,7 +92,7 @@
       <!-- Already paid on chain -->
       <div v-else-if="hasPaidOnChain" class="already-paid">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="8" fill="#198060" />
+          <circle cx="8" cy="8" r="8" fill="currentColor" />
           <path
             d="M5 8L7 10L11 6"
             stroke="white"
@@ -124,13 +109,13 @@
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
           <path
             d="M6.5 1L2 3V7C2 9.5 4 11.8 6.5 12.5C9 11.8 11 9.5 11 7V3L6.5 1Z"
-            stroke="#8B8880"
+            stroke="currentColor"
             stroke-width="1.1"
             fill="none"
           />
           <path
             d="M4.5 6.5L5.8 7.8L8.5 5"
-            stroke="#8B8880"
+            stroke="currentColor"
             stroke-width="1.1"
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -148,7 +133,7 @@
     <div class="actions">
       <button
         v-if="!hasPaidOnChain && !isCreator"
-        class="btn-pay"
+        class="btn-primary btn-pay"
         :disabled="isPaying"
         @click="pay"
       >
@@ -156,24 +141,13 @@
           <circle cx="11" cy="11" r="11" fill="#1A1916" />
           <path d="M6.5 17L11 7L15.5 17H6.5Z" fill="#F6B221" />
         </svg>
-        <span>{{ isPaying ? t('pay.processing') : t('pay.payButton', { amount: perPerson.toFixed(2) }) }}</span>
+        <span>{{
+          isPaying ? t('pay.processing') : t('pay.payButton', { amount: perPerson.toFixed(2) })
+        }}</span>
       </button>
 
       <button class="btn-qr" @click="showQR = true">
-        <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-          <rect x="2" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
-          <rect x="2" y="11" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
-          <rect x="11" y="2" width="5" height="5" rx="1" stroke="#3D3B35" stroke-width="1.4" />
-          <rect x="3.5" y="3.5" width="2" height="2" fill="#3D3B35" />
-          <rect x="3.5" y="12.5" width="2" height="2" fill="#3D3B35" />
-          <rect x="12.5" y="3.5" width="2" height="2" fill="#3D3B35" />
-          <path
-            d="M11 11H13M15 11V13M11 15H13M15 15V13M15 13H11"
-            stroke="#3D3B35"
-            stroke-width="1.4"
-            stroke-linecap="round"
-          />
-        </svg>
+        <QrCodeIcon width="16" height="16" />
         <span>{{ t('pay.showQr') }}</span>
       </button>
 
@@ -190,6 +164,8 @@ import { amountPerPerson, paymentData } from '../utils/room';
 import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 import InitialAvatar from '../components/InitialAvatar.vue';
+import ScreenHeader from '../components/ScreenHeader.vue';
+import QrCodeIcon from '../assets/svg/qrCode.svg';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useModalBackWhen } from '../composables/modalBack';
@@ -278,7 +254,11 @@ async function pay() {
   isPaying.value = true;
   error.value = '';
   try {
-    const txHash = await requestPayment(perPerson.value, props.room.creatorId, paymentData(props.room));
+    const txHash = await requestPayment(
+      perPerson.value,
+      props.room.creatorId,
+      paymentData(props.room),
+    );
 
     // SDK confirmed the tx — record settlement and navigate immediately.
     if (props.groupId && currentUser.value) {
@@ -307,7 +287,6 @@ async function pay() {
   }
 }
 
-
 onMounted(async () => {
   // Reuse the already-connected user (avoids re-triggering the native dialog).
   currentUser.value = session.user.value ?? (await getCurrentUser());
@@ -323,43 +302,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-}
-
-.top-bar {
-  padding: 8px 18px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.bar-title {
-  flex: 1;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--dark);
-  letter-spacing: -0.3px;
-}
-
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-}
-
 .scroll {
   flex: 1;
   overflow-y: auto;
@@ -399,15 +341,6 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.amount-label {
-  font-size: 10px;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
 .amount-big {
   font-size: 46px;
   font-weight: 700;
@@ -435,15 +368,6 @@ onUnmounted(() => {
   border-radius: 14px;
   padding: 14px 16px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-
-.detail-label {
-  font-size: 10px;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  margin-bottom: 10px;
 }
 
 .detail-row {
@@ -591,6 +515,7 @@ onUnmounted(() => {
   justify-content: center;
   gap: 5px;
   padding: 4px 0;
+  color: var(--text);
 }
 
 .security-note span {
@@ -616,42 +541,10 @@ onUnmounted(() => {
 }
 
 .btn-pay {
-  background: var(--accent);
-  border: none;
-  border-radius: 16px;
-  padding: 16px 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--dark);
-  cursor: pointer;
-  font-family: inherit;
-  width: 100%;
-  transition: opacity 0.15s;
-}
-
-.btn-pay:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-.btn-pay:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-.confirming-banner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: var(--accent-dim);
-  border-radius: 16px;
-  padding: 16px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--dark);
 }
 
 .btn-qr {
@@ -665,7 +558,7 @@ onUnmounted(() => {
   background: transparent;
   font-size: 13px;
   font-weight: 500;
-  color: #3d3b35;
+  color: var(--text-mid);
   font-family: inherit;
   width: 100%;
   cursor: pointer;
@@ -674,16 +567,6 @@ onUnmounted(() => {
 
 .btn-qr:hover {
   background: var(--border-subtle);
-}
-
-.error-msg {
-  font-size: 13px;
-  color: var(--red);
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-  border-radius: 12px;
-  padding: 10px 14px;
-  text-align: center;
 }
 
 /* QR view */

@@ -20,7 +20,9 @@
       </div>
 
       <div class="title">{{ t('success.title') }}</div>
-      <div class="subtitle">{{ t('success.subtitle', { amount: amount.toFixed(2), recipient }) }}</div>
+      <div class="subtitle">
+        {{ t('success.subtitle', { amount: amount.toFixed(2), recipient }) }}
+      </div>
 
       <!-- TX card -->
       <div class="tx-card">
@@ -58,13 +60,6 @@ function goBack() {
 </script>
 
 <style scoped>
-.screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-}
-
 .center {
   flex: 1;
   display: flex;

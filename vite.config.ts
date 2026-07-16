@@ -12,7 +12,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
-      svgLoader(),
+      // svgo désactivé : il supprime le viewBox, nécessaire pour
+      // redimensionner les icônes via les attributs width/height.
+      svgLoader({ svgo: false }),
       sentryVitePlugin({
         org: 'payshare',
         project: 'sentry-payshare',

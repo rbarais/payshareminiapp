@@ -1,19 +1,6 @@
 <template>
   <div class="screen">
-    <div class="top-bar">
-      <button class="icon-btn" @click="goBack">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path
-            d="M2 2L12 12M12 2L2 12"
-            stroke="#3D3B35"
-            stroke-width="1.8"
-            stroke-linecap="round"
-          />
-        </svg>
-      </button>
-      <span class="bar-title">{{ t('join.title') }}</span>
-      <div style="width: 36px" />
-    </div>
+    <ScreenHeader :title="t('join.title')" close @back="goBack" />
 
     <div class="content">
       <!-- Chargement preview -->
@@ -32,29 +19,13 @@
           >
             <InitialAvatar :name="p.name" :size="40" />
             <span class="placeholder-name">{{ p.name }}</span>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M6 3L11 8L6 13"
-                stroke="#8B8880"
-                stroke-width="1.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+            <ChevronRightIcon class="chevron" />
           </button>
 
           <button class="placeholder-btn new" @click="selectNew">
             <div class="new-avatar">+</div>
             <span class="placeholder-name">{{ t('join.notInList') }}</span>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M6 3L11 8L6 13"
-                stroke="#8B8880"
-                stroke-width="1.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+            <ChevronRightIcon class="chevron" />
           </button>
         </div>
       </template>
@@ -75,7 +46,7 @@
           <p class="hint">
             {{ placeholders.length > 0 ? t('join.newMemberHint') : t('join.chooseNameHint') }}
           </p>
-          <div class="field-label" style="margin-top: 18px">{{ t('join.nameLabel') }}</div>
+          <div class="name-label">{{ t('join.nameLabel') }}</div>
           <div class="name-input-wrap">
             <input
               v-model="displayName"
@@ -110,6 +81,8 @@ import { joinGroup, fetchJoinPreview } from '../utils/api';
 import { authenticate, getStoredJwt } from '../utils/auth';
 import { captureError } from '../utils/errors';
 import InitialAvatar from '../components/InitialAvatar.vue';
+import ScreenHeader from '../components/ScreenHeader.vue';
+import ChevronRightIcon from '../assets/svg/chevronRight.svg';
 
 const props = defineProps<{ groupId: string; token: string }>();
 
@@ -206,34 +179,6 @@ const canJoin = () => {
 </script>
 
 <style scoped>
-.screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-}
-.top-bar {
-  padding: 10px 18px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-.bar-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--dark);
-}
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--border);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 .content {
   flex: 1;
   padding: 0 18px;
@@ -250,9 +195,13 @@ const canJoin = () => {
 }
 .hint {
   font-size: 14px;
-  color: var(--muted, #6b6860);
+  color: var(--text-mid);
   line-height: 1.45;
   margin: 0 0 4px;
+}
+.chevron {
+  color: var(--text);
+  flex-shrink: 0;
 }
 .placeholder-list {
   display: flex;
@@ -263,7 +212,7 @@ const canJoin = () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--card, #fff);
+  background: var(--bg-card);
   border: none;
   border-radius: 16px;
   padding: 12px 14px;
@@ -276,7 +225,7 @@ const canJoin = () => {
   opacity: 0.75;
 }
 .placeholder-btn.new {
-  background: var(--border, #f0ede8);
+  background: var(--border);
 }
 .placeholder-name {
   flex: 1;
@@ -288,7 +237,7 @@ const canJoin = () => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--bg, #f5f3ef);
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -297,7 +246,7 @@ const canJoin = () => {
   flex-shrink: 0;
 }
 .confirm-card {
-  background: var(--card, #fff);
+  background: var(--bg-card);
   border-radius: 18px;
   padding: 24px 18px;
   display: flex;
@@ -313,15 +262,15 @@ const canJoin = () => {
   margin: 0;
 }
 .field-card {
-  background: var(--card, #fff);
+  background: var(--bg-card);
   border-radius: 18px;
   padding: 18px;
 }
-.field-label {
+.name-label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--muted, #8b8880);
-  margin-bottom: 8px;
+  color: var(--text);
+  margin: 18px 0 8px;
 }
 .name-input-wrap {
   display: flex;
@@ -343,7 +292,7 @@ const canJoin = () => {
   background: none;
   border: none;
   font-size: 13px;
-  color: var(--text-mid, #8b8880);
+  color: var(--text-mid);
   cursor: pointer;
   padding: 4px 0;
   font-family: inherit;
@@ -352,18 +301,5 @@ const canJoin = () => {
 .cta-area {
   padding: 16px 18px calc(16px + env(safe-area-inset-bottom));
   flex-shrink: 0;
-}
-.btn-primary {
-  width: 100%;
-  padding: 16px;
-  border: none;
-  border-radius: 14px;
-  background: var(--accent, #1f2348);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
-}
-.btn-primary:disabled {
-  opacity: 0.5;
 }
 </style>

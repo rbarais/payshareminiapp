@@ -1,37 +1,16 @@
 <template>
   <div class="screen">
-    <div class="top-bar">
-      <button class="icon-btn" @click="goBack">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path
-            d="M2 2L12 12M12 2L2 12"
-            stroke="#3D3B35"
-            stroke-width="1.8"
-            stroke-linecap="round"
-          />
-        </svg>
-      </button>
-      <span class="bar-title">{{ t('newGroup.title') }}</span>
-      <div style="width: 36px" />
-    </div>
+    <ScreenHeader :title="t('newGroup.title')" close @back="goBack" />
 
     <div class="content">
       <!-- Icon + Name card -->
       <div class="field-card">
-        <div class="field-label">{{ t('newGroup.iconLabel') }}</div>
+        <div class="form-label">{{ t('newGroup.iconLabel') }}</div>
         <GroupIconPicker v-model="selectedIcon" />
 
-        <div class="field-label" style="margin-top: 18px">{{ t('newGroup.nameLabel') }}</div>
+        <div class="form-label" style="margin-top: 18px">{{ t('newGroup.nameLabel') }}</div>
         <div class="name-input-wrap">
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <path
-              d="M2 13L5 10M9 2L13 6L6.5 12.5L2.5 12.5L2.5 8.5L9 2Z"
-              stroke="#8B8880"
-              stroke-width="1.3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          <PencilIcon />
           <input
             v-model="groupName"
             class="name-input"
@@ -43,7 +22,7 @@
 
       <!-- Members card -->
       <div class="field-card">
-        <div class="field-label">{{ t('newGroup.membersLabel') }}</div>
+        <div class="form-label">{{ t('newGroup.membersLabel') }}</div>
         <div class="members-row">
           <!-- Creator -->
           <div class="member">
@@ -63,9 +42,7 @@
 
           <!-- Ajout -->
           <button class="add-member" @click="adding = true">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 2V12M2 7H12" stroke="#6B6860" stroke-width="1.6" stroke-linecap="round" />
-            </svg>
+            <PlusIcon />
           </button>
         </div>
 
@@ -104,6 +81,9 @@ import { useToast } from '../stores/toast';
 import { generateId } from '../utils/storage';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import NimiqIdenticon from '../components/NimiqIdenticon.vue';
+import ScreenHeader from '../components/ScreenHeader.vue';
+import PencilIcon from '../assets/svg/pencil.svg';
+import PlusIcon from '../assets/svg/plus.svg';
 import { captureError } from '../utils/errors';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import { useI18n } from '../stores/i18n';
@@ -169,39 +149,6 @@ async function done() {
 </script>
 
 <style scoped>
-.screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-}
-
-.top-bar {
-  padding: 10px 18px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.bar-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--dark);
-}
-
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--border);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
 .content {
   flex: 1;
   padding: 0 18px;
@@ -218,12 +165,8 @@ async function done() {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-.field-label {
-  font-size: 10px;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+/* Les labels des cartes gardent leur espacement d'origine */
+.form-label {
   margin-bottom: 12px;
 }
 
@@ -235,7 +178,8 @@ async function done() {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fafaf8;
+  background: var(--bg);
+  color: var(--text);
 }
 
 .name-input {
@@ -295,6 +239,7 @@ async function done() {
   justify-content: center;
   border: 1.5px dashed var(--border);
   background: none;
+  color: var(--text-mid);
   border-radius: 50%;
   width: 46px;
   height: 46px;
@@ -319,7 +264,7 @@ async function done() {
   padding: 10px 12px;
   font-size: 14px;
   outline: none;
-  background: #fafaf8;
+  background: var(--bg);
   font-family: inherit;
 }
 
@@ -343,29 +288,5 @@ async function done() {
 .cta-area {
   padding: 14px 18px 28px;
   flex-shrink: 0;
-}
-
-.btn-primary {
-  display: block;
-  width: 100%;
-  background: var(--accent);
-  border: none;
-  border-radius: 16px;
-  padding: 17px;
-  text-align: center;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--dark);
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity 0.15s;
-}
-
-.btn-primary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.btn-primary:hover:not(:disabled) {
-  opacity: 0.9;
 }
 </style>

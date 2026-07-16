@@ -30,7 +30,7 @@ describe('prefs (thème)', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
-  it('setTheme force la valeur, la persiste et l\'applique', async () => {
+  it("setTheme force la valeur, la persiste et l'applique", async () => {
     mockMatchMedia(false);
     const { usePrefs } = await import('../prefs');
     const { setTheme, theme } = usePrefs();
@@ -47,7 +47,7 @@ describe('prefs (displayName)', () => {
     vi.resetModules();
   });
 
-  it('setDisplayName met à jour l\'état réactif et persiste', async () => {
+  it("setDisplayName met à jour l'état réactif et persiste", async () => {
     const { usePrefs } = await import('../prefs');
     const { setDisplayName, displayName } = usePrefs();
     setDisplayName('Alice');
@@ -55,7 +55,7 @@ describe('prefs (displayName)', () => {
     expect(JSON.parse(localStorage.getItem('payshare_prefs')!).displayName).toBe('Alice');
   });
 
-  it('displayName démarre vide quand rien n\'est stocké', async () => {
+  it("displayName démarre vide quand rien n'est stocké", async () => {
     const { usePrefs } = await import('../prefs');
     expect(usePrefs().displayName.value).toBe('');
   });

@@ -95,7 +95,12 @@
     <path d="M3 13H19" :stroke="color" stroke-width="1.5" />
   </svg>
   <svg v-else :width="size" :height="size" viewBox="0 0 22 22" fill="none">
-    <path d="M5 10H15L13.5 19H6.5L5 10Z" :stroke="color" stroke-width="1.5" stroke-linejoin="round" />
+    <path
+      d="M5 10H15L13.5 19H6.5L5 10Z"
+      :stroke="color"
+      stroke-width="1.5"
+      stroke-linejoin="round"
+    />
     <path
       d="M15 12H17C18.1 12 19 12.9 19 14C19 15.1 18.1 16 17 16H15"
       :stroke="color"

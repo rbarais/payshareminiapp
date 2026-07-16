@@ -88,7 +88,7 @@ useModalBack(() => emit('cancel'));
   color: var(--dark);
 }
 .btn-confirm.danger {
-  background: #fff0f0;
+  background: var(--red-bg);
   color: var(--red);
 }
 </style>

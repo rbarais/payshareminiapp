@@ -14,8 +14,8 @@
       <div class="section-row">
         <span class="section-title">{{ t('home.myGroups') }}</span>
         <span v-if="syncing" class="syncing-dot" />
-        <button class="new-btn" @click="goToNewGroup">
-          <span class="new-plus">+</span>
+        <button class="pill dark" @click="goToNewGroup">
+          <PlusIcon width="12" height="12" />
           <span>{{ t('home.new') }}</span>
         </button>
       </div>
@@ -34,29 +34,15 @@
       </div>
 
       <!-- Empty state -->
-      <div v-else class="empty">
-        <div class="empty-icon">
-          <svg width="34" height="34" viewBox="0 0 22 22" fill="none">
-            <circle cx="8" cy="8.5" r="3" stroke="currentColor" stroke-width="1.5" />
-            <circle cx="15" cy="8.5" r="3" stroke="currentColor" stroke-width="1.5" />
-            <path
-              d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-            />
-            <path
-              d="M15 14C18.31 14 21 16.24 21 19"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-            />
-          </svg>
-        </div>
-        <div class="empty-title">{{ t('home.emptyTitle') }}</div>
-        <div class="empty-sub">{{ t('home.emptySub') }}</div>
-        <button class="empty-cta" @click="goToNewGroup">{{ t('home.emptyCta') }}</button>
-      </div>
+      <EmptyState
+        v-else
+        :title="t('home.emptyTitle')"
+        :sub="t('home.emptySub')"
+        :cta="t('home.emptyCta')"
+        @cta="goToNewGroup"
+      >
+        <UsersIcon />
+      </EmptyState>
     </div>
   </div>
 </template>
@@ -70,6 +56,9 @@ import { useToast } from '../stores/toast';
 import GroupCard from '../components/GroupCard.vue';
 import WalletBadge from '../components/WalletBadge.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
+import EmptyState from '../components/EmptyState.vue';
+import PlusIcon from '../assets/svg/plus.svg';
+import UsersIcon from '../assets/svg/users.svg';
 import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
 
@@ -118,14 +107,6 @@ function goToGroup(id: string) {
 </script>
 
 <style scoped>
-.screen {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  overflow: hidden;
-}
-
 /* Header */
 .header {
   padding: 10px 20px 14px;
@@ -167,26 +148,6 @@ function goToGroup(id: string) {
   color: var(--dark);
 }
 
-.new-btn {
-  background: var(--dark);
-  border: none;
-  border-radius: 20px;
-  padding: 6px 14px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-  transition: opacity 0.15s;
-}
-
-.new-btn:hover {
-  opacity: 0.8;
-}
-
 .syncing-dot {
   width: 7px;
   height: 7px;
@@ -208,67 +169,10 @@ function goToGroup(id: string) {
   }
 }
 
-.new-plus {
-  font-size: 15px;
-  line-height: 1;
-  margin-top: -1px;
-}
-
 /* Group list */
 .group-list {
   display: flex;
   flex-direction: column;
   gap: 9px;
-}
-
-/* Empty state */
-.empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 6px;
-  padding: 20px;
-}
-
-.empty-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
-  background: var(--bg-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 8px;
-  box-shadow: var(--shadow-sm);
-  color: var(--text);
-}
-
-.empty-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--dark);
-}
-
-.empty-sub {
-  font-size: 12px;
-  color: var(--text);
-  max-width: 220px;
-  line-height: 1.4;
-}
-
-.empty-cta {
-  margin-top: 12px;
-  background: var(--accent);
-  border: none;
-  border-radius: 14px;
-  padding: 12px 20px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--dark);
-  cursor: pointer;
-  font-family: inherit;
 }
 </style>

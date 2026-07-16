@@ -2,6 +2,10 @@
   <div class="sheet-overlay" @click="$emit('close')">
     <div class="sheet" @click.stop>
       <div class="sheet-handle" />
+      <div v-if="title" class="sheet-head">
+        <div class="sheet-title">{{ title }}</div>
+        <div v-if="subtitle" class="sheet-sub">{{ subtitle }}</div>
+      </div>
       <slot />
     </div>
   </div>
@@ -10,8 +14,9 @@
 <script setup lang="ts">
 import { useModalBack } from '../composables/modalBack';
 
-// Reusable bottom-sheet: dark overlay + animated sheet + handle.
-// Clicking the overlay (outside the sheet) emits `close`.
+// Reusable bottom-sheet: dark overlay + animated sheet + handle, with an
+// optional title/subtitle header. Clicking the overlay emits `close`.
+defineProps<{ title?: string; subtitle?: string }>();
 const emit = defineEmits<{ close: [] }>();
 
 // The hardware / browser back button closes the sheet instead of navigating.
@@ -57,5 +62,19 @@ useModalBack(() => emit('close'));
   border-radius: 2px;
   background: var(--border);
   margin: 0 auto 14px;
+}
+
+.sheet-head {
+  margin-bottom: 14px;
+}
+.sheet-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--dark);
+}
+.sheet-sub {
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 2px;
 }
 </style>

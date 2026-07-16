@@ -4,23 +4,23 @@
 </template>
 
 <script setup lang="ts">
-import Identicons from '@nimiq/identicons/dist/identicons.bundle.min.js'
-import { ref, watchEffect } from 'vue'
+import Identicons from '@nimiq/identicons/dist/identicons.bundle.min.js';
+import { ref, watchEffect } from 'vue';
 
 const props = withDefaults(defineProps<{ size?: number; address?: string | null }>(), {
   size: 38,
   address: null,
-})
+});
 
-const svgContent = ref(Identicons.placeholder('#bbb', 1))
+const svgContent = ref(Identicons.placeholder('#bbb', 1));
 
 watchEffect(async () => {
   if (props.address) {
-    svgContent.value = await Identicons.svg(props.address)
+    svgContent.value = await Identicons.svg(props.address);
   } else {
-    svgContent.value = Identicons.placeholder('#bbb', 1)
+    svgContent.value = Identicons.placeholder('#bbb', 1);
   }
-})
+});
 </script>
 
 <style scoped>

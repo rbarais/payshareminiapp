@@ -63,34 +63,26 @@
         </div>
       </template>
 
-      <div v-else class="empty">
-        <div class="empty-icon">
-          <svg width="30" height="30" viewBox="0 0 22 22" fill="none">
-            <rect
-              x="3"
-              y="5"
-              width="16"
-              height="14"
-              rx="2"
-              stroke="currentColor"
-              stroke-width="1.5"
-            />
-            <path
-              d="M7 10H15M7 13H12"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-            />
-            <path
-              d="M7 3V7M15 3V7"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-            />
-          </svg>
-        </div>
-        <div class="empty-title">{{ emptyMessage }}</div>
-      </div>
+      <EmptyState v-else :title="emptyMessage">
+        <svg width="30" height="30" viewBox="0 0 22 22" fill="none">
+          <rect
+            x="3"
+            y="5"
+            width="16"
+            height="14"
+            rx="2"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <path
+            d="M7 10H15M7 13H12"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+          <path d="M7 3V7M15 3V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </EmptyState>
     </div>
   </div>
 </template>
@@ -101,9 +93,10 @@ import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useI18n } from '../stores/i18n';
 import { useToast } from '../stores/toast';
-import { eurRate, fetchRate } from '../utils/rate';
+import { fetchRate, eurApprox } from '../utils/rate';
 import { captureError } from '../utils/errors';
 import type { ActivityEvent } from '../utils/history';
+import EmptyState from '../components/EmptyState.vue';
 
 type Filter = 'all' | 'sent' | 'received';
 
@@ -188,8 +181,8 @@ function amountText(event: ActivityEvent): string {
 }
 
 function eurText(event: ActivityEvent): string {
-  if (event.currency !== 'NIM' || eurRate.value == null) return '';
-  return '≈ ' + (event.amount * eurRate.value).toFixed(2) + ' €';
+  if (event.currency !== 'NIM') return '';
+  return eurApprox(event.amount);
 }
 
 function shortHash(hash: string): string {
@@ -218,14 +211,6 @@ function daySectionLabel(date: Date): string {
 </script>
 
 <style scoped>
-.screen {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  overflow: hidden;
-}
-
 .header {
   padding: 14px 20px 10px;
   flex-shrink: 0;
@@ -244,29 +229,13 @@ function daySectionLabel(date: Date): string {
   gap: 8px;
 }
 
-.pill {
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 7px 16px;
-  border-radius: 20px;
-  background: var(--bg-card);
-  color: var(--text);
-}
-
-.pill.active {
-  background: var(--accent-dim);
-  color: var(--accent);
-  font-weight: 700;
-}
-
 .content {
   flex: 1;
   padding: 4px 18px 16px;
   overflow-y: auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .day-group {
@@ -381,33 +350,5 @@ function daySectionLabel(date: Date): string {
   color: var(--text);
   opacity: 0.7;
   margin-top: 1px;
-}
-
-.empty {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 10px;
-  color: var(--text);
-}
-
-.empty-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
-  background: var(--bg-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-sm);
-}
-
-.empty-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-mid);
 }
 </style>

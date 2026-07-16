@@ -42,7 +42,7 @@ describe('paymentData', () => {
   });
 
   it('French characters (2-byte UTF-8)', () => {
-    const room = makeRoom({ reason: 'Réveillon de Noël à l\'église' });
+    const room = makeRoom({ reason: "Réveillon de Noël à l'église" });
     const data = paymentData(room);
     expect(bytes(data)).toBeLessThanOrEqual(64);
     expect(data.startsWith(roomTag(room.id))).toBe(true);
@@ -80,7 +80,9 @@ describe('paymentData', () => {
     const data = paymentData(room);
     expect(bytes(data)).toBeLessThanOrEqual(64);
     // Must decode back without errors
-    expect(new TextDecoder('utf-8', { fatal: true }).decode(new TextEncoder().encode(data))).toBe(data);
+    expect(new TextDecoder('utf-8', { fatal: true }).decode(new TextEncoder().encode(data))).toBe(
+      data,
+    );
   });
 
   it('reason longer than 64 bytes alone still produces valid output', () => {

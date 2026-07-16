@@ -6,7 +6,7 @@ describe('session.setName', () => {
     vi.resetModules();
   });
 
-  it('met à jour le nom de l\'utilisateur et le localStorage', async () => {
+  it("met à jour le nom de l'utilisateur et le localStorage", async () => {
     localStorage.setItem(
       'payshare_session',
       JSON.stringify({ id: 'NQ_ALICE', name: 'Nimiq User' }),

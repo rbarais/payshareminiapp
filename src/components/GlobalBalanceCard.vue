@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { eurRate, fetchRate } from '../utils/rate';
+import { fetchRate, eurApprox } from '../utils/rate';
 import { useI18n } from '../stores/i18n';
 
 // "Global balance" card: what others owe you vs what you owe, aggregated.
@@ -50,8 +50,7 @@ onMounted(() => {
 });
 
 function eur(nim: number): string {
-  if (eurRate.value == null) return '—';
-  return '≈ ' + (nim * eurRate.value).toFixed(2) + ' €';
+  return eurApprox(nim) || '—';
 }
 
 const creditedStr = computed(() =>

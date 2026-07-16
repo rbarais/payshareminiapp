@@ -4,7 +4,7 @@ import { readPrefs, patchPrefs } from '../prefsStorage';
 describe('prefsStorage', () => {
   beforeEach(() => localStorage.clear());
 
-  it('renvoie un objet vide quand rien n\'est stocké', () => {
+  it("renvoie un objet vide quand rien n'est stocké", () => {
     expect(readPrefs()).toEqual({});
   });
 

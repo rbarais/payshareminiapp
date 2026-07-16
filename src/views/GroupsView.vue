@@ -2,8 +2,8 @@
   <div class="screen">
     <div class="header">
       <div class="title">{{ t('groups.title') }}</div>
-      <button class="new-btn" @click="goToNewGroup">
-        <span class="new-plus">+</span>
+      <button class="pill dark" @click="goToNewGroup">
+        <PlusIcon width="12" height="12" />
         <span>{{ t('groups.new') }}</span>
       </button>
     </div>
@@ -37,29 +37,15 @@
         {{ t('groups.emptyFiltered') }}
       </div>
 
-      <div v-else class="empty">
-        <div class="empty-icon">
-          <svg width="34" height="34" viewBox="0 0 22 22" fill="none">
-            <circle cx="8" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5" />
-            <circle cx="15" cy="8.5" r="3" stroke="#C8C5BF" stroke-width="1.5" />
-            <path
-              d="M2 19C2 16.24 4.69 14 8 14C11.31 14 14 16.24 14 19"
-              stroke="#C8C5BF"
-              stroke-width="1.5"
-              stroke-linecap="round"
-            />
-            <path
-              d="M15 14C18.31 14 21 16.24 21 19"
-              stroke="#C8C5BF"
-              stroke-width="1.5"
-              stroke-linecap="round"
-            />
-          </svg>
-        </div>
-        <div class="empty-title">{{ t('groups.emptyTitle') }}</div>
-        <div class="empty-sub">{{ t('groups.emptySub') }}</div>
-        <button class="empty-cta" @click="goToNewGroup">{{ t('groups.emptyCta') }}</button>
-      </div>
+      <EmptyState
+        v-else
+        :title="t('groups.emptyTitle')"
+        :sub="t('groups.emptySub')"
+        :cta="t('groups.emptyCta')"
+        @cta="goToNewGroup"
+      >
+        <UsersIcon />
+      </EmptyState>
     </div>
   </div>
 </template>
@@ -71,6 +57,9 @@ import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useI18n } from '../stores/i18n';
 import GroupCard from '../components/GroupCard.vue';
+import EmptyState from '../components/EmptyState.vue';
+import PlusIcon from '../assets/svg/plus.svg';
+import UsersIcon from '../assets/svg/users.svg';
 
 type Filter = 'all' | 'active' | 'settled';
 
@@ -119,14 +108,6 @@ function goToGroup(id: string) {
 </script>
 
 <style scoped>
-.screen {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  overflow: hidden;
-}
-
 .header {
   padding: 14px 20px;
   display: flex;
@@ -142,49 +123,11 @@ function goToGroup(id: string) {
   letter-spacing: -0.5px;
 }
 
-.new-btn {
-  background: var(--dark);
-  border: none;
-  border-radius: 20px;
-  padding: 6px 14px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.new-plus {
-  font-size: 15px;
-  line-height: 1;
-  margin-top: -1px;
-}
-
 .filters {
   display: flex;
   gap: 8px;
   padding: 0 20px 12px;
   flex-shrink: 0;
-}
-
-.pill {
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 7px 16px;
-  border-radius: 20px;
-  background: var(--bg-card);
-  color: var(--text);
-}
-
-.pill.active {
-  background: var(--accent-dim);
-  color: var(--accent);
-  font-weight: 700;
 }
 
 .content {
@@ -208,53 +151,5 @@ function goToGroup(id: string) {
   display: flex;
   flex-direction: column;
   gap: 9px;
-}
-
-.empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 6px;
-  padding: 20px;
-}
-
-.empty-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
-  background: var(--bg-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 8px;
-  box-shadow: var(--shadow-sm);
-}
-
-.empty-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--dark);
-}
-.empty-sub {
-  font-size: 12px;
-  color: var(--text);
-  max-width: 220px;
-  line-height: 1.4;
-}
-
-.empty-cta {
-  margin-top: 12px;
-  background: var(--accent);
-  border: none;
-  border-radius: 14px;
-  padding: 12px 20px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--dark);
-  cursor: pointer;
-  font-family: inherit;
 }
 </style>

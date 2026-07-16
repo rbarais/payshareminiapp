@@ -24,10 +24,7 @@ describe('rate', () => {
   });
 
   it('renvoie le cache frais sans refetch', async () => {
-    localStorage.setItem(
-      'payshare_rate',
-      JSON.stringify({ rate: 0.0015, ts: Date.now() }),
-    );
+    localStorage.setItem('payshare_rate', JSON.stringify({ rate: 0.0015, ts: Date.now() }));
     const spy = vi.fn();
     vi.stubGlobal('fetch', spy);
     const { fetchRate } = await import('../rate');

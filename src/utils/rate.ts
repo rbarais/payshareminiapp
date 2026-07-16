@@ -2,8 +2,7 @@ import { ref } from 'vue';
 
 const CACHE_KEY = 'payshare_rate';
 const TTL_MS = 10 * 60 * 1000;
-const URL =
-  'https://api.coingecko.com/api/v3/simple/price?ids=nimiq-2&vs_currencies=eur';
+const URL = 'https://api.coingecko.com/api/v3/simple/price?ids=nimiq-2&vs_currencies=eur';
 
 interface Entry {
   rate: number;
@@ -15,15 +14,19 @@ function readEntry(): Entry | null {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Entry;
-    return typeof parsed.rate === 'number' && typeof parsed.ts === 'number'
-      ? parsed
-      : null;
+    return typeof parsed.rate === 'number' && typeof parsed.ts === 'number' ? parsed : null;
   } catch {
     return null;
   }
 }
 
 export const eurRate = ref<number | null>(readEntry()?.rate ?? null);
+
+// Libellé "≈ 1.23 €" pour un montant NIM, ou '' tant que le taux est inconnu.
+export function eurApprox(nim: number): string {
+  if (eurRate.value === null) return '';
+  return `≈ ${(nim * eurRate.value).toFixed(2)} €`;
+}
 
 export async function fetchRate(): Promise<number | null> {
   const entry = readEntry();
