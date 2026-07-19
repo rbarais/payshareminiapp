@@ -103,7 +103,7 @@ export const fr = {
     walletConnection: 'Connexion wallet via Nimiq Pay',
     walletLabel: 'Nimiq Pay Wallet',
     connected: 'Connecté',
-    balances: 'Soldes',
+    balances: 'Montant disponible sur Nimiq Pay',
     consensus: 'Consensus',
     consensusEstablished: 'Établi',
     consensusConnecting: 'Connexion…',
@@ -284,7 +284,7 @@ export const fr = {
     chooseOther: '← Choisir un autre',
     newMemberHint: 'Tu rejoins le groupe en tant que nouveau membre.',
     chooseNameHint:
-      'Tu as été invité à rejoindre un groupe. Choisis le nom visible par les autres.',
+      'Tu as été invité à rejoindre un groupe PayShare. Choisis le nom qui apparaitra pour les autres.',
     nameLabel: 'Ton nom',
     namePlaceholder: 'Ton prénom',
     backToList: '← Choisir dans la liste',

@@ -16,11 +16,6 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     integrations: [Sentry.browserTracingIntegration({ router })],
     tracesSampleRate: 1.0,
     beforeSend(event) {
-      // The Nimiq Pay SDK's CallbackAdapter creates a secondary internal Promise
-      // when a transaction fails. This floating Promise rejects with the raw
-      // JSON-RPC error before we can attach a handler — it's a SDK bug we can't
-      // fix. The rejection IS already caught and shown to the user in PayView,
-      // so we drop the duplicate unhandledrejection event here.
       const isNimiqSdkRejection = event.exception?.values?.some(
         (exception) =>
           exception.type === 'UnhandledRejection' &&
