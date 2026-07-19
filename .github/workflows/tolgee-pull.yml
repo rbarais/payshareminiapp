@@ -1,0 +1,25 @@
+name: Pull translations from Tolgee
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx --yes @tolgee/cli pull --api-key ${{ secrets.TOLGEE_API_KEY }}
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/tolgee-sync
+          title: 'chore(i18n): sync trads depuis Tolgee'
+          commit-message: 'chore(i18n): sync trads depuis Tolgee'
+          body: |
+            Traductions mises à jour depuis Tolgee (projet 33409).
+            Vérifier le diff sur `src/i18n/*.json` (pluriels `|`, apostrophes FR).

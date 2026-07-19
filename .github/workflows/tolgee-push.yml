@@ -1,0 +1,13 @@
+name: Push i18n keys to Tolgee
+
+on:
+  push:
+    branches: [master]
+    paths: ['src/i18n/**']
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx --yes @tolgee/cli push --api-key ${{ secrets.TOLGEE_API_KEY }}
