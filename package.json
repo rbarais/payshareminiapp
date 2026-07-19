@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "dev:tunnel": "bash scripts/dev-tunnel.sh",
-    "build": "vue-tsc -b && vite build",
+    "typecheck:server": "tsc -p api/tsconfig.json --noEmit",
+    "build": "npm run typecheck:server && vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

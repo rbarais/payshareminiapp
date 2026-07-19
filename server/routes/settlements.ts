@@ -8,10 +8,10 @@ function normalizeAddr(addr: string): string {
   return addr.replace(/\s/g, '').toUpperCase();
 }
 
-interface AllocationInput {
+type AllocationInput = {
   expenseId: string;
   amount: number;
-}
+};
 
 function parseAllocations(raw: unknown): AllocationInput[] | null {
   if (raw == null) return [];

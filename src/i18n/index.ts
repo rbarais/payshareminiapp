@@ -1,9 +1,9 @@
 import { createI18n } from 'vue-i18n';
 import { getHostLanguage } from '@nimiq/mini-app-sdk';
-import { fr } from './fr';
-import { en } from './en';
-import { de } from './de';
-import { es } from './es';
+import fr from './fr.json';
+import en from './en.json';
+import de from './de.json';
+import es from './es.json';
 import { readPrefs, type Locale } from '../utils/prefsStorage';
 
 export type Dict = typeof fr;

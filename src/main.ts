@@ -4,6 +4,7 @@ import './style.css';
 import App from './App.vue';
 import router from './router';
 import { i18n } from './i18n';
+import { hydrateFromTolgee } from './i18n/hydrate';
 import { applyTheme } from './stores/prefs';
 
 const app = createApp(App);
@@ -30,4 +31,5 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 app.use(i18n);
 app.use(router);
 applyTheme();
-app.mount('#app');
+app.mount('#app'); // rendu instantané avec les traductions bundlées
+void hydrateFromTolgee(); // puis mise à jour depuis Tolgee en tâche de fond
