@@ -18,6 +18,9 @@ interface OpenModal {
   // Set to true when the modal is being closed *because* the user pressed back,
   // so we know not to pop an extra history entry on the way out.
   closedByBack: boolean;
+  // location.href at the time this modal opened, so a delayed cleanup can
+  // tell whether a real navigation happened in the meantime (see unregister).
+  openedAtHref: string;
 }
 
 const stack: OpenModal[] = [];
@@ -57,7 +60,7 @@ export function anyModalOpen(): boolean {
 }
 
 function register(close: () => void): OpenModal {
-  const entry: OpenModal = { close, closedByBack: false };
+  const entry: OpenModal = { close, closedByBack: false, openedAtHref: location.href };
   stack.push(entry);
   if (cleanupPending) {
     // Another modal just closed this tick: reuse its dummy entry instead of
@@ -84,6 +87,12 @@ function unregister(entry: OpenModal): void {
   queueMicrotask(() => {
     if (!cleanupPending) return;
     cleanupPending = false;
+    // If the URL already changed since this modal opened, a real navigation
+    // happened as part of this same close (e.g. selecting a notification
+    // navigates to its group) — popping history now would undo it. Leave the
+    // dummy entry in place: it duplicates the page the modal was opened on,
+    // so a later hardware back still lands exactly where the user expects.
+    if (location.href !== entry.openedAtHref) return;
     ignoreNextPop = true;
     history.back();
   });
