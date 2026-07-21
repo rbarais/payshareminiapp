@@ -120,7 +120,13 @@ describe('buildNotifications', () => {
 
   it('sorts events most-recent first', () => {
     const older = expense({ id: 'old', createdAt: new Date('2026-07-10T09:00:00Z') });
-    const items = buildNotifications([group()], [older, expense()], [settlement()], ME, neverSettled);
+    const items = buildNotifications(
+      [group()],
+      [older, expense()],
+      [settlement()],
+      ME,
+      neverSettled,
+    );
     const times = items.map((item) => item.date.getTime());
     expect(times).toEqual([...times].sort((a, b) => b - a));
   });
