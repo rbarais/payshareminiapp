@@ -214,6 +214,15 @@
     "title": "Neue Gruppe",
     "you": "Du"
   },
+  "notifications": {
+    "empty": "Noch keine Benachrichtigungen",
+    "expenseShare": "{name} hat eine Ausgabe von {amount} hinzugefügt, die dich betrifft, in {group}",
+    "groupSettled": "{group} ist jetzt beglichen",
+    "hoursAgo": "vor {n} Std.",
+    "memberJoined": "{name} ist {group} beigetreten",
+    "received": "{name} hat dir {amount} zurückgezahlt",
+    "title": "Benachrichtigungen"
+  },
   "pay": {
     "alreadyPaid": "Bereits on-chain bezahlt ✓",
     "amountLabel": "Zu zahlender Betrag",

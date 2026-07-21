@@ -214,6 +214,15 @@
     "title": "Nuevo grupo",
     "you": "Tú"
   },
+  "notifications": {
+    "empty": "Aún no hay notificaciones",
+    "expenseShare": "{name} añadió un gasto de {amount} que te concierne en {group}",
+    "groupSettled": "{group} está ahora saldado",
+    "hoursAgo": "hace {n}h",
+    "memberJoined": "{name} se unió a {group}",
+    "received": "{name} te devolvió {amount}",
+    "title": "Notificaciones"
+  },
   "pay": {
     "alreadyPaid": "Ya pagado on-chain ✓",
     "amountLabel": "Importe a pagar",

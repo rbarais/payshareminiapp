@@ -214,6 +214,15 @@
     "title": "New group",
     "you": "You"
   },
+  "notifications": {
+    "empty": "No notifications yet",
+    "expenseShare": "{name} added an expense of {amount} concerning you in {group}",
+    "groupSettled": "{group} is now settled",
+    "hoursAgo": "{n}h ago",
+    "memberJoined": "{name} joined {group}",
+    "received": "{name} paid you back {amount}",
+    "title": "Notifications"
+  },
   "pay": {
     "alreadyPaid": "Already paid on-chain ✓",
     "amountLabel": "Amount to pay",

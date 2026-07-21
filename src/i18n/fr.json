@@ -214,6 +214,15 @@
     "title": "Nouveau groupe",
     "you": "Toi"
   },
+  "notifications": {
+    "empty": "Aucune notification pour le moment",
+    "expenseShare": "{name} a ajouté une dépense de {amount} te concernant dans {group}",
+    "groupSettled": "{group} est maintenant soldé",
+    "hoursAgo": "il y a {n}h",
+    "memberJoined": "{name} a rejoint {group}",
+    "received": "{name} t'a remboursé {amount}",
+    "title": "Notifications"
+  },
   "pay": {
     "alreadyPaid": "Déjà payé on-chain ✓",
     "amountLabel": "Montant à payer",
