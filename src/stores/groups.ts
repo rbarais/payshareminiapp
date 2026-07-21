@@ -28,6 +28,7 @@ import {
   fetchAllSettlements,
 } from '../utils/api';
 import { buildActivityFeed, type ActivityEvent } from '../utils/history';
+import { buildNotifications, type NotificationItem } from '../utils/notifications';
 
 interface State {
   groups: Group[];
@@ -282,6 +283,32 @@ function grossCreditForMember(groupId: string, memberId: string, nimiqAddress?: 
   return round2(Math.max(0, credit));
 }
 
+// True when every debtor's share on an expense is fully settled (nobody
+// owes anything on it anymore) — used to disable interaction on the card,
+// and to detect when a group just became fully settled (notifications).
+// A placeholder payer/debtor (no Nimiq address) can never be fully settled.
+function isExpenseFullySettled(groupId: string, expenseId: string): boolean {
+  const expense = state.expenses.find(
+    (entry) => entry.id === expenseId && entry.groupId === groupId,
+  );
+  const group = state.groups.find((entry) => entry.id === groupId);
+  if (!expense || !group) return false;
+  const payer = group.members.find((member) => member.id === expense.paidBy);
+  if (!payer?.address) return false;
+  for (const share of expense.shares) {
+    if (share.memberId === expense.paidBy || share.amount <= 0.005) continue;
+    const debtor = group.members.find((member) => member.id === share.memberId);
+    if (!debtor?.address) return false;
+    const creditor = creditorBreakdown(groupId, debtor.id, debtor.address).find(
+      (debt) => debt.creditor.id === expense.paidBy,
+    );
+    const item = creditor?.expenses.find((entry) => entry.expense.id === expenseId);
+    const open = item ? item.open : share.amount;
+    if (open >= 0.005) return false;
+  }
+  return true;
+}
+
 export function useGroupsStore() {
   return {
     groups: computed(() => state.groups),
@@ -297,6 +324,17 @@ export function useGroupsStore() {
     // Unified activity feed (settlements + expenses) concerning the user.
     activityFeed: (nimiqAddress: string): ActivityEvent[] =>
       buildActivityFeed(state.groups, state.expenses, state.settlements, nimiqAddress),
+
+    // Unread-worthy events (payment received, expense concerning me, new
+    // member, group just fully settled) for the notification bell.
+    notifications: (nimiqAddress: string): NotificationItem[] =>
+      buildNotifications(
+        state.groups,
+        state.expenses,
+        state.settlements,
+        nimiqAddress,
+        isExpenseFullySettled,
+      ),
 
     // Gross debts of the user (by Nimiq address), grouped by creditor.
     grossDebtsForUser: (groupId: string, nimiqAddress: string): CreditorDebt[] => {
@@ -355,28 +393,7 @@ export function useGroupsStore() {
 
     // True when every debtor's share on an expense is fully settled (nobody
     // owes anything on it anymore) — used to disable interaction on the card.
-    // A placeholder payer/debtor (no Nimiq address) can never be fully settled.
-    expenseFullySettled: (groupId: string, expenseId: string): boolean => {
-      const expense = state.expenses.find(
-        (entry) => entry.id === expenseId && entry.groupId === groupId,
-      );
-      const group = state.groups.find((entry) => entry.id === groupId);
-      if (!expense || !group) return false;
-      const payer = group.members.find((member) => member.id === expense.paidBy);
-      if (!payer?.address) return false;
-      for (const share of expense.shares) {
-        if (share.memberId === expense.paidBy || share.amount <= 0.005) continue;
-        const debtor = group.members.find((member) => member.id === share.memberId);
-        if (!debtor?.address) return false; // placeholder debtor can't have paid
-        const creditor = creditorBreakdown(groupId, debtor.id, debtor.address).find(
-          (debt) => debt.creditor.id === expense.paidBy,
-        );
-        const item = creditor?.expenses.find((entry) => entry.expense.id === expenseId);
-        const open = item ? item.open : share.amount;
-        if (open >= 0.005) return false;
-      }
-      return true;
-    },
+    expenseFullySettled: isExpenseFullySettled,
 
     // Fraction (0..1) of an expense reimbursed to the payer across all debtors —
     // real settlement progress. 1 when fully settled, 0 when nothing is paid.
