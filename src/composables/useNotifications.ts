@@ -40,9 +40,10 @@ export function useNotifications() {
 
   function markSeen(): void {
     const now = new Date();
-    const latestNotificationTime = items.value.length > 0
-      ? Math.max(...items.value.map((n) => n.date.getTime()), now.getTime())
-      : now.getTime();
+    const latestNotificationTime = Math.max(
+      ...items.value.map((item) => item.date.getTime()),
+      now.getTime(),
+    );
     const lastSeenAt = new Date(latestNotificationTime);
     state.lastSeenAt = lastSeenAt;
     state.storageAvailable = writeLastSeen(lastSeenAt);
