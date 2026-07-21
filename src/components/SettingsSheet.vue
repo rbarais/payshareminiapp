@@ -473,7 +473,7 @@ function comingSoon() {
   font-size: 13px;
   font-weight: 700;
   font-family: inherit;
-  color: var(--dark);
+  color: var(--ink);
   background: var(--accent);
   cursor: pointer;
 }

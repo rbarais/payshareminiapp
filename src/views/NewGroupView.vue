@@ -271,7 +271,7 @@ async function done() {
 .guest-add-btn {
   border: none;
   border-radius: 12px;
-  background: var(--dark);
+  background: var(--ink);
   color: var(--accent);
   font-size: 13px;
   font-weight: 600;

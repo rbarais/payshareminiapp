@@ -133,7 +133,7 @@ const netStr = computed(() => {
 .balance-net-amount {
   font-size: 24px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--ink);
   letter-spacing: -0.8px;
   line-height: 1;
   white-space: nowrap;

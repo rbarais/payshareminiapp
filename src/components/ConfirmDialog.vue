@@ -85,7 +85,7 @@ useModalBack(() => emit('cancel'));
 }
 .btn-confirm {
   background: var(--accent);
-  color: var(--dark);
+  color: var(--ink);
 }
 .btn-confirm.danger {
   background: var(--red-bg);

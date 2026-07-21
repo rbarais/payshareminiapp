@@ -2,6 +2,7 @@
   --bg: #faf9f7;
   --bg-card: #ffffff;
   --dark: #1a1916;
+  --ink: #1a1916;
   --accent: #f6b221;
   --accent-dim: #fff1cf;
   --green: #198060;
@@ -10,8 +11,8 @@
   --red-bg: #fff0f0;
   --red-border: #f8d8d8;
   --text: #8b8880;
-  --text-mid: #6b6860;
-  --text-faint: #c8c5bf;
+  --text-mid: #3d3b35;
+  --text-faint: #a09890;
   --green-border: #c6efe0;
   --border: #edecea;
   --border-subtle: #f0eee9;
@@ -27,22 +28,22 @@
 }
 
 [data-theme='dark'] {
-  --bg: #16151a;
-  --bg-card: #1f1e25;
-  --dark: #f3f1ec;
+  --bg: #15130e;
+  --bg-card: #1e1b15;
+  --dark: #f0ede6;
   --accent: #f6b221;
   --accent-dim: #3a2f12;
-  --green: #34c59a;
-  --green-bg: #18352c;
-  --red: #e06b6b;
-  --red-bg: #3a1f1f;
-  --red-border: #4a2a2a;
-  --text: #8b8880;
-  --text-mid: #a8a49c;
-  --text-faint: #55534d;
-  --green-border: #23493a;
-  --border: #2a2930;
-  --border-subtle: #232228;
+  --green: #198060;
+  --green-bg: #e0f5ee;
+  --red: #cc3c3c;
+  --red-bg: #fff0f0;
+  --red-border: #f8d8d8;
+  --text: #7a7870;
+  --text-mid: #c8c4bc;
+  --text-faint: #4a4840;
+  --green-border: #c6efe0;
+  --border: #2c2920;
+  --border-subtle: #252218;
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
@@ -123,6 +124,10 @@ input {
 .icon-btn:hover {
   opacity: 0.8;
 }
+.icon-btn.dark {
+  background: var(--ink);
+  color: var(--accent);
+}
 
 /* Bouton principal (CTA accent pleine largeur) */
 .btn-primary {
@@ -135,7 +140,7 @@ input {
   text-align: center;
   font-size: 15px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--ink);
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.15s;
@@ -192,12 +197,12 @@ input {
 }
 .pill.accent {
   background: var(--accent);
-  color: var(--dark);
+  color: var(--ink);
   font-weight: 700;
   padding: 6px 14px;
 }
 .pill.dark {
-  background: var(--dark);
+  background: var(--ink);
   color: var(--accent);
   display: flex;
   align-items: center;

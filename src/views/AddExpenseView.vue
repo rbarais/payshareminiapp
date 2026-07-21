@@ -328,6 +328,7 @@ function goBack() {
 <style scoped>
 .icon-btn.accent {
   background: var(--accent);
+  color: var(--ink);
 }
 
 /* Amount */
@@ -368,7 +369,7 @@ function goBack() {
 }
 
 .currency-pill.active {
-  background: var(--dark);
+  background: var(--ink);
   color: var(--accent);
 }
 
@@ -482,7 +483,7 @@ function goBack() {
 }
 
 .mode-tab.active {
-  background: var(--dark);
+  background: var(--ink);
   color: var(--accent);
 }
 

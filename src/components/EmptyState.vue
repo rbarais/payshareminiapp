@@ -59,7 +59,7 @@ defineEmits<{ cta: [] }>();
   padding: 12px 20px;
   font-size: 13px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--ink);
   cursor: pointer;
   font-family: inherit;
 }

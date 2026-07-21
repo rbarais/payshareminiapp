@@ -72,6 +72,7 @@
     "owedToYou": "You are owed",
     "paidByMeta": "Paid by",
     "paidByPrefix": "paid by",
+    "scanQr": "Scan a QR code",
     "settled": "Settled ✓",
     "settledSub": "No pending debts",
     "settledTitle": "Group settled ✓",

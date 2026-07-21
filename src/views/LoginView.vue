@@ -3,9 +3,7 @@
     <!-- Home screen -->
     <div v-if="phase === 'idle'" class="hero">
       <div class="logo-badge">
-        <svg width="40" height="40" viewBox="0 0 26 26" fill="none">
-          <path d="M6 20L13 4L20 20H6Z" fill="#1A1916" />
-        </svg>
+        <PayshareIcon width="78" height="78" />
       </div>
       <div class="brand">PayShare</div>
       <div class="tagline">powered by <span>Nimiq Blockchain</span></div>
@@ -138,9 +136,7 @@
     <!-- Connecting / success -->
     <div v-else class="status">
       <div class="logo-badge pulse">
-        <svg width="40" height="40" viewBox="0 0 26 26" fill="none">
-          <path d="M6 20L13 4L20 20H6Z" fill="#1A1916" />
-        </svg>
+        <PayshareIcon width="78" height="78" />
       </div>
       <div class="status-text">
         {{ phase === 'connected' ? t('login.connected') : t('login.connecting') }}
@@ -157,6 +153,7 @@ import { ref, computed } from 'vue';
 import { useSession } from '../stores/session';
 import { t } from '../stores/i18n';
 import { buildInviteDeeplink, decodeInviteFromText } from '../utils/room';
+import PayshareIcon from '../assets/svg/payshareIcon.svg';
 
 const session = useSession();
 const emit = defineEmits<{ connected: [] }>();
@@ -229,7 +226,6 @@ async function connect() {
   width: 78px;
   height: 78px;
   border-radius: 24px;
-  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -315,7 +311,7 @@ async function connect() {
   flex-shrink: 0;
   font-size: 15px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--ink);
   font-family: inherit;
 }
 

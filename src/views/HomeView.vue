@@ -3,7 +3,6 @@
     <!-- Header -->
     <div class="header">
       <div class="logo">PayShare</div>
-      <WalletBadge :address="userId" @open="emit('open-settings')" />
     </div>
 
     <!-- Content -->
@@ -13,11 +12,15 @@
       <!-- Groups header -->
       <div class="section-row">
         <span class="section-title">{{ t('home.myGroups') }}</span>
-        <span v-if="syncing" class="syncing-dot" />
-        <button class="pill dark" @click="goToNewGroup">
-          <PlusIcon width="12" height="12" />
-          <span>{{ t('home.new') }}</span>
-        </button>
+        <div class="section-actions">
+          <span v-if="syncing" class="syncing-dot" />
+          <button class="pill dark" :aria-label="t('group.scanQr')" @click="goToScan">
+            <QrCodeIcon width="14" height="14" />
+          </button>
+          <button class="pill dark" @click="goToNewGroup">
+            <PlusIcon width="12" height="12" />
+          </button>
+        </div>
       </div>
 
       <!-- Group list -->
@@ -54,15 +57,13 @@ import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import GroupCard from '../components/GroupCard.vue';
-import WalletBadge from '../components/WalletBadge.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
 import EmptyState from '../components/EmptyState.vue';
 import PlusIcon from '../assets/svg/plus.svg';
+import QrCodeIcon from '../assets/svg/qrCode.svg';
 import UsersIcon from '../assets/svg/users.svg';
 import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
-
-const emit = defineEmits<{ 'open-settings': [] }>();
 
 const router = useRouter();
 const session = useSession();
@@ -99,6 +100,10 @@ const owed = computed(() => groups.value.reduce((sum, entry) => sum + entry.gros
 
 function goToNewGroup() {
   router.push({ name: 'newGroup' });
+}
+
+function goToScan() {
+  router.push({ name: 'scan' });
 }
 
 function goToGroup(id: string) {
@@ -146,6 +151,12 @@ function goToGroup(id: string) {
   font-size: 16px;
   font-weight: 600;
   color: var(--dark);
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .syncing-dot {

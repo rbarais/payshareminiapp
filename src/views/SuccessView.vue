@@ -172,7 +172,7 @@ function goBack() {
 .btn-back {
   display: block;
   width: 100%;
-  background: var(--dark);
+  background: var(--ink);
   border: none;
   border-radius: 16px;
   padding: 17px;

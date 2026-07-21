@@ -2,10 +2,14 @@
   <div class="screen">
     <div class="header">
       <div class="title">{{ t('groups.title') }}</div>
-      <button class="pill dark" @click="goToNewGroup">
-        <PlusIcon width="12" height="12" />
-        <span>{{ t('groups.new') }}</span>
-      </button>
+      <div class="header-actions">
+        <button class="icon-btn" :aria-label="t('group.scanQr')" @click="goToScan">
+          <QrCodeIcon width="16" height="16" />
+        </button>
+        <button class="icon-btn dark" :aria-label="t('groups.new')" @click="goToNewGroup">
+          <PlusIcon width="14" height="14" />
+        </button>
+      </div>
     </div>
 
     <div v-if="groups.length" class="filters">
@@ -59,6 +63,7 @@ import { useI18n } from '../stores/i18n';
 import GroupCard from '../components/GroupCard.vue';
 import EmptyState from '../components/EmptyState.vue';
 import PlusIcon from '../assets/svg/plus.svg';
+import QrCodeIcon from '../assets/svg/qrCode.svg';
 import UsersIcon from '../assets/svg/users.svg';
 
 type Filter = 'all' | 'active' | 'settled';
@@ -102,6 +107,10 @@ function goToNewGroup() {
   router.push({ name: 'newGroup' });
 }
 
+function goToScan() {
+  router.push({ name: 'scan' });
+}
+
 function goToGroup(id: string) {
   router.push({ name: 'group', params: { id } });
 }
@@ -121,6 +130,12 @@ function goToGroup(id: string) {
   font-weight: 700;
   color: var(--dark);
   letter-spacing: -0.5px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .filters {

@@ -1,0 +1,17 @@
+{
+  "name": "Payshare",
+  "short_name": "Payshare",
+  "description": "Split the bill. Pay in crypto.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#863bff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

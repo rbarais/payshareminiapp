@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   // Cible du proxy /api en dev : le backend Vercel déjà déployé.
   // Surchargeable via VITE_API_PROXY_TARGET dans .env.local.
-  const apiTarget = env.VITE_API_PROXY_TARGET || 'https://payshareminiapp.vercel.app';
+  const apiTarget = env.VITE_API_PROXY_TARGET || 'https://payshareapp.com';
 
   return {
     plugins: [

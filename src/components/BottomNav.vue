@@ -58,15 +58,9 @@
       <span>{{ t('nav.history') }}</span>
     </div>
     <div class="nav-item" :class="{ active: active === 'profile' }" @click="go('profile')">
-      <svg :width="sizeIconBtn" :height="sizeIconBtn" viewBox="0 0 22 22" fill="none">
-        <circle cx="11" cy="8" r="3.5" :stroke="iconColor('profile')" stroke-width="1.5" />
-        <path
-          d="M4 20C4 16.69 7.13 14 11 14C14.87 14 18 16.69 18 20"
-          :stroke="iconColor('profile')"
-          stroke-width="1.5"
-          stroke-linecap="round"
-        />
-      </svg>
+      <div class="nav-identicon" :class="{ active: active === 'profile' }">
+        <NimiqIdenticon :address="session.user.value?.id ?? ''" :size="sizeIconBtn" />
+      </div>
       <span>{{ t('nav.profile') }}</span>
     </div>
   </nav>
@@ -75,8 +69,11 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useI18n } from '../stores/i18n';
+import { useSession } from '../stores/session';
+import NimiqIdenticon from './NimiqIdenticon.vue';
 
 const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'profile' }>();
+const session = useSession();
 const emit = defineEmits<{ 'open-settings': [] }>();
 
 const router = useRouter();
@@ -127,5 +124,18 @@ function go(key: 'home' | 'groups' | 'history' | 'profile') {
 .nav-item.active span {
   color: var(--accent);
   font-weight: 700;
+}
+
+.nav-identicon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-sizing: content-box;
+  border: 1.5px solid transparent;
+}
+
+.nav-identicon.active {
+  border-color: #f6b221;
 }
 </style>

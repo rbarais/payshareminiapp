@@ -32,7 +32,7 @@ const toast = useToast();
 .toast {
   max-width: 360px;
   width: 100%;
-  background: var(--dark);
+  background: var(--ink);
   color: #fff;
   font-size: 13px;
   font-weight: 500;
