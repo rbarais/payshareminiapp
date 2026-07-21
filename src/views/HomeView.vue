@@ -3,6 +3,7 @@
     <!-- Header -->
     <div class="header">
       <div class="logo">PayShare</div>
+      <NotificationBell :unread="notifications.hasUnread.value" @click="openNotifications" />
     </div>
 
     <!-- Content -->
@@ -47,11 +48,18 @@
         <UsersIcon />
       </EmptyState>
     </div>
+
+    <NotificationsSheet
+      v-if="showNotifications"
+      :items="notifications.items.value"
+      @close="showNotifications = false"
+      @select="goToGroupFromNotification"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
@@ -59,17 +67,22 @@ import { useToast } from '../stores/toast';
 import GroupCard from '../components/GroupCard.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
 import EmptyState from '../components/EmptyState.vue';
+import NotificationBell from '../components/NotificationBell.vue';
+import NotificationsSheet from '../components/NotificationsSheet.vue';
 import PlusIcon from '../assets/svg/plus.svg';
 import QrCodeIcon from '../assets/svg/qrCode.svg';
 import UsersIcon from '../assets/svg/users.svg';
 import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
+import { useNotifications } from '../composables/useNotifications';
 
 const router = useRouter();
 const session = useSession();
 const store = useGroupsStore();
 const toast = useToast();
 const { t } = useI18n();
+const notifications = useNotifications();
+const showNotifications = ref(false);
 
 // Hydrate groups + expenses from the DB on open (stale-while-revalidate).
 onMounted(async () => {
@@ -108,6 +121,16 @@ function goToScan() {
 
 function goToGroup(id: string) {
   router.push({ name: 'group', params: { id } });
+}
+
+function openNotifications() {
+  showNotifications.value = true;
+  notifications.markSeen();
+}
+
+function goToGroupFromNotification(groupId: string) {
+  showNotifications.value = false;
+  goToGroup(groupId);
 }
 </script>
 
