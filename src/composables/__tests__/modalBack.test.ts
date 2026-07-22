@@ -44,18 +44,49 @@ describe('modalBack', () => {
     expect(backSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('does not pop history when the URL already changed since the modal opened (a real navigation happened)', async () => {
-    const { useModalBack } = await import('../modalBack');
+  it('does not pop history when closeForNavigation() marks the close as a navigation', async () => {
+    const { useModalBack, closeForNavigation } = await import('../modalBack');
     const backSpy = vi.spyOn(history, 'back').mockImplementation(() => {});
     const unmount = mountModal(useModalBack, () => {});
 
-    // Mirrors a router.push() to a new route firing in the same handler that
-    // closes the modal (e.g. NotificationsSheet's select -> goToGroup).
-    history.pushState(null, '', '#/group/g1');
+    closeForNavigation();
     unmount();
     await flushMicrotasks();
 
     expect(backSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not pop history even when cleanup would run before the navigation commits', async () => {
+    const { useModalBack, closeForNavigation } = await import('../modalBack');
+    const backSpy = vi.spyOn(history, 'back').mockImplementation(() => {});
+    const unmount = mountModal(useModalBack, () => {});
+
+    // The signal is synchronous, so it holds regardless of whether the cleanup
+    // microtask fires before vue-router commits the navigation — the exact
+    // ordering race the url-based approach lost.
+    closeForNavigation();
+    unmount();
+    await Promise.resolve();
+    history.pushState(null, '', '#/group/g1');
+    await flushMicrotasks();
+
+    expect(backSpy).not.toHaveBeenCalled();
+  });
+
+  it('consumes the navigation flag once, so the next plain close still cleans up', async () => {
+    const { useModalBack, closeForNavigation } = await import('../modalBack');
+    const backSpy = vi.spyOn(history, 'back').mockImplementation(() => {});
+
+    const unmountA = mountModal(useModalBack, () => {});
+    closeForNavigation();
+    unmountA();
+    await flushMicrotasks();
+    expect(backSpy).not.toHaveBeenCalled();
+
+    const unmountB = mountModal(useModalBack, () => {});
+    unmountB();
+    await flushMicrotasks();
+    expect(backSpy).toHaveBeenCalledTimes(1);
   });
 
   it('never pops an extra entry when closed via the hardware back button', async () => {

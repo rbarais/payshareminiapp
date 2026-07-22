@@ -18,9 +18,6 @@ interface OpenModal {
   // Set to true when the modal is being closed *because* the user pressed back,
   // so we know not to pop an extra history entry on the way out.
   closedByBack: boolean;
-  // location.href at the time this modal opened, so a delayed cleanup can
-  // tell whether a real navigation happened in the meantime (see unregister).
-  openedAtHref: string;
 }
 
 const stack: OpenModal[] = [];
@@ -28,6 +25,15 @@ const stack: OpenModal[] = [];
 // Set right before we call history.back() to clean up our own dummy entry, so
 // the resulting popstate is ignored rather than treated as a back press.
 let ignoreNextPop = false;
+
+// Set synchronously before closing a modal that navigates elsewhere, so the
+// unregister below skips its history.back() (which would otherwise cancel the
+// navigation) regardless of when vue-router commits it.
+let closingForNavigation = false;
+
+export function closeForNavigation(): void {
+  closingForNavigation = true;
+}
 
 // A programmatic close schedules the removal of its dummy history entry on the
 // next microtask instead of doing it immediately. If another modal opens in the
@@ -60,7 +66,7 @@ export function anyModalOpen(): boolean {
 }
 
 function register(close: () => void): OpenModal {
-  const entry: OpenModal = { close, closedByBack: false, openedAtHref: location.href };
+  const entry: OpenModal = { close, closedByBack: false };
   stack.push(entry);
   if (cleanupPending) {
     // Another modal just closed this tick: reuse its dummy entry instead of
@@ -80,6 +86,13 @@ function unregister(entry: OpenModal): void {
   stack.splice(index, 1);
   if (entry.closedByBack) return;
 
+  // Closed as part of navigating elsewhere: leave the dummy entry in place
+  // rather than popping it and fighting the navigation.
+  if (closingForNavigation) {
+    closingForNavigation = false;
+    return;
+  }
+
   // Closed programmatically (button, tap outside): drop the dummy entry we
   // pushed on open — but defer it so a modal opening in the same tick can
   // reuse the entry rather than pop-then-push and race the browser.
@@ -87,12 +100,6 @@ function unregister(entry: OpenModal): void {
   queueMicrotask(() => {
     if (!cleanupPending) return;
     cleanupPending = false;
-    // If the URL already changed since this modal opened, a real navigation
-    // happened as part of this same close (e.g. selecting a notification
-    // navigates to its group) — popping history now would undo it. Leave the
-    // dummy entry in place: it duplicates the page the modal was opened on,
-    // so a later hardware back still lands exactly where the user expects.
-    if (location.href !== entry.openedAtHref) return;
     ignoreNextPop = true;
     history.back();
   });

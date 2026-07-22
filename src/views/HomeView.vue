@@ -75,6 +75,7 @@ import UsersIcon from '../assets/svg/users.svg';
 import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
 import { useNotifications } from '../composables/useNotifications';
+import { closeForNavigation } from '../composables/modalBack';
 
 const router = useRouter();
 const session = useSession();
@@ -129,6 +130,7 @@ function openNotifications() {
 }
 
 function goToGroupFromNotification(groupId: string) {
+  closeForNavigation();
   showNotifications.value = false;
   goToGroup(groupId);
 }
