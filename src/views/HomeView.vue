@@ -16,7 +16,7 @@
         <div class="section-actions">
           <span v-if="syncing" class="syncing-dot" />
           <button class="pill dark" :aria-label="t('group.scanQr')" @click="goToScan">
-            <QrCodeIcon width="14" height="14" />
+            <QrCodeIcon width="12" height="12" />
           </button>
           <button class="pill dark" @click="goToNewGroup">
             <PlusIcon width="12" height="12" />

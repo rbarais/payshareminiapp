@@ -207,7 +207,7 @@ input {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 14px;
+  padding: 6px;
 }
 
 /* Formulaires : label uppercase + champ bordé */

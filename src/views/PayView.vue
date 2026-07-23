@@ -137,13 +137,12 @@
         :disabled="isPaying"
         @click="pay"
       >
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <circle cx="11" cy="11" r="11" fill="#1A1916" />
-          <path d="M6.5 17L11 7L15.5 17H6.5Z" fill="#F6B221" />
-        </svg>
-        <span>{{
-          isPaying ? t('pay.processing') : t('pay.payButton', { amount: perPerson.toFixed(2) })
-        }}</span>
+        <PayshareIcon width="22" height="22" />
+        <span>
+          {{
+            isPaying ? t('pay.processing') : t('pay.payButton', { amount: perPerson.toFixed(2) })
+          }}
+        </span>
       </button>
 
       <button class="btn-qr" @click="showQR = true">
@@ -169,7 +168,7 @@ import QrCodeIcon from '../assets/svg/qrCode.svg';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useModalBackWhen } from '../composables/modalBack';
-
+import PayshareIcon from '../assets/svg/payshareIcon.svg';
 import { useRouter } from 'vue-router';
 import { useI18n } from '../stores/i18n';
 import { useToast } from '../stores/toast';

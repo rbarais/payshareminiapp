@@ -92,7 +92,7 @@
     <div class="card">
       <div class="card-label">{{ t('settings.community') }}</div>
       <div class="community">
-        <button class="community-tile" aria-label="X" @click="openCommunity('x')">
+        <button class="community-tile" aria-label="X" @click="openCommunity('https://x.com/nimiq')">
           <svg class="community-icon" width="16" height="16" viewBox="0 0 18 18" fill="none">
             <path
               d="M2 2L8.5 9.5M16 2L9.5 9.5M8.5 9.5L5 16M8.5 9.5L13 16"
@@ -103,7 +103,11 @@
           </svg>
           <span class="community-name">X</span>
         </button>
-        <button class="community-tile" aria-label="Telegram" @click="openCommunity('telegram')">
+        <button
+          class="community-tile"
+          aria-label="Telegram"
+          @click="openCommunity('https://t.me/nimiq')"
+        >
           <svg class="community-icon" width="16" height="16" viewBox="0 0 18 18" fill="none">
             <path
               d="M2 9L16 3L12 15L8.5 10.5L13 6M8.5 10.5L6.5 15.5"
@@ -115,7 +119,11 @@
           </svg>
           <span class="community-name">Telegram</span>
         </button>
-        <button class="community-tile" aria-label="Discord" @click="openCommunity('discord')">
+        <button
+          class="community-tile"
+          aria-label="Discord"
+          @click="openCommunity('https://discord.com/invite/nimiq')"
+        >
           <svg class="community-icon" width="16" height="16" viewBox="0 0 18 18" fill="none">
             <path
               d="M6.5 3C6.5 3 5 4.5 4.5 6.5C3 7 2 8 2 9.5C2 12 4 14 6 14.5L6.5 13.5C5 13 4.5 12 4.5 12C5.5 12.5 7 13 9 13C11 13 12.5 12.5 13.5 12C13.5 12 13 13 11.5 13.5L12 14.5C14 14 16 12 16 9.5C16 8 15 7 13.5 6.5C13 4.5 11.5 3 11.5 3C11 4 10.5 5 10 5.5H8C7.5 5 7 4 6.5 3Z"
@@ -128,7 +136,11 @@
           </svg>
           <span class="community-name">Discord</span>
         </button>
-        <button class="community-tile" aria-label="GitHub" @click="openCommunity('github')">
+        <button
+          class="community-tile"
+          aria-label="GitHub"
+          @click="openCommunity('https://github.com/nimiq')"
+        >
           <svg class="community-icon" width="16" height="16" viewBox="0 0 18 18" fill="none">
             <path
               d="M9 2C5.13 2 2 5.13 2 9C2 12.09 4 14.68 6.74 15.6C7.09 15.67 7.21 15.45 7.21 15.27V13.85C5.27 14.27 4.87 13 4.87 13C4.55 12.19 4.09 11.97 4.09 11.97C3.44 11.54 4.14 11.55 4.14 11.55C4.85 11.6 5.22 12.27 5.22 12.27C5.86 13.39 6.91 13.06 7.24 12.87C7.31 12.41 7.5 12.09 7.7 11.9C6.17 11.71 4.55 11.13 4.55 8.38C4.55 7.59 4.83 6.94 5.24 6.43C5.17 6.23 4.92 5.5 5.31 4.52C5.31 4.52 5.91 4.31 7.21 5.23C7.74 5.07 8.32 4.99 8.9 4.98C9.48 4.99 10.06 5.07 10.59 5.23C11.89 4.31 12.49 4.52 12.49 4.52C12.88 5.5 12.63 6.23 12.56 6.43C12.97 6.94 13.25 7.59 13.25 8.38C13.25 11.14 11.63 11.71 10.09 11.89C10.34 12.12 10.57 12.56 10.57 13.24V15.27C10.57 15.46 10.69 15.68 11.05 15.6C13.78 14.68 15.78 12.09 15.78 9C15.78 5.13 12.65 2 8.78 2H9Z"
