@@ -1,3 +1,6 @@
+import { getHostLanguage } from '@nimiq/mini-app-sdk';
+import { signMessage, detectNimiqApp } from './nimiq';
+
 const JWT_KEY = 'payshare_jwt';
 
 export function getStoredJwt(): string | null {
@@ -9,12 +12,8 @@ export function setStoredJwt(token: string | null): void {
   else localStorage.removeItem(JWT_KEY);
 }
 
-async function post(path: string, body: unknown): Promise<unknown> {
-  const res = await fetch(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+async function request(path: string, init?: RequestInit): Promise<unknown> {
+  const res = await fetch(path, init);
   if (!res.ok) {
     let detail = '';
     try {
@@ -27,7 +26,62 @@ async function post(path: string, body: unknown): Promise<unknown> {
   return res.json();
 }
 
-export async function authenticate(address: string): Promise<void> {
-  const { token } = (await post('/api/auth/token', { address })) as { token: string };
+function normalizeAddr(addr: string): string {
+  return addr.replace(/\s/g, '').toUpperCase();
+}
+
+/**
+ * Authenticate the connected user by signing a server-issued challenge.
+ * The JWT's address is derived server-side from the signing public key, so the
+ * client cannot claim an address it does not control. `expectedAddress` (the
+ * wallet's primary account) is cross-checked against the derived address to
+ * catch the case where the wallet signs with a different key.
+ */
+export async function authenticate(expectedAddress: string): Promise<void> {
+  const inNimiq = await detectNimiqApp();
+
+  if (!inNimiq) {
+    // Dev browser: no wallet to sign with. The server honors this only when
+    // ALLOW_DEV_AUTH is enabled (never in production).
+    const { token } = (await request('/api/auth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ devAddress: expectedAddress }),
+    })) as { token: string };
+    setStoredJwt(token);
+    return;
+  }
+
+  const lang = getHostLanguage() ?? 'en';
+  const { challenge, mac } = (await request(
+    `/api/auth/challenge?lang=${encodeURIComponent(lang)}`,
+  )) as {
+    challenge: string;
+    mac: string;
+  };
+  const { publicKey, signature } = await signMessage(challenge);
+  const { token, address } = (await request('/api/auth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ challenge, mac, publicKey, signature }),
+  })) as { token: string; address: string };
+
+  if (normalizeAddr(address) !== normalizeAddr(expectedAddress)) {
+    throw new Error('signed address does not match the connected account');
+  }
+  setStoredJwt(token);
+}
+
+/**
+ * Extend the current session silently (no signature), using the still-valid
+ * JWT. Keeps an active user logged in without re-prompting the wallet.
+ */
+export async function refreshToken(): Promise<void> {
+  const jwt = getStoredJwt();
+  if (!jwt) throw new Error('no token to refresh');
+  const { token } = (await request('/api/auth/refresh', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
+  })) as { token: string };
   setStoredJwt(token);
 }

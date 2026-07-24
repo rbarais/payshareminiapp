@@ -1,5 +1,6 @@
 import { verifyAsync as ed25519Verify } from '@noble/ed25519';
 import { blake2b } from '@noble/hashes/blake2.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 
 function hexToBytes(hex: string): Uint8Array {
   const clean = hex.replace(/\s/g, '');
@@ -44,7 +45,7 @@ function nimiqChecksum(encoded: string): string {
   return (98 - rem).toString().padStart(2, '0');
 }
 
-function pubKeyToAddress(pubKeyBytes: Uint8Array): string {
+export function pubKeyToAddress(pubKeyBytes: Uint8Array): string {
   const hash = blake2b(pubKeyBytes, { dkLen: 32 });
   const account = hash.slice(0, 20);
   const encoded = base32Encode(account);
@@ -53,9 +54,21 @@ function pubKeyToAddress(pubKeyBytes: Uint8Array): string {
   return `NQ${checksum} ${groups.join(' ')}`;
 }
 
-export function messagePreImage(message: string): Uint8Array {
-  // Ed25519 signs raw bytes — no external pre-hash; SHA-512 is internal to the algorithm
-  return new TextEncoder().encode('\x16Nimiq Signed Message:\n' + message);
+const MSG_PREFIX = '\x16Nimiq Signed Message:\n';
+
+// The value Ed25519 signs for a Nimiq "signed message":
+// sha256(prefix + messageByteLength + message). Per the canonical Keyguard
+// implementation (Key.js#signMessage), the length is the UTF-8 BYTE length of
+// the message, not the JS string length — they diverge for any non-ASCII
+// character (accents, umlauts, ...), which silently breaks verification for
+// every non-English challenge.
+export function messageHash(message: string): Uint8Array {
+  const messageBytes = new TextEncoder().encode(message);
+  const prefixBytes = new TextEncoder().encode(MSG_PREFIX + messageBytes.byteLength);
+  const data = new Uint8Array(prefixBytes.length + messageBytes.length);
+  data.set(prefixBytes, 0);
+  data.set(messageBytes, prefixBytes.length);
+  return sha256(data);
 }
 
 export async function verifyNimiqSignature(
@@ -65,8 +78,8 @@ export async function verifyNimiqSignature(
 ): Promise<string> {
   const pubKeyBytes = hexToBytes(publicKeyHex);
   const sigBytes = hexToBytes(signatureHex);
-  const preimage = messagePreImage(message);
-  const valid = await ed25519Verify(sigBytes, preimage, pubKeyBytes, { zip215: false });
+  const hash = messageHash(message);
+  const valid = await ed25519Verify(sigBytes, hash, pubKeyBytes, { zip215: false });
   if (!valid) throw new Error('invalid signature');
   return pubKeyToAddress(pubKeyBytes);
 }

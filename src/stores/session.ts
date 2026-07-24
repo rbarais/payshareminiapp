@@ -1,7 +1,7 @@
 import { reactive, computed } from 'vue';
 import { getHostLanguage } from '@nimiq/mini-app-sdk';
 import { getCurrentUser, formatAddressShort, detectNimiqApp } from '../utils/nimiq';
-import { authenticate } from '../utils/auth';
+import { authenticate, refreshToken } from '../utils/auth';
 import { getStoredJwt, setStoredJwt } from '../utils/auth';
 import { t } from './i18n';
 
@@ -85,15 +85,25 @@ export function useSession() {
     async checkEnvironment(): Promise<boolean> {
       const isNimiqApp = await detectNimiqApp();
       state.isNimiqApp = isNimiqApp;
-      // JWT expired or missing: attempt a silent refresh through the provider.
-      // If it fails (outside Nimiq Pay or signature refused), disconnect.
-      if (state.user && isJwtExpired()) {
-        try {
-          await authenticate(state.user.id);
-        } catch {
-          state.user = null;
-          localStorage.removeItem(SESSION_KEY);
-          setStoredJwt(null);
+      if (state.user) {
+        if (isJwtExpired()) {
+          // Fully expired (or missing): a fresh signature is required. If it
+          // fails (outside Nimiq Pay or signature refused), disconnect.
+          try {
+            await authenticate(state.user.id);
+          } catch {
+            state.user = null;
+            localStorage.removeItem(SESSION_KEY);
+            setStoredJwt(null);
+          }
+        } else {
+          // Still valid: roll the session forward silently, no signature. A
+          // failure here is non-fatal — the current token stays usable.
+          try {
+            await refreshToken();
+          } catch {
+            // keep the existing valid token
+          }
         }
       }
       return isNimiqApp;

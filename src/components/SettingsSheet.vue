@@ -305,16 +305,7 @@ const locales: { key: Locale; label: string }[] = [
   { key: 'es', label: '🇪🇸 ES' },
 ];
 
-// ── Community links (URLs to be filled in later) ───────────────────────────
-const communityUrls: Record<string, string> = {
-  x: '',
-  telegram: '',
-  discord: '',
-  github: '',
-};
-
-function openCommunity(key: string) {
-  const url = communityUrls[key];
+function openCommunity(url: string) {
   if (url) {
     window.open(url, '_blank', 'noopener');
   } else {

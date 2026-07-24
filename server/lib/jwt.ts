@@ -7,7 +7,7 @@ function secret(): Uint8Array {
 export async function signJwt(address: string): Promise<string> {
   return new SignJWT({ sub: address, role: 'authenticated' })
     .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('7d')
+    .setExpirationTime('30d')
     .sign(secret());
 }
 

@@ -35,7 +35,18 @@
           </div>
         </div>
 
-        <button class="cta" @click="openInNimiqPay">
+        <button v-if="session.isNimiqApp.value === true" class="cta" @click="connect">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect width="22" height="22" rx="6" fill="#1B1F3B" />
+            <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
+          </svg>
+          <span>{{ t('login.connectBtn') }}</span>
+        </button>
+        <!-- Undetermined (still detecting) or confirmed outside Nimiq Pay: this
+             is the safe default — jumping straight to "Se connecter" before the
+             app knows it's running inside an external browser (e.g. Messenger's
+             in-app browser) leaves the user stuck with no working action. -->
+        <button v-else class="cta" @click="openInNimiqPay">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
             <rect width="22" height="22" rx="6" fill="#1B1F3B" />
             <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
@@ -45,6 +56,7 @@
         <p class="invite-hint">
           {{ t('login.inviteHint') }}
         </p>
+        <p v-if="session.error.value" class="err">{{ session.error.value }}</p>
       </template>
 
       <!-- Standard home screen -->
