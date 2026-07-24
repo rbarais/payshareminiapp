@@ -1,6 +1,6 @@
 <template>
   <button class="bell" :aria-label="t('notifications.title')" @click="$emit('click')">
-    <BellIcon width="18" height="18" />
+    <BellIcon width="20" height="20" />
     <span v-if="unread" class="dot" />
   </button>
 </template>

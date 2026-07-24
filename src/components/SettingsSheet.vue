@@ -8,10 +8,6 @@
         </div>
         <div class="wallet-meta">
           <div class="wallet-label">
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <circle cx="7" cy="7" r="7" fill="#F6B221" />
-              <polygon points="4.5,10.5 7,3.5 9.5,10.5" fill="#1A1916" />
-            </svg>
             <span>{{ t('settings.walletLabel') }}</span>
           </div>
           <div class="wallet-addr">{{ session.walletShort.value }}</div>
@@ -93,12 +89,16 @@
       <div class="card-label">{{ t('settings.community') }}</div>
       <div class="community">
         <button class="community-tile" aria-label="X" @click="openCommunity('https://x.com/nimiq')">
-          <svg class="community-icon" width="16" height="16" viewBox="0 0 18 18" fill="none">
+          <svg
+            class="community-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
             <path
-              d="M2 2L8.5 9.5M16 2L9.5 9.5M8.5 9.5L5 16M8.5 9.5L13 16"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
+              d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"
             />
           </svg>
           <span class="community-name">X</span>
@@ -108,13 +108,16 @@
           aria-label="Telegram"
           @click="openCommunity('https://t.me/nimiq')"
         >
-          <svg class="community-icon" width="16" height="16" viewBox="0 0 18 18" fill="none">
+          <svg
+            class="community-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
             <path
-              d="M2 9L16 3L12 15L8.5 10.5L13 6M8.5 10.5L6.5 15.5"
-              stroke="currentColor"
-              stroke-width="1.4"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212-.07-.062-.174-.041-.249-.024-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"
             />
           </svg>
           <span class="community-name">Telegram</span>
@@ -124,15 +127,17 @@
           aria-label="Discord"
           @click="openCommunity('https://discord.com/invite/nimiq')"
         >
-          <svg class="community-icon" width="16" height="16" viewBox="0 0 18 18" fill="none">
+          <svg
+            class="community-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
             <path
-              d="M6.5 3C6.5 3 5 4.5 4.5 6.5C3 7 2 8 2 9.5C2 12 4 14 6 14.5L6.5 13.5C5 13 4.5 12 4.5 12C5.5 12.5 7 13 9 13C11 13 12.5 12.5 13.5 12C13.5 12 13 13 11.5 13.5L12 14.5C14 14 16 12 16 9.5C16 8 15 7 13.5 6.5C13 4.5 11.5 3 11.5 3C11 4 10.5 5 10 5.5H8C7.5 5 7 4 6.5 3Z"
-              stroke="currentColor"
-              stroke-width="1.3"
-              stroke-linejoin="round"
+              d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.037 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 0 .0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"
             />
-            <circle cx="7" cy="9.5" r="1.2" fill="currentColor" />
-            <circle cx="11" cy="9.5" r="1.2" fill="currentColor" />
           </svg>
           <span class="community-name">Discord</span>
         </button>
@@ -141,10 +146,16 @@
           aria-label="GitHub"
           @click="openCommunity('https://github.com/nimiq')"
         >
-          <svg class="community-icon" width="16" height="16" viewBox="0 0 18 18" fill="none">
+          <svg
+            class="community-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
             <path
-              d="M9 2C5.13 2 2 5.13 2 9C2 12.09 4 14.68 6.74 15.6C7.09 15.67 7.21 15.45 7.21 15.27V13.85C5.27 14.27 4.87 13 4.87 13C4.55 12.19 4.09 11.97 4.09 11.97C3.44 11.54 4.14 11.55 4.14 11.55C4.85 11.6 5.22 12.27 5.22 12.27C5.86 13.39 6.91 13.06 7.24 12.87C7.31 12.41 7.5 12.09 7.7 11.9C6.17 11.71 4.55 11.13 4.55 8.38C4.55 7.59 4.83 6.94 5.24 6.43C5.17 6.23 4.92 5.5 5.31 4.52C5.31 4.52 5.91 4.31 7.21 5.23C7.74 5.07 8.32 4.99 8.9 4.98C9.48 4.99 10.06 5.07 10.59 5.23C11.89 4.31 12.49 4.52 12.49 4.52C12.88 5.5 12.63 6.23 12.56 6.43C12.97 6.94 13.25 7.59 13.25 8.38C13.25 11.14 11.63 11.71 10.09 11.89C10.34 12.12 10.57 12.56 10.57 13.24V15.27C10.57 15.46 10.69 15.68 11.05 15.6C13.78 14.68 15.78 12.09 15.78 9C15.78 5.13 12.65 2 8.78 2H9Z"
-              fill="currentColor"
+              d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23a11.5 11.5 0 0 1 3-.405c1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
             />
           </svg>
           <span class="community-name">GitHub</span>
@@ -279,17 +290,20 @@ const nimEurLabel = computed(() => {
   return `≈ ${eur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR`;
 });
 
-onMounted(async () => {
+// Chaque valeur s'affiche dès qu'elle arrive : un appel lent ou muet (pont natif
+// après une mise en veille) ne doit pas retenir l'affichage des autres.
+onMounted(() => {
   const addresses = session.user.value?.addresses ?? [];
-  const [established, height, balance] = await Promise.all([
-    getConsensusEstablished(),
-    getBlockNumber(),
-    fetchNimBalanceTotal(addresses),
-    fetchRate(),
-  ]);
-  consensus.value = established;
-  blockNumber.value = height;
-  nimBalance.value = balance;
+  void getConsensusEstablished().then((established) => {
+    consensus.value = established;
+  });
+  void getBlockNumber().then((height) => {
+    blockNumber.value = height;
+  });
+  void fetchNimBalanceTotal(addresses).then((balance) => {
+    nimBalance.value = balance;
+  });
+  void fetchRate();
 });
 
 // ── Options ────────────────────────────────────────────────────────────────

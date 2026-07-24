@@ -98,14 +98,14 @@ import { captureError } from '../utils/errors';
 import type { ActivityEvent } from '../utils/history';
 import EmptyState from '../components/EmptyState.vue';
 
-type Filter = 'all' | 'sent' | 'received';
+type Filter = 'all' | 'sent' | 'received' | 'other';
 
 const session = useSession();
 const store = useGroupsStore();
 const { t, locale } = useI18n();
 const toast = useToast();
 
-const filters: Filter[] = ['all', 'sent', 'received'];
+const filters: Filter[] = ['all', 'sent', 'received', 'other'];
 const filter = ref<Filter>('all');
 
 onMounted(async () => {
@@ -124,6 +124,9 @@ const feed = computed(() => store.activityFeed(userId.value));
 const filtered = computed(() => {
   if (filter.value === 'sent') return feed.value.filter((event) => event.kind === 'sent');
   if (filter.value === 'received') return feed.value.filter((event) => event.kind === 'received');
+  if (filter.value === 'other') {
+    return feed.value.filter((event) => event.kind !== 'sent' && event.kind !== 'received');
+  }
   return feed.value;
 });
 
@@ -148,12 +151,14 @@ const sections = computed(() => {
 const emptyMessage = computed(() => {
   if (filter.value === 'sent') return t('history.emptySent');
   if (filter.value === 'received') return t('history.emptyReceived');
+  if (filter.value === 'other') return t('history.emptyOther');
   return t('history.empty');
 });
 
 function filterLabel(option: Filter): string {
   if (option === 'sent') return t('history.filterSent');
   if (option === 'received') return t('history.filterReceived');
+  if (option === 'other') return t('history.filterOther');
   return t('history.filterAll');
 }
 

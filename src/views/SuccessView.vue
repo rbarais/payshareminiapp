@@ -5,15 +5,14 @@
       <!-- Animated icon -->
       <div class="circle-wrap">
         <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
-          <circle cx="50" cy="50" r="50" fill="#F6B221" />
-          <path d="M34 66L50 24L66 66H34Z" fill="#1A1916" />
+          <circle cx="50" cy="50" r="50" fill="var(--green)" />
           <path
-            d="M29 52L39 62L63 36"
+            d="M29 51L43 65L71 35"
             stroke="white"
-            stroke-width="5"
+            stroke-width="9"
             stroke-linecap="round"
             stroke-linejoin="round"
-            stroke-dasharray="50"
+            stroke-dasharray="61"
             class="check-path"
           />
         </svg>
@@ -95,7 +94,7 @@ function goBack() {
 
 @keyframes psCheckDraw {
   from {
-    stroke-dashoffset: 50;
+    stroke-dashoffset: 61;
   }
   to {
     stroke-dashoffset: 0;

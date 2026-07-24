@@ -54,11 +54,9 @@ function eur(nim: number): string {
 }
 
 const creditedStr = computed(() =>
-  showEur.value ? eur(props.credited) : '+' + props.credited.toFixed(1) + ' NIM',
+  showEur.value ? eur(props.credited) : `${props.credited.toFixed(1)} NIM`,
 );
-const owedStr = computed(() =>
-  showEur.value ? eur(props.owed) : '−' + props.owed.toFixed(1) + ' NIM',
-);
+const owedStr = computed(() => (showEur.value ? eur(props.owed) : `${props.owed.toFixed(1)} NIM`));
 
 // Net balance = what you're owed minus what you owe.
 const net = computed(() => props.credited - props.owed);

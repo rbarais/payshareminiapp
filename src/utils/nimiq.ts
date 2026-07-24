@@ -45,6 +45,22 @@ async function getProvider(): Promise<NimiqProvider | null> {
   }
 }
 
+const PROVIDER_TIMEOUT_MS = 5000;
+
+/**
+ * Bound a provider call in time. If the WebView is suspended mid-call (screen
+ * locked), the native bridge never answers: the promise neither resolves nor
+ * rejects, so a try/catch cannot save the caller. Resolve to null instead of
+ * hanging forever.
+ */
+function withTimeout<T>(promise: Promise<T>): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const fallback = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), PROVIDER_TIMEOUT_MS);
+  });
+  return Promise.race([promise, fallback]).finally(() => clearTimeout(timer));
+}
+
 /** Get the current user's Nimiq address (triggers the access dialog). */
 export async function getNimiqAddress(): Promise<string> {
   const provider = await initNimiq();
@@ -91,7 +107,7 @@ export async function getConsensusEstablished(): Promise<boolean | null> {
   const provider = await getProvider();
   if (!provider) return null;
   try {
-    return await provider.isConsensusEstablished();
+    return await withTimeout(provider.isConsensusEstablished());
   } catch {
     return null;
   }
@@ -102,7 +118,7 @@ export async function getBlockNumber(): Promise<number | null> {
   const provider = await getProvider();
   if (!provider) return null;
   try {
-    return await provider.getBlockNumber();
+    return await withTimeout(provider.getBlockNumber());
   } catch {
     return null;
   }

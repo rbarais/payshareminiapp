@@ -96,7 +96,6 @@
       <div class="invite-qr-box">
         <QRCodeGenerator :url="inviteQrDeeplink" :size="200" />
       </div>
-      <p class="invite-qr-hint">{{ t('group.inviteQrHint') }}</p>
       <button class="btn-primary" @click="copyInviteLink">{{ t('group.copyInviteLink') }}</button>
       <p class="invite-qr-note">{{ t('group.inviteQrNote') }}</p>
     </BaseSheet>
