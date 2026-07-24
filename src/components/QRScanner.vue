@@ -22,18 +22,30 @@
     </div>
 
     <div v-else class="camera-view">
-      <video ref="videoEl" class="video" playsinline muted autoplay />
+      <video
+        ref="videoEl"
+        class="video"
+        :class="{ ready }"
+        playsinline
+        muted
+        autoplay
+        @playing="ready = true"
+      />
       <canvas ref="canvasEl" class="canvas" />
 
+      <div v-if="!ready" class="loading">
+        <span class="spinner" />
+      </div>
+
       <!-- Viewfinder -->
-      <div class="viewfinder">
+      <div class="viewfinder" :class="{ ready }">
         <div class="corner tl" />
         <div class="corner tr" />
         <div class="corner bl" />
         <div class="corner br" />
       </div>
 
-      <p class="hint">{{ t('scan.hint') }}</p>
+      <p class="hint" :class="{ ready }">{{ t('scan.hint') }}</p>
 
       <button
         class="btn-cancel"
@@ -70,6 +82,7 @@ const videoEl = ref<HTMLVideoElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
 const error = ref('');
 const scanning = ref(false);
+const ready = ref(false);
 const manualLink = ref('');
 
 function submitManual() {
@@ -208,6 +221,7 @@ function tick() {
 
 function stop() {
   scanning.value = false;
+  ready.value = false;
   if (rafId !== null) cancelAnimationFrame(rafId);
   if (pollId !== null) clearInterval(pollId);
   stream?.getTracks().forEach((track) => track.stop());
@@ -245,10 +259,39 @@ onUnmounted(stop);
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.video.ready {
+  opacity: 1;
 }
 
 .canvas {
   display: none;
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Centered viewfinder */
@@ -259,6 +302,12 @@ onUnmounted(stop);
   transform: translate(-50%, -60%);
   width: 240px;
   height: 240px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.viewfinder.ready {
+  opacity: 1;
 }
 
 .corner {
@@ -300,6 +349,12 @@ onUnmounted(stop);
   font-size: 14px;
   margin-bottom: 20px;
   text-align: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.hint.ready {
+  opacity: 1;
 }
 
 .btn-cancel {
