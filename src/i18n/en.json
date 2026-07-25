@@ -67,6 +67,7 @@
     "membersCount": "{count} member | {count} members",
     "nameLabel": "Name",
     "noExpenses": "No expenses yet",
+    "noExpensesSub": "Add a first expense to start splitting the group's costs",
     "owed": "you owe",
     "owedToYou": "You are owed",
     "paidByMeta": "Paid by",

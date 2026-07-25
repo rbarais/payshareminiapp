@@ -67,6 +67,7 @@
     "membersCount": "{count} Mitglied | {count} Mitglieder",
     "nameLabel": "Name",
     "noExpenses": "Noch keine Ausgaben",
+    "noExpensesSub": "Füge eine erste Ausgabe hinzu, um die Kosten der Gruppe zu teilen",
     "owed": "du schuldest",
     "owedToYou": "Man schuldet dir",
     "paidByMeta": "Bezahlt von",

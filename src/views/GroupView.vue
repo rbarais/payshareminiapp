@@ -43,8 +43,8 @@
       <div v-if="eurApprox(grossCredit)" class="eur-approx">{{ eurApprox(grossCredit) }}</div>
     </div>
 
-    <!-- Settled: neither debt nor credit -->
-    <div v-if="grossDebt <= 0.005 && grossCredit <= 0.005" class="settled-card">
+    <!-- Settled: neither debt nor credit (only once the group has expenses) -->
+    <div v-if="expenses.length && grossDebt <= 0.005 && grossCredit <= 0.005" class="settled-card">
       <div class="settled-icon">
         <CheckIcon width="16" height="16" />
       </div>
@@ -55,7 +55,7 @@
     </div>
 
     <!-- Expenses header -->
-    <div class="expenses-header">
+    <div v-if="expenses.length" class="expenses-header">
       <span class="expenses-title">{{ t('group.expenses') }}</span>
       <button class="pill accent" @click="goToAddExpense">{{ t('group.addExpense') }}</button>
     </div>
@@ -78,9 +78,13 @@
       />
     </div>
 
-    <!-- Empty expenses -->
+    <!-- Empty expenses: replaces both the balance card and the expense list -->
     <div v-else class="expense-empty">
-      <div class="expense-empty-text">{{ t('group.noExpenses') }}</div>
+      <div class="expense-empty-icon">
+        <PlusIcon width="22" height="22" />
+      </div>
+      <div class="expense-empty-title">{{ t('group.noExpenses') }}</div>
+      <div class="expense-empty-sub">{{ t('group.noExpensesSub') }}</div>
       <button class="expense-empty-cta" @click="goToAddExpense">
         {{ t('group.addExpenseCta') }}
       </button>
@@ -625,16 +629,38 @@ async function confirmAddMember() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
   padding: 30px 18px;
+  text-align: center;
 }
 
-.expense-empty-text {
-  font-size: 13px;
+.expense-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.expense-empty-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.expense-empty-sub {
+  font-size: 12px;
   color: var(--text);
+  line-height: 1.5;
+  max-width: 240px;
 }
 
 .expense-empty-cta {
+  margin-top: 8px;
   background: var(--accent);
   border: none;
   border-radius: 14px;

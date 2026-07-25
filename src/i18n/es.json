@@ -67,6 +67,7 @@
     "membersCount": "{count} miembro | {count} miembros",
     "nameLabel": "Nombre",
     "noExpenses": "Todavía no hay gastos",
+    "noExpensesSub": "Añade un primer gasto para empezar a repartir los costes del grupo",
     "owed": "debes",
     "owedToYou": "Te deben",
     "paidByMeta": "Pagado por",

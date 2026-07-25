@@ -67,6 +67,7 @@
     "membersCount": "{count} membre | {count} membres",
     "nameLabel": "Nom",
     "noExpenses": "Aucune dépense pour l'instant",
+    "noExpensesSub": "Ajoute une première dépense pour commencer à partager les frais du groupe",
     "owed": "tu dois",
     "owedToYou": "On te doit",
     "paidByMeta": "Payé par",
