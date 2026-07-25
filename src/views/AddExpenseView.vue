@@ -2,7 +2,10 @@
   <div v-if="group" class="screen">
     <!-- Top bar -->
     <ScreenHeader :title="t('addExpense.title')" close @back="goBack">
-      <button class="icon-btn accent" @click="create"><CheckIcon /></button>
+      <button class="icon-btn accent" :disabled="saving" @click="create">
+        <ButtonSpinner v-if="saving" :size="15" />
+        <CheckIcon v-else />
+      </button>
     </ScreenHeader>
 
     <!-- Amount -->
@@ -151,7 +154,13 @@
 
     <!-- CTA -->
     <div class="cta-area">
-      <button class="btn-primary" :disabled="!!splitError" @click="create">
+      <button
+        class="btn-primary"
+        :class="{ 'is-loading': saving }"
+        :disabled="!!splitError || saving"
+        @click="create"
+      >
+        <ButtonSpinner v-if="saving" />
         {{ t('addExpense.addExpense') }}
       </button>
     </div>
@@ -167,6 +176,7 @@ import { useGroupsStore } from '../stores/groups';
 import { useToast } from '../stores/toast';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
+import ButtonSpinner from '../components/ButtonSpinner.vue';
 import CheckIcon from '../assets/svg/check.svg';
 import ChevronDownIcon from '../assets/svg/chevronDown.svg';
 import { captureError } from '../utils/errors';
@@ -203,6 +213,7 @@ useModalBackWhen(showPayerMenu, () => {
   showPayerMenu.value = false;
 });
 const mode = ref<SplitMode>('equal');
+const saving = ref(false);
 
 // Per-member split state: inclusion (equal), percentage (%), amount (fixed).
 const split = reactive<Record<string, { included: boolean; pct: number; amt: number }>>({});
@@ -284,6 +295,7 @@ function selectPayer(id: string) {
 }
 
 async function create() {
+  if (saving.value) return;
   if (splitError.value || !amount.value) {
     toast.show(splitError.value || t('addExpense.errorFormIncomplete'), 'error');
     return;
@@ -301,6 +313,7 @@ async function create() {
       .map((member) => ({ memberId: member.id, weight: split[member.id].amt }));
   }
 
+  saving.value = true;
   try {
     await store.addExpense({
       groupId: groupId.value,
@@ -314,6 +327,7 @@ async function create() {
   } catch (err) {
     captureError(err, 'AddExpenseView.addExpense');
     toast.show(t('addExpense.addFailed'), 'error');
+    saving.value = false;
     return;
   }
   toast.show(t('addExpense.added'), 'success');

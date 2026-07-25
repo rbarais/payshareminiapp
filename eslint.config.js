@@ -6,7 +6,22 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'node_modules/**', 'supabase/**', '*.config.js', '*.config.ts'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'supabase/**',
+      '.claude/**',
+      '*.config.js',
+      '*.config.ts',
+    ],
+  },
+
+  // Un worktree sous .claude/ ajoute une seconde racine tsconfig candidate et
+  // fait échouer le parsing : on fixe la racine sur ce fichier de config.
+  {
+    languageOptions: {
+      parserOptions: { tsconfigRootDir: import.meta.dirname },
+    },
   },
 
   js.configs.recommended,

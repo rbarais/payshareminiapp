@@ -85,7 +85,13 @@
     </div>
 
     <div class="cta-area">
-      <button class="btn-primary" :disabled="!canJoin() || joining" @click="join">
+      <button
+        class="btn-primary"
+        :class="{ 'is-loading': joining }"
+        :disabled="!canJoin() || joining"
+        @click="join"
+      >
+        <ButtonSpinner v-if="joining" />
         {{ joining ? t('join.joining') : t('join.joinBtn') }}
       </button>
     </div>
@@ -106,6 +112,7 @@ import { GROUP_ICON_STYLE } from '../utils/groupUi';
 import GroupIcon from '../components/GroupIcon.vue';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
+import ButtonSpinner from '../components/ButtonSpinner.vue';
 import ChevronRightIcon from '../assets/svg/chevronRight.svg';
 
 const props = defineProps<{ groupId: string; token: string }>();

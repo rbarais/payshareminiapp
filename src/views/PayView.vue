@@ -63,7 +63,7 @@
         <div class="progress-head">
           <span class="progress-label">{{ t('pay.progressLabel') }}</span>
           <button class="refresh-btn" :disabled="syncing" @click="loadPayments">
-            <span v-if="syncing" class="spin-dot" /> {{ syncing ? t('pay.syncing') : '↻' }}
+            <ButtonSpinner v-if="syncing" :size="10" /> {{ syncing ? t('pay.syncing') : '↻' }}
           </button>
         </div>
         <div class="progress-bar">
@@ -134,10 +134,12 @@
       <button
         v-if="!hasPaidOnChain && !isCreator"
         class="btn-primary btn-pay"
+        :class="{ 'is-loading': isPaying }"
         :disabled="isPaying"
         @click="pay"
       >
-        <PayshareIcon width="22" height="22" />
+        <ButtonSpinner v-if="isPaying" :size="20" />
+        <PayshareIcon v-else width="22" height="22" />
         <span>
           {{
             isPaying ? t('pay.processing') : t('pay.payButton', { amount: perPerson.toFixed(2) })
@@ -164,6 +166,7 @@ import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
+import ButtonSpinner from '../components/ButtonSpinner.vue';
 import QrCodeIcon from '../assets/svg/qrCode.svg';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
@@ -432,22 +435,6 @@ onUnmounted(() => {
 
 .refresh-btn:disabled {
   opacity: 0.5;
-}
-
-.spin-dot {
-  width: 8px;
-  height: 8px;
-  border: 2px solid var(--text);
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  display: inline-block;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .progress-bar {

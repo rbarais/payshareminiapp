@@ -64,7 +64,13 @@
 
     <!-- CTA -->
     <div class="cta-area">
-      <button class="btn-primary" :disabled="!groupName.trim()" @click="done">
+      <button
+        class="btn-primary"
+        :class="{ 'is-loading': creating }"
+        :disabled="!groupName.trim() || creating"
+        @click="done"
+      >
+        <ButtonSpinner v-if="creating" />
         {{ t('newGroup.createGroup') }}
       </button>
     </div>
@@ -82,6 +88,7 @@ import { generateId } from '../utils/storage';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import NimiqIdenticon from '../components/NimiqIdenticon.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
+import ButtonSpinner from '../components/ButtonSpinner.vue';
 import PencilIcon from '../assets/svg/pencil.svg';
 import PlusIcon from '../assets/svg/plus.svg';
 import { captureError } from '../utils/errors';
@@ -102,6 +109,7 @@ const selectedIcon = ref<GroupIcon>('person');
 const guests = ref<{ id: string; name: string }[]>([]);
 const adding = ref(false);
 const newGuestName = ref('');
+const creating = ref(false);
 
 const creatorName = computed(() => session.user.value?.name ?? t('newGroup.you'));
 
@@ -126,10 +134,12 @@ function removeGuest(id: string) {
 
 async function done() {
   const name = groupName.value.trim();
-  if (!name) return;
+  if (!name || creating.value) return;
   const user = session.user.value;
   if (!user) return;
 
+  creating.value = true;
+  let groupId: string;
   try {
     const group = await store.createGroup({
       name,
@@ -140,11 +150,15 @@ async function done() {
     for (const guest of guests.value) {
       await store.addPlaceholderMember(group.id, guest.name);
     }
-    router.replace({ name: 'group', params: { id: group.id } });
+    groupId = group.id;
   } catch (err) {
     captureError(err, 'NewGroupView.createGroup');
     toast.show(t('newGroup.createFailed'), 'error');
+    creating.value = false;
+    return;
   }
+  // On garde l'état de chargement : l'écran est remplacé dans la foulée.
+  router.replace({ name: 'group', params: { id: groupId } });
 }
 </script>
 

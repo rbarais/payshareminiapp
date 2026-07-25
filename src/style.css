@@ -124,6 +124,9 @@ input {
 .icon-btn:hover {
   opacity: 0.8;
 }
+.icon-btn:disabled {
+  cursor: progress;
+}
 .icon-btn.dark {
   background: var(--ink);
   color: var(--accent);
@@ -131,7 +134,10 @@ input {
 
 /* Bouton principal (CTA accent pleine largeur) */
 .btn-primary {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   width: 100%;
   background: var(--accent);
   border: none;
@@ -148,6 +154,11 @@ input {
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+/* Un bouton qui travaille reste lisible, contrairement à un bouton bloqué. */
+.btn-primary.is-loading:disabled {
+  opacity: 0.75;
+  cursor: progress;
 }
 .btn-primary:hover:not(:disabled) {
   opacity: 0.9;

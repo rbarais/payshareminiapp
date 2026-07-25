@@ -159,9 +159,11 @@
 
       <button
         class="btn-primary"
+        :class="{ 'is-loading': addingMember }"
         :disabled="!addMemberName.trim() || addingMember"
         @click="confirmAddMember"
       >
+        <ButtonSpinner v-if="addingMember" />
         {{ addingMember ? t('group.adding') : t('common.add') }}
       </button>
       <button
@@ -215,6 +217,7 @@ import InviteSheet from '../components/InviteSheet.vue';
 import CreditorList from '../components/CreditorList.vue';
 import BaseSheet from '../components/BaseSheet.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
+import ButtonSpinner from '../components/ButtonSpinner.vue';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 import QrCodeIcon from '../assets/svg/qrCode.svg';
