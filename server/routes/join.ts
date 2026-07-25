@@ -5,7 +5,8 @@ import { requireAuth, type AuthRequest } from '../lib/auth.js';
 const router = Router();
 
 // GET /api/join/preview?g=<groupId>&t=<token>
-// Returns the available placeholders (address IS NULL) without authentication.
+// Returns the group identity and the available placeholders (address IS NULL)
+// without authentication.
 router.get('/join/preview', async (req, res): Promise<void> => {
   const groupId = req.query.g as string;
   const token = req.query.t as string;
@@ -16,22 +17,28 @@ router.get('/join/preview', async (req, res): Promise<void> => {
   }
 
   try {
-    const groups = await sql<{ id: string }[]>`
-      SELECT id FROM groups WHERE id = ${groupId} AND invite_token = ${token} LIMIT 1
+    const groups = await sql<{ id: string; name: string; icon: string }[]>`
+      SELECT id, name, icon FROM groups WHERE id = ${groupId} AND invite_token = ${token} LIMIT 1
     `;
     if (groups.length === 0) {
       res.status(401).json({ error: 'invalid invite' });
       return;
     }
 
-    const placeholders = await sql<{ id: string; name: string }[]>`
-      SELECT id, name FROM members
-      WHERE group_id = ${groupId} AND address IS NULL
+    const members = await sql<{ id: string; name: string; address: string | null }[]>`
+      SELECT id, name, address FROM members
+      WHERE group_id = ${groupId}
       ORDER BY joined_at
     `;
 
+    const group = groups[0];
     res.json({
-      placeholders: placeholders.map((member) => ({ id: member.id, name: member.name })),
+      name: group.name,
+      icon: group.icon,
+      memberCount: members.length,
+      placeholders: members
+        .filter((member) => member.address === null)
+        .map((member) => ({ id: member.id, name: member.name })),
     });
   } catch (err) {
     console.error(err);

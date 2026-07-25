@@ -6,60 +6,81 @@
       <!-- Chargement preview -->
       <div v-if="loadingPreview" class="loading">{{ t('join.loading') }}</div>
 
-      <!-- Placeholders disponibles -->
-      <template v-else-if="placeholders.length > 0 && choice === null">
-        <p class="hint">{{ $t('join.hint', { name: groupName }) }}</p>
-
-        <div class="placeholder-list">
-          <button
-            v-for="p in placeholders"
-            :key="p.id"
-            class="placeholder-btn"
-            @click="selectPlaceholder(p.id)"
-          >
-            <InitialAvatar :name="p.name" :size="40" />
-            <span class="placeholder-name">{{ p.name }}</span>
-            <ChevronRightIcon class="chevron" />
-          </button>
-
-          <button class="placeholder-btn new" @click="selectNew">
-            <div class="new-avatar">+</div>
-            <span class="placeholder-name">{{ t('join.notInList') }}</span>
-            <ChevronRightIcon class="chevron" />
-          </button>
-        </div>
-      </template>
-
-      <!-- Selected placeholder: confirm -->
-      <template v-else-if="choice !== null && choice !== 'new'">
-        <div class="confirm-card">
-          <InitialAvatar :name="placeholders.find((p) => p.id === choice)?.name ?? ''" :size="56" />
-          <p class="confirm-name">{{ placeholders.find((p) => p.id === choice)?.name }}</p>
-          <p class="hint">{{ t('join.confirmHint') }}</p>
-        </div>
-        <button class="link-back" @click="choice = null">{{ t('join.chooseOther') }}</button>
-      </template>
-
-      <!-- Nouveau membre : entrer son nom -->
       <template v-else>
-        <div class="field-card">
-          <p class="hint">
-            {{ placeholders.length > 0 ? t('join.newMemberHint') : t('join.chooseNameHint') }}
-          </p>
-          <div class="name-label">{{ t('join.nameLabel') }}</div>
-          <div class="name-input-wrap">
-            <input
-              v-model="displayName"
-              class="name-input"
-              type="text"
-              :placeholder="t('join.namePlaceholder')"
-              @keyup.enter="join"
-            />
+        <!-- Invitation -->
+        <div v-if="groupName" class="invite-card">
+          <div class="invite-label">{{ t('join.invitation') }}</div>
+          <div class="invite-row">
+            <div class="group-icon" :style="{ background: iconStyle.bg }">
+              <GroupIcon :type="groupIcon" :color="iconStyle.color" />
+            </div>
+            <div class="invite-info">
+              <div class="invite-name">{{ groupName }}</div>
+              <div class="invite-meta">
+                {{ t('group.membersCount', { count: memberCount }, memberCount) }}
+              </div>
+            </div>
           </div>
         </div>
-        <button v-if="placeholders.length > 0" class="link-back" @click="choice = null">
-          {{ t('join.backToList') }}
-        </button>
+
+        <!-- Placeholders disponibles -->
+        <template v-if="placeholders.length > 0 && choice === null">
+          <p class="hint">{{ t('join.whoAreYou') }}</p>
+
+          <div class="placeholder-list">
+            <button
+              v-for="p in placeholders"
+              :key="p.id"
+              class="placeholder-btn"
+              @click="selectPlaceholder(p.id)"
+            >
+              <InitialAvatar :name="p.name" :size="40" />
+              <span class="placeholder-name">{{ p.name }}</span>
+              <ChevronRightIcon class="chevron" />
+            </button>
+
+            <button class="placeholder-btn new" @click="selectNew">
+              <div class="new-avatar">+</div>
+              <span class="placeholder-name">{{ t('join.notInList') }}</span>
+              <ChevronRightIcon class="chevron" />
+            </button>
+          </div>
+        </template>
+
+        <!-- Selected placeholder: confirm -->
+        <template v-else-if="choice !== null && choice !== 'new'">
+          <div class="confirm-card">
+            <InitialAvatar
+              :name="placeholders.find((p) => p.id === choice)?.name ?? ''"
+              :size="56"
+            />
+            <p class="confirm-name">{{ placeholders.find((p) => p.id === choice)?.name }}</p>
+            <p class="hint">{{ t('join.confirmHint') }}</p>
+          </div>
+          <button class="link-back" @click="choice = null">{{ t('join.chooseOther') }}</button>
+        </template>
+
+        <!-- Nouveau membre : entrer son nom -->
+        <template v-else>
+          <div class="field-card">
+            <p class="hint">
+              {{ placeholders.length > 0 ? t('join.newMemberHint') : t('join.chooseNameHint') }}
+            </p>
+            <div class="name-label">{{ t('join.nameLabel') }}</div>
+            <div class="name-input-wrap">
+              <input
+                v-model="displayName"
+                class="name-input"
+                type="text"
+                :placeholder="t('join.namePlaceholder')"
+                @keyup.enter="join"
+              />
+            </div>
+          </div>
+          <button v-if="placeholders.length > 0" class="link-back" @click="choice = null">
+            {{ t('join.backToList') }}
+          </button>
+        </template>
       </template>
     </div>
 
@@ -72,14 +93,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import type { GroupIcon as GroupIconType } from '../types';
 import { useSession } from '../stores/session';
 import { useToast } from '../stores/toast';
 import { t } from '../stores/i18n';
 import { joinGroup, fetchJoinPreview } from '../utils/api';
 import { authenticate, getStoredJwt } from '../utils/auth';
 import { captureError } from '../utils/errors';
+import { GROUP_ICON_STYLE } from '../utils/groupUi';
+import GroupIcon from '../components/GroupIcon.vue';
 import InitialAvatar from '../components/InitialAvatar.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
 import ChevronRightIcon from '../assets/svg/chevronRight.svg';
@@ -99,6 +123,10 @@ const choice = ref<string | 'new' | null>(null);
 const displayName = ref(session.user.value?.name ?? '');
 const joining = ref(false);
 const groupName = ref('');
+const groupIcon = ref<GroupIconType>('person');
+const memberCount = ref(0);
+
+const iconStyle = computed(() => GROUP_ICON_STYLE[groupIcon.value]);
 
 onMounted(async () => {
   if (!props.groupId || !props.token) {
@@ -108,11 +136,17 @@ onMounted(async () => {
   try {
     const preview = await fetchJoinPreview(props.groupId, props.token);
     placeholders.value = preview.placeholders;
+    groupName.value = preview.name;
+    groupIcon.value = preview.icon;
+    memberCount.value = preview.memberCount;
   } catch {
     // Invalid token or network error — we'll find out at join time
   } finally {
     loadingPreview.value = false;
   }
+  // Aucun membre à réclamer : le formulaire « nouveau membre » est le seul écran
+  // affiché, donc le choix est implicite (sinon le CTA reste grisé sans issue).
+  if (placeholders.value.length === 0) choice.value = 'new';
   // Pre-fill the name if already connected
   if (session.user.value?.name) displayName.value = session.user.value.name;
 });
@@ -152,7 +186,6 @@ async function join() {
     const options =
       choice.value === 'new' ? { name: displayName.value.trim() } : { placeholderId: choice.value };
     const { name } = await joinGroup(props.groupId, props.token, options);
-    groupName.value = name;
     toast.show(t('join.toastJoined', { name }), 'success');
   } catch (err) {
     if (err instanceof Error && err.message === 'API 409') {
@@ -198,6 +231,48 @@ const canJoin = () => {
   color: var(--text-mid);
   line-height: 1.45;
   margin: 0 0 4px;
+}
+.invite-card {
+  background: var(--bg-card);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.invite-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+.invite-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.group-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.invite-info {
+  flex: 1;
+  min-width: 0;
+}
+.invite-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dark);
+}
+.invite-meta {
+  font-size: 11px;
+  color: var(--text);
+  margin-top: 3px;
 }
 .chevron {
   color: var(--text);

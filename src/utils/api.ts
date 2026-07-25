@@ -1,6 +1,7 @@
 import { getStoredJwt, setStoredJwt } from './auth';
 import type {
   Group,
+  GroupIcon,
   Expense,
   Settlement,
   Member,
@@ -90,7 +91,12 @@ export async function addPlaceholderMember(groupId: string, name: string): Promi
 export async function fetchJoinPreview(
   groupId: string,
   token: string,
-): Promise<{ placeholders: { id: string; name: string }[] }> {
+): Promise<{
+  name: string;
+  icon: GroupIcon;
+  memberCount: number;
+  placeholders: { id: string; name: string }[];
+}> {
   return apiFetch(
     `/api/join/preview?g=${encodeURIComponent(groupId)}&t=${encodeURIComponent(token)}`,
   );

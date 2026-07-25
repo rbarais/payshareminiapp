@@ -158,7 +158,7 @@
     "chooseNameHint": "Du wurdest eingeladen, einer PayShare-Gruppe beizutreten. Wähle den Namen, der für andere angezeigt wird.",
     "chooseOther": "← Anderes wählen",
     "confirmHint": "Du verknüpfst dein Nimiq-Wallet mit diesem Gruppenmitglied.",
-    "hint": "Du wurdest eingeladen, der Gruppe {name} beizutreten. Welches Mitglied bist du?",
+    "invitation": "Einladung",
     "joinBtn": "Gruppe beitreten",
     "joining": "Verbindung…",
     "loading": "Wird geladen…",
@@ -172,7 +172,8 @@
     "toastEnterName": "Gib deinen Vornamen ein",
     "toastInvalidInvite": "Ungültige oder bereits verwendete Einladung",
     "toastJoined": "Du bist „{name}\" beigetreten",
-    "toastNotConnected": "Verbinde dich, um beizutreten"
+    "toastNotConnected": "Verbinde dich, um beizutreten",
+    "whoAreYou": "Wer von diesen Mitgliedern bist du?"
   },
   "login": {
     "connectBtn": "Über Nimiq Pay verbinden",
