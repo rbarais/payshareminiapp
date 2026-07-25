@@ -323,6 +323,7 @@ async function create() {
       paidBy: paidBy.value,
       split: mode.value,
       participants,
+      createdBy: userId.value,
     });
   } catch (err) {
     captureError(err, 'AddExpenseView.addExpense');

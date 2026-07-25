@@ -28,6 +28,7 @@
     "back": "Zurück",
     "cancel": "Abbrechen",
     "save": "Speichern",
+    "saving": "Speichern…",
     "soon": "Bald"
   },
   "error": {
@@ -79,6 +80,8 @@
     "syncRequired": "Synchronisierung vor dem Teilen erforderlich",
     "toSettle": "Zu begleichen",
     "unknown": "Unbekannt",
+    "updateExpenseFailed": "Ausgabe konnte nicht geändert werden",
+    "updateGroupFailed": "Gruppe konnte nicht geändert werden",
     "you": "du",
     "youPaid": "du hast bezahlt"
   },

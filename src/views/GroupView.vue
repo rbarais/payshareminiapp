@@ -2,7 +2,7 @@
   <div v-if="group" class="screen">
     <!-- Header -->
     <ScreenHeader :title="group.name" :subtitle="headerSub" @back="goBack">
-      <button class="icon-btn" @click="openEditGroup"><DotsIcon /></button>
+      <button v-if="isCreator" class="icon-btn" @click="openEditGroup"><DotsIcon /></button>
     </ScreenHeader>
 
     <!-- Members + invite -->
@@ -73,6 +73,7 @@
         :settled="shareStatus(exp.id)?.settled ?? false"
         :tx-hash="shareStatus(exp.id)?.txHash ?? null"
         :clickable="!store.expenseFullySettled(props.id, exp.id)"
+        :can-edit="!!exp.createdBy && exp.createdBy === userId"
         @select="onSelectExpense(exp)"
         @edit="openEditExpense(exp)"
       />
@@ -132,8 +133,14 @@
         @keyup.enter="saveGroup"
       />
 
-      <button class="btn-primary" :disabled="!editGroupName.trim()" @click="saveGroup">
-        {{ t('common.save') }}
+      <button
+        class="btn-primary"
+        :class="{ 'is-loading': savingGroup }"
+        :disabled="!editGroupName.trim() || savingGroup"
+        @click="saveGroup"
+      >
+        <ButtonSpinner v-if="savingGroup" />
+        {{ savingGroup ? t('common.saving') : t('common.save') }}
       </button>
       <button class="btn-ghost" @click="editGroupOpen = false">{{ t('common.cancel') }}</button>
     </BaseSheet>
@@ -193,8 +200,14 @@
         @keyup.enter="saveExpense"
       />
 
-      <button class="btn-primary" :disabled="!editExpenseDesc.trim()" @click="saveExpense">
-        {{ t('common.save') }}
+      <button
+        class="btn-primary"
+        :class="{ 'is-loading': savingExpense }"
+        :disabled="!editExpenseDesc.trim() || savingExpense"
+        @click="saveExpense"
+      >
+        <ButtonSpinner v-if="savingExpense" />
+        {{ savingExpense ? t('common.saving') : t('common.save') }}
       </button>
       <button class="btn-ghost" @click="closeEditExpense">{{ t('common.cancel') }}</button>
     </BaseSheet>
@@ -380,6 +393,7 @@ const inviteExpense = ref<Expense | null>(null);
 const editGroupOpen = ref(false);
 const editGroupName = ref('');
 const editGroupIcon = ref<GroupIcon>('person');
+const savingGroup = ref(false);
 
 function openEditGroup() {
   if (!group.value) return;
@@ -388,17 +402,26 @@ function openEditGroup() {
   editGroupOpen.value = true;
 }
 
-function saveGroup() {
+async function saveGroup() {
   const name = editGroupName.value.trim();
-  if (!name) return;
-  store.updateGroup(props.id, { name, icon: editGroupIcon.value });
-  editGroupOpen.value = false;
-  toast.show(t('group.groupUpdated'), 'success');
+  if (!name || savingGroup.value) return;
+  savingGroup.value = true;
+  try {
+    await store.updateGroup(props.id, { name, icon: editGroupIcon.value });
+    editGroupOpen.value = false;
+    toast.show(t('group.groupUpdated'), 'success');
+  } catch (err) {
+    captureError(err, 'GroupView.updateGroup');
+    toast.show(t('group.updateGroupFailed'), 'error');
+  } finally {
+    savingGroup.value = false;
+  }
 }
 
 // ── Expense editing (description) ───────────────────────────────────────────
 const editExpense = ref<Expense | null>(null);
 const editExpenseDesc = ref('');
+const savingExpense = ref(false);
 
 const editExpenseSub = computed(() => {
   const expense = editExpense.value;
@@ -416,12 +439,20 @@ function closeEditExpense() {
   editExpenseDesc.value = '';
 }
 
-function saveExpense() {
+async function saveExpense() {
   const description = editExpenseDesc.value.trim();
-  if (!description || !editExpense.value) return;
-  store.updateExpense(editExpense.value.id, { description });
-  closeEditExpense();
-  toast.show(t('group.expenseUpdated'), 'success');
+  if (!description || !editExpense.value || savingExpense.value) return;
+  savingExpense.value = true;
+  try {
+    await store.updateExpense(editExpense.value.id, { description });
+    closeEditExpense();
+    toast.show(t('group.expenseUpdated'), 'success');
+  } catch (err) {
+    captureError(err, 'GroupView.updateExpense');
+    toast.show(t('group.updateExpenseFailed'), 'error');
+  } finally {
+    savingExpense.value = false;
+  }
 }
 
 function goBack() {

@@ -56,6 +56,9 @@ export interface Expense {
   split: SplitMode;
   shares: ExpenseShare[]; // one entry per member involved
   createdAt: Date;
+  // Nimiq address of whoever saved the expense — the only one allowed to edit
+  // it. Absent on legacy rows whose payer was still a placeholder.
+  createdBy?: string;
 }
 
 export interface Group {

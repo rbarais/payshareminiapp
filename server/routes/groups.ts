@@ -124,4 +124,37 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
   }
 });
 
+// PATCH /api/groups/:id — only the creator may rename the group or change its icon.
+router.patch('/:id', requireAuth, async (req, res): Promise<void> => {
+  const { address } = (req as AuthRequest).user;
+  const groupId = req.params.id;
+  const { name, icon } = req.body as { name?: string; icon?: string };
+
+  const nextName = name?.trim() || null;
+  const nextIcon = icon?.trim() || null;
+  if (!nextName && !nextIcon) {
+    res.status(400).json({ error: 'name or icon required' });
+    return;
+  }
+
+  try {
+    const rows = await sql<{ id: string }[]>`
+      UPDATE groups
+      SET name = COALESCE(${nextName}, name),
+          icon = COALESCE(${nextIcon}, icon)
+      WHERE id = ${groupId} AND creator_addr = ${address}
+      RETURNING id
+    `;
+    if (rows.length === 0) {
+      res.status(403).json({ error: 'only the creator can edit this group' });
+      return;
+    }
+
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'internal server error' });
+  }
+});
+
 export default router;

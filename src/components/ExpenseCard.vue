@@ -12,6 +12,7 @@
         </div>
       </div>
       <button
+        v-if="canEdit"
         class="exp-edit-btn"
         :aria-label="t('group.editExpenseAriaLabel')"
         @click.stop="$emit('edit')"
@@ -45,9 +46,10 @@ import { useI18n } from '../stores/i18n';
 import PencilIcon from '../assets/svg/pencil.svg';
 
 // Card for an expense within a group. Clicking opens the pay invitation;
-// the pencil emits `edit`. Derived values (share, payer) are provided by the
-// parent, which knows the group context and the current user. `clickable` is
-// false once there is nothing left to do on the card (my share fully settled).
+// the pencil emits `edit` and is only shown when `canEdit` (the author).
+// Derived values (share, payer) are provided by the parent, which knows the
+// group context and the current user. `clickable` is false once there is
+// nothing left to do on the card (my share fully settled).
 const props = withDefaults(
   defineProps<{
     expense: Expense;
@@ -58,8 +60,9 @@ const props = withDefaults(
     settled?: boolean;
     txHash?: string | null;
     clickable?: boolean;
+    canEdit?: boolean;
   }>(),
-  { clickable: true, progress: 0 },
+  { clickable: true, progress: 0, canEdit: false },
 );
 defineEmits<{ select: []; edit: [] }>();
 

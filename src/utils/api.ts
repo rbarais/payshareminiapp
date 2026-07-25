@@ -75,6 +75,27 @@ export async function insertExpense(expense: Expense): Promise<void> {
   });
 }
 
+export async function updateGroup(
+  groupId: string,
+  patch: { name?: string; icon?: GroupIcon },
+): Promise<void> {
+  await apiFetch<void>(`/api/groups/${groupId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+}
+
+export async function updateExpense(
+  groupId: string,
+  expenseId: string,
+  patch: { description: string },
+): Promise<void> {
+  await apiFetch<void>(`/api/groups/${groupId}/expenses/${expenseId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+}
+
 export async function fetchGroupMembers(groupId: string): Promise<Member[]> {
   const members = await apiFetch<SerializedMember[]>(`/api/groups/${groupId}/members`);
   return members.map(mapMember);

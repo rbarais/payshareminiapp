@@ -28,9 +28,10 @@ router.get('/:id/expenses', requireAuth, async (req, res): Promise<void> => {
         split: string;
         shares: unknown[];
         created_at: Date;
+        created_by: string | null;
       }[]
     >`
-      SELECT id, group_id, description, amount, currency, paid_by, split, shares, created_at
+      SELECT id, group_id, description, amount, currency, paid_by, split, shares, created_at, created_by
       FROM expenses
       WHERE group_id = ${groupId}
       ORDER BY created_at DESC
@@ -47,6 +48,7 @@ router.get('/:id/expenses', requireAuth, async (req, res): Promise<void> => {
         split: row.split,
         shares: row.shares ?? [],
         createdAt: row.created_at,
+        createdBy: row.created_by ?? undefined,
       })),
     );
   } catch (err) {
@@ -91,14 +93,46 @@ router.post('/:id/expenses', requireAuth, async (req, res): Promise<void> => {
     }
 
     await sql`
-      INSERT INTO expenses (id, group_id, description, amount, currency, paid_by, split, shares)
+      INSERT INTO expenses (id, group_id, description, amount, currency, paid_by, split, shares, created_by)
       VALUES (
         ${expense.id}, ${groupId}, ${expense.description}, ${expense.amount},
-        ${expense.currency}, ${expense.paidBy}, ${expense.split}, ${sql.json(expense.shares ?? [])}
+        ${expense.currency}, ${expense.paidBy}, ${expense.split}, ${sql.json(expense.shares ?? [])},
+        ${address}
       )
     `;
 
     res.status(201).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'internal server error' });
+  }
+});
+
+// PATCH /api/groups/:id/expenses/:expenseId — only the author of the expense
+// may edit it (created_by, set at insert time from the authenticated address).
+router.patch('/:id/expenses/:expenseId', requireAuth, async (req, res): Promise<void> => {
+  const { address } = (req as AuthRequest).user;
+  const { id: groupId, expenseId } = req.params;
+  const { description } = req.body as { description?: string };
+
+  if (!description?.trim()) {
+    res.status(400).json({ error: 'description required' });
+    return;
+  }
+
+  try {
+    const rows = await sql<{ id: string }[]>`
+      UPDATE expenses
+      SET description = ${description.trim()}
+      WHERE id = ${expenseId} AND group_id = ${groupId} AND created_by = ${address}
+      RETURNING id
+    `;
+    if (rows.length === 0) {
+      res.status(403).json({ error: 'only the author can edit this expense' });
+      return;
+    }
+
+    res.status(204).end();
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'internal server error' });

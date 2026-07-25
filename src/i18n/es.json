@@ -28,6 +28,7 @@
     "back": "Atrás",
     "cancel": "Cancelar",
     "save": "Guardar",
+    "saving": "Guardando…",
     "soon": "Pronto"
   },
   "error": {
@@ -79,6 +80,8 @@
     "syncRequired": "Sincronización necesaria antes de compartir",
     "toSettle": "Por saldar",
     "unknown": "Desconocido",
+    "updateExpenseFailed": "No se ha podido modificar el gasto",
+    "updateGroupFailed": "No se ha podido modificar el grupo",
     "you": "tú",
     "youPaid": "has pagado"
   },

@@ -20,6 +20,8 @@ import {
   insertGroup,
   insertExpense,
   insertSettlement,
+  updateGroup,
+  updateExpense,
   fetchMyGroups,
   fetchGroupExpenses,
   fetchGroupSettlements,
@@ -451,9 +453,14 @@ export function useGroupsStore() {
       return group;
     },
 
-    updateGroup(id: string, patch: Partial<Omit<Group, 'id' | 'createdAt'>>): Group | null {
+    // Rename a group / change its icon — the backend rejects anyone but the creator.
+    async updateGroup(
+      id: string,
+      patch: { name?: string; icon?: GroupIcon },
+    ): Promise<Group | null> {
       const group = state.groups.find((group) => group.id === id);
       if (!group) return null;
+      await updateGroup(id, patch);
       Object.assign(group, patch);
       return group;
     },
@@ -493,6 +500,7 @@ export function useGroupsStore() {
       paidBy: string;
       split: SplitMode;
       participants: { memberId: string; weight?: number }[];
+      createdBy: string; // Nimiq address of the author (server-enforced on edit)
     }): Promise<Expense> {
       const expense: Expense = {
         id: crypto.randomUUID(),
@@ -504,15 +512,18 @@ export function useGroupsStore() {
         split: params.split,
         shares: computeShares(params.amount, params.split, params.participants),
         createdAt: new Date(),
+        createdBy: params.createdBy,
       };
       await insertExpense(expense);
       state.expenses.push(expense);
       return expense;
     },
 
-    updateExpense(id: string, patch: Partial<Pick<Expense, 'description'>>): Expense | null {
+    // Edit an expense description — the backend rejects anyone but its author.
+    async updateExpense(id: string, patch: { description: string }): Promise<Expense | null> {
       const expense = state.expenses.find((entry) => entry.id === id);
       if (!expense) return null;
+      await updateExpense(expense.groupId, id, patch);
       Object.assign(expense, patch);
       return expense;
     },
