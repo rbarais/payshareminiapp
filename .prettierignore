@@ -3,3 +3,4 @@ node_modules
 *.md
 supabase/migrations
 package-lock.json
+public/welcome/index.html
