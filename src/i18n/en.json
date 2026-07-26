@@ -123,7 +123,7 @@
     "filterSent": "Paid",
     "justNow": "just now",
     "minutesAgo": "{n} min ago",
-    "nExpenses": "{n} expenses",
+    "nExpenses": "{n} expense | {n} expenses",
     "paidTo": "Paid {name}",
     "receivedFrom": "Received from {name}",
     "title": "History",
