@@ -12,6 +12,7 @@
         :key="member.id"
         :address="member.address"
         :size="36"
+        @click="showMemberModal(member.name)"
       />
       <div v-if="isCreator" class="add-member-wrap">
         <button class="add-member-btn" @click="showAddMember = true">
@@ -211,6 +212,11 @@
       </button>
       <button class="btn-ghost" @click="closeEditExpense">{{ t('common.cancel') }}</button>
     </BaseSheet>
+    <BaseSheet
+      v-if="displayMemberSheet && memberDisplayed"
+      :title="memberDisplayed"
+      @close="onCloseMemberSheet"
+    />
   </div>
 </template>
 
@@ -484,6 +490,17 @@ async function confirmAddMember() {
     addingMember.value = false;
   }
 }
+
+const displayMemberSheet = ref(false);
+const memberDisplayed = ref<string | null>(null);
+const showMemberModal = (member: string) => {
+  memberDisplayed.value = member;
+  displayMemberSheet.value = true;
+};
+const onCloseMemberSheet = () => {
+  displayMemberSheet.value = false;
+  memberDisplayed.value = null;
+};
 </script>
 
 <style scoped>

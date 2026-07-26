@@ -35,27 +35,26 @@
           </div>
         </div>
 
-        <button v-if="session.isNimiqApp.value === true" class="cta" @click="connect">
+        <button v-if="inNimiqApp" class="cta" @click="connect">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
             <rect width="22" height="22" rx="6" fill="#1B1F3B" />
             <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
           </svg>
           <span>{{ t('login.connectBtn') }}</span>
         </button>
-        <!-- Undetermined (still detecting) or confirmed outside Nimiq Pay: this
-             is the safe default — jumping straight to "Se connecter" before the
-             app knows it's running inside an external browser (e.g. Messenger's
-             in-app browser) leaves the user stuck with no working action. -->
-        <button v-else class="cta" @click="openInNimiqPay">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <rect width="22" height="22" rx="6" fill="#1B1F3B" />
-            <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
-          </svg>
-          <span>{{ t('login.openInNimiq') }}</span>
-        </button>
-        <p class="invite-hint">
-          {{ t('login.inviteHint') }}
-        </p>
+        <DesktopQRHandoff v-else-if="isDesktop" :url="pageUrl" />
+        <template v-else>
+          <button class="cta" @click="openInNimiqPay">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <rect width="22" height="22" rx="6" fill="#1B1F3B" />
+              <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
+            </svg>
+            <span>{{ t('login.openInNimiq') }}</span>
+          </button>
+          <p class="invite-hint">
+            {{ t('login.inviteHint') }}
+          </p>
+        </template>
         <p v-if="session.error.value" class="err">{{ session.error.value }}</p>
       </template>
 
@@ -124,20 +123,24 @@
           </div>
         </div>
 
-        <button class="cta" @click="connect">
+        <button v-if="inNimiqApp" class="cta" @click="connect">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
             <rect width="22" height="22" rx="6" fill="#1B1F3B" />
             <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
           </svg>
           <span>{{ t('login.connectBtn') }}</span>
         </button>
-        <button
-          v-if="session.isNimiqApp.value === false"
-          class="cta-secondary"
-          @click="openInNimiqPay"
-        >
-          {{ t('login.openInNimiq') }}
-        </button>
+        <DesktopQRHandoff v-else-if="isDesktop" :url="pageUrl" />
+        <template v-else>
+          <button class="cta" @click="openInNimiqPay">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <rect width="22" height="22" rx="6" fill="#1B1F3B" />
+              <polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#F6B221" />
+            </svg>
+            <span>{{ t('login.openInNimiq') }}</span>
+          </button>
+          <p class="store-hint">{{ t('login.storeHint') }}</p>
+        </template>
         <p v-if="session.error.value" class="err">{{ session.error.value }}</p>
         <p class="privacy">
           {{ t('login.privacy') }}
@@ -164,8 +167,10 @@
 import { ref, computed } from 'vue';
 import { useSession } from '../stores/session';
 import { t } from '../stores/i18n';
-import { buildInviteDeeplink, decodeInviteFromText } from '../utils/room';
+import { decodeInviteFromText } from '../utils/room';
+import { detectPlatform, openInNimiqPay as handoffToNimiqPay } from '../utils/appLinks';
 import PayshareIcon from '../assets/svg/payshareIcon.svg';
+import DesktopQRHandoff from '../components/DesktopQRHandoff.vue';
 
 const session = useSession();
 const emit = defineEmits<{ connected: [] }>();
@@ -173,10 +178,22 @@ const emit = defineEmits<{ connected: [] }>();
 // Detect whether the URL contains a group invitation (?g=&t=).
 const pendingInvite = computed(() => decodeInviteFromText(window.location.href));
 
-// Relay the current URL to Nimiq Pay via deeplink.
-// Triggered by a tap (user gesture → required on iOS for custom schemes).
+// Only `true` unlocks "Se connecter". While detection is undetermined (`null`)
+// we offer the deeplink: it is the safe default — a plain browser (or an in-app
+// browser like Messenger's) cannot connect a wallet, and offering a CTA that
+// fails leaves the user stuck. Inside Nimiq Pay the host marker is readable
+// synchronously, so this state is a non-event there.
+const inNimiqApp = computed(() => session.isNimiqApp.value === true);
+
+// Desktop cannot run Nimiq Pay: no deeplink there, a QR handoff instead.
+const isDesktop = detectPlatform() === 'desktop';
+const pageUrl = window.location.href;
+
+// Relay the current URL to Nimiq Pay via deeplink, or to the store if the app
+// is not installed. Triggered by a tap (user gesture → required on iOS for
+// custom schemes).
 function openInNimiqPay() {
-  window.location.href = buildInviteDeeplink(window.location.href);
+  handoffToNimiqPay(pageUrl);
 }
 
 // 'idle' → home screen · 'connecting' → peer discovery · 'connected' → success
@@ -391,6 +408,14 @@ async function connect() {
   margin-top: 12px;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.25);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.store-hint {
+  margin-top: 12px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
   text-align: center;
   line-height: 1.6;
 }

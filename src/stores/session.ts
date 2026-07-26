@@ -1,6 +1,6 @@
 import { reactive, computed } from 'vue';
 import { getHostLanguage } from '@nimiq/mini-app-sdk';
-import { getCurrentUser, formatAddressShort, detectNimiqApp } from '../utils/nimiq';
+import { getCurrentUser, formatAddressShort, detectNimiqApp, isNimiqHost } from '../utils/nimiq';
 import { authenticate, refreshToken } from '../utils/auth';
 import { getStoredJwt, setStoredJwt } from '../utils/auth';
 import { t } from './i18n';
@@ -66,7 +66,9 @@ const state = reactive<SessionState>({
   language: detectLanguage(),
   connecting: false,
   error: '',
-  isNimiqApp: null,
+  // The host marker is readable synchronously, so inside Nimiq Pay the first
+  // paint is already correct. Outside, stay undetermined until the probe ends.
+  isNimiqApp: isNimiqHost() ? true : null,
 });
 
 export function useSession() {

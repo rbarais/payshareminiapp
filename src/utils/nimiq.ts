@@ -8,11 +8,18 @@ import { readPrefs } from './prefsStorage';
 // Following the official tutorial: we call `init({ timeout })` ONCE at startup
 // (App.vue onMounted) and keep the promise. `init()` polls for the injection of
 // `window.nimiq` and rejects after the timeout if we are not inside Nimiq Pay.
-// All functions below await this same promise — no second call, no dependency
-// on an unreliable synchronous check.
+// All provider calls below await this same promise — no second call.
+//
+// Knowing WHERE we run is a separate question, answered by `isNimiqHost()`:
+// waiting for `init()` to reject would cost the full SDK timeout (10s) before
+// the login screen can offer anything usable outside Nimiq Pay.
 // ─────────────────────────────────────────────────────────────────────────
 
 let nimiqPromise: Promise<NimiqProvider> | null = null;
+
+// Grace period for a host that injects `window.nimiq` without seeding
+// `window.nimiqPay` — far shorter than the SDK's 10s default.
+const HOST_PROBE_TIMEOUT_MS = 1500;
 
 /** Start (or reuse) the provider initialization. */
 export function initNimiq(): Promise<NimiqProvider> {
@@ -23,13 +30,28 @@ export function initNimiq(): Promise<NimiqProvider> {
 }
 
 /**
- * Detect whether the app runs inside Nimiq Pay: true if the provider
- * initializes, false if `init()` rejects (provider never injected). Reuses the
- * shared init promise — no extra `init()` call.
+ * Are we inside the Nimiq Pay WebView? Synchronous and available on the first
+ * paint: Nimiq Pay seeds `window.nimiqPay` (host language, device identifier)
+ * BEFORE the mini-app page script runs. `window.nimiq` — the provider — is
+ * injected later, so it only confirms the host, it cannot rule it out.
+ */
+export function isNimiqHost(): boolean {
+  return typeof window !== 'undefined' && (!!window.nimiqPay || !!window.nimiq);
+}
+
+/**
+ * Detect whether the app runs inside Nimiq Pay. The host marker answers
+ * instantly; without it we still give the provider a short window before
+ * concluding we are in a plain browser.
  */
 export async function detectNimiqApp(): Promise<boolean> {
+  if (isNimiqHost()) {
+    // Warm up the provider promise without blocking the answer.
+    initNimiq().catch(() => {});
+    return true;
+  }
   try {
-    await initNimiq();
+    await init({ timeout: HOST_PROBE_TIMEOUT_MS });
     return true;
   } catch {
     return false;
@@ -177,12 +199,4 @@ export async function signMessage(
     throw new Error(result.error.message);
   }
   return { publicKey: result.publicKey, signature: result.signature };
-}
-
-/**
- * Synchronous check (provider already injected?). Unreliable right after load —
- * prefer `detectNimiqApp()` / the store's `isNimiqApp` state.
- */
-export function isNimiqEnvironment(): boolean {
-  return typeof window !== 'undefined' && !!window.nimiq;
 }

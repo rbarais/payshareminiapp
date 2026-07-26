@@ -183,6 +183,7 @@
     "connectBtn": "Über Nimiq Pay verbinden",
     "connected": "Wallet verbunden!",
     "connecting": "Verbindung zum Netzwerk…",
+    "desktopQr": "Scanne diesen QR-Code mit deinem Handy, um PayShare in Nimiq Pay zu öffnen.",
     "feature1Sub": "Reisen, WGs, Restaurants — reibungslos teilen",
     "feature1Title": "Ausgabengruppen",
     "feature2Sub": "Zahle in Krypto, ohne Bank",
@@ -194,7 +195,8 @@
     "inviteTitle": "Du wurdest eingeladen",
     "openInNimiq": "In Nimiq Pay öffnen",
     "privacy": "Es werden keine personenbezogenen Daten erfasst.",
-    "searchingPeers": "Suche nach Nimiq-Peers…"
+    "searchingPeers": "Suche nach Nimiq-Peers…",
+    "storeHint": "Nimiq Pay nicht installiert? Du wirst zum Store weitergeleitet."
   },
   "nameSetup": {
     "continue": "Weiter",

@@ -724,10 +724,19 @@
       <h2 style="font-size:52px;font-weight:700;letter-spacing:-2px;color:#fff;margin:0 0 20px;line-height:1.05;" data-i18n="cta.2">Partage les frais.<br>Règle en crypto.</h2>
       <p style="font-size:17px;color:rgba(255,255,255,0.4);margin:0 0 32px;line-height:1.6;text-wrap:pretty;" data-i18n="cta.3">PayShare fait les comptes pour toi. Il ne te reste plus qu’à payer.</p>
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
-        <a href="https://payshareapp.com" target="_blank" rel="noopener" class="ps-btn" style="display:inline-flex;align-items:center;gap:10px;background:#F6B221;color:#1A1916;font-size:16px;font-weight:700;padding:17px 34px;border-radius:16px;box-shadow:0 8px 32px rgba(246,178,33,0.22);">
+        <a id="cta-open-app" href="https://payshareapp.com" target="_blank" rel="noopener" class="ps-btn" style="display:inline-flex;align-items:center;gap:10px;background:#F6B221;color:#1A1916;font-size:16px;font-weight:700;padding:17px 34px;border-radius:16px;box-shadow:0 8px 32px rgba(246,178,33,0.22);">
         <svg width="18" height="18" viewBox="0 0 22 22" fill="none"><polygon points="19,11 15,4.1 7,4.1 3,11 7,17.9 15,17.9" fill="#1A1916"></polygon></svg>
         <span data-i18n="cta.4">Ouvrir PayShare</span>
       </a>
+      <script>
+        // Sur desktop il n'y a pas d'app à ouvrir : seul le QR code reste pertinent.
+        (() => {
+          const ua = navigator.userAgent;
+          const iPadOS = /macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+          const isMobile = /android|iphone|ipad|ipod/i.test(ua) || iPadOS;
+          if (!isMobile) document.getElementById('cta-open-app')?.remove();
+        })();
+      </script>
         <div style="display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:8px 18px 8px 8px;">
           <div style="background:#FFFFFF;border-radius:12px;padding:5px;">
             <img src="/welcome/assets/qr-code.svg" alt="QR code vers payshareapp.com" width="80" height="80" style="display:block;border-radius:4px;" data-i18n-attr="alt:cta.11">

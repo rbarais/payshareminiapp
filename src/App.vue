@@ -35,7 +35,6 @@ import { useRouter, useRoute } from 'vue-router';
 import { onMounted, watch, computed, ref } from 'vue';
 import { decodeRoomFromUrl, decodeRoomFromText, decodeInviteFromText } from './utils/room';
 import { useSession } from './stores/session';
-import { useToast } from './stores/toast';
 import { t } from './stores/i18n';
 import LoginView from './views/LoginView.vue';
 import NameSetup from './components/NameSetup.vue';
@@ -48,7 +47,6 @@ import { usePrefs } from './stores/prefs';
 const router = useRouter();
 const route = useRoute();
 const session = useSession();
-const toast = useToast();
 const { displayName } = usePrefs();
 
 const NAV_ROUTES = new Set(['home', 'groups', 'history']);
@@ -104,13 +102,10 @@ function checkUrlForDeeplink() {
 }
 
 onMounted(async () => {
-  // Start the Nimiq provider init at startup (see mini-app tutorial).
-  // If init() fails, we do not enter the app: a simple toast for now, a
-  // dedicated screen will come later.
-  const inNimiq = await session.checkEnvironment();
-  if (!inNimiq) {
-    toast.show(t('error.openInNimiq'), 'error');
-  }
+  // Start the Nimiq provider init at startup (see mini-app tutorial). Outside
+  // Nimiq Pay we do not enter the app; the login screen offers the deeplink, so
+  // no toast is needed here.
+  await session.checkEnvironment();
   if (showApp.value) checkUrlForDeeplink();
 });
 
