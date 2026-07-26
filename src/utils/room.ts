@@ -6,10 +6,13 @@ export function decodeRoomFromUrl(): ShareableRoom | null {
 
 // Encode a shareable payment payload into a URL (?r=base64).
 // Decoded at startup by App.vue → routes to the payment screen.
+//
+// Always built from the origin, never `window.location.pathname`: with
+// path-based routing the current pathname reflects whatever screen the user
+// is on (e.g. `/group/abc`), not the app's root.
 export function encodeShareUrl(shareable: ShareableRoom): string {
   const encoded = encodeURIComponent(btoa(JSON.stringify(shareable)));
-  const base = `${window.location.origin}${window.location.pathname}`;
-  return `${base}?r=${encoded}`;
+  return `${window.location.origin}/?r=${encoded}`;
 }
 
 // Build an invite link that OPENS the mini-app inside Nimiq Pay (deeplink),
@@ -37,21 +40,22 @@ export function decodeRoomFromText(text: string): ShareableRoom | null {
 // (payment): ?g=<groupId>&t=<inviteToken> → opens the "Join" screen.
 // ─────────────────────────────────────────────────────────────────────────
 
-// Invite params live in the hash (#/join?g=&t=) rather than the query string
-// so Nimiq Pay always identifies the app by origin alone → a single "PayShare"
-// entry in the mini-app list, whatever the group.
+// Nimiq Pay identifies a mini app by its domain, not the full URL, so a plain
+// query string does not create extra entries in the mini-app list.
 export function buildInviteUrl(groupId: string, token: string): string {
-  const base = `${window.location.origin}${window.location.pathname}`;
-  return `${base}#/join?g=${encodeURIComponent(groupId)}&t=${encodeURIComponent(token)}`;
+  const params = `g=${encodeURIComponent(groupId)}&t=${encodeURIComponent(token)}`;
+  return `${window.location.origin}/join?${params}`;
 }
 
 export function decodeInviteFromText(text: string): { groupId: string; token: string } | null {
   try {
     const url = new URL(text);
-    // Hash format: https://payshare.app/#/join?g=...&t=...
+    // Invite links generated before the switch to plain query strings embedded
+    // g/t in the hash (#/join?g=...&t=...); keep reading it so old links still
+    // work.
     const hashSearch = url.hash.includes('?') ? new URLSearchParams(url.hash.split('?')[1]) : null;
-    const groupId = hashSearch?.get('g') ?? url.searchParams.get('g');
-    const token = hashSearch?.get('t') ?? url.searchParams.get('t');
+    const groupId = url.searchParams.get('g') ?? hashSearch?.get('g');
+    const token = url.searchParams.get('t') ?? hashSearch?.get('t');
     if (!groupId || !token) return null;
     return { groupId, token };
   } catch {

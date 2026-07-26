@@ -161,7 +161,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import type { ShareableRoom, Settlement } from '../types';
 import { getCurrentUser, requestPayment } from '../utils/nimiq';
-import { amountPerPerson, paymentData } from '../utils/room';
+import { amountPerPerson, paymentData, encodeShareUrl } from '../utils/room';
 import { fetchRoomPayments, type RoomPayment } from '../utils/webclient';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
 import InitialAvatar from '../components/InitialAvatar.vue';
@@ -230,11 +230,7 @@ const hasPaidOnChain = computed(() => {
   return !!me && payments.value.some((payment) => norm(payment.from) === me);
 });
 
-const shareUrl = computed(() => {
-  if (!props.room) return '';
-  const encoded = encodeURIComponent(btoa(JSON.stringify(props.room)));
-  return `${window.location.origin}${window.location.pathname}?r=${encoded}`;
-});
+const shareUrl = computed(() => (props.room ? encodeShareUrl(props.room) : ''));
 
 let pollId: ReturnType<typeof setInterval> | null = null;
 

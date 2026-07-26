@@ -20,8 +20,8 @@
         </button>
         <span class="add-member-label">{{ t('group.invite') }}</span>
       </div>
-      <button class="qr-btn" @click="invite">
-        <QrCodeIcon />
+      <button class="share-btn" :aria-label="t('group.inviteSheetTitle')" @click="invite">
+        <ShareIcon />
       </button>
     </div>
 
@@ -239,7 +239,7 @@ import ScreenHeader from '../components/ScreenHeader.vue';
 import ButtonSpinner from '../components/ButtonSpinner.vue';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
-import QrCodeIcon from '../assets/svg/qrCode.svg';
+import ShareIcon from '../assets/svg/share.svg';
 import DotsIcon from '../assets/svg/dots.svg';
 import PlusIcon from '../assets/svg/plus.svg';
 import CheckIcon from '../assets/svg/check.svg';
@@ -546,7 +546,7 @@ const onCloseMemberSheet = () => {
   font-weight: 500;
 }
 
-.qr-btn {
+.share-btn {
   margin-left: auto;
   width: 36px;
   height: 36px;
@@ -561,7 +561,8 @@ const onCloseMemberSheet = () => {
   transition: opacity 0.15s;
 }
 
-.qr-btn:hover {
+.share-btn:hover,
+.share-btn:active {
   opacity: 0.75;
 }
 

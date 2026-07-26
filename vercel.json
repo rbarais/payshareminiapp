@@ -1,7 +1,8 @@
 {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/welcome", "destination": "/welcome/index.html" }
+    { "source": "/welcome", "destination": "/welcome/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
