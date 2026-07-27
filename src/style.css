@@ -23,6 +23,14 @@
      absolu pour que sa disparition ne reflow pas les écrans en transition. */
   --nav-h: 78px;
 
+  /* Paliers de largeur (window size classes) : compact < 600, medium 600-839,
+     expanded >= 840. --pane-max borne les écrans mono-tâche (formulaires,
+     paiement) à une longueur de ligne lisible même quand l'app s'élargit. */
+  --app-max: 430px;
+  --gutter: 18px;
+  --pane-max: 100%;
+  --sheet-max: 430px;
+
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 16px;
   color: var(--dark);

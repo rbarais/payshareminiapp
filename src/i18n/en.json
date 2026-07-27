@@ -29,6 +29,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving…",
+    "slogan": "Split the bill. Pay in crypto.",
     "soon": "Soon"
   },
   "error": {
@@ -181,23 +182,30 @@
     "whoAreYou": "Which of these members are you?"
   },
   "login": {
+    "badgeFree": "100% free",
+    "badgeSecure": "Secured by blockchain",
+    "badgeSpeed": "2-second settlement",
     "connectBtn": "Connect via Nimiq Pay",
     "connected": "Wallet connected!",
     "connecting": "Connecting to network…",
     "desktopQr": "Scan this QR code with your phone to open PayShare in Nimiq Pay.",
-    "feature1Sub": "Trips, flat shares, restaurants — split without friction",
-    "feature1Title": "Expense groups",
-    "feature2Sub": "Pay in crypto, no bank needed",
-    "feature2Title": "Settle in 2 seconds",
-    "feature3Sub": "Everything is recorded on the Nimiq blockchain",
-    "feature3Title": "Transparent & verifiable",
+    "feature1Sub": "You create the group, friends join by QR code, everyone adds their expenses. PayShare does the maths for you.",
+    "feature1Title": "Nobody forgets who owes what",
+    "feature2Sub": "Your share goes out in NIM from the app. No bank details to ask for, no transfer to wait on. It all confirms in ~2 seconds.",
+    "feature2Title": "Paid back in seconds",
+    "feature3Sub": "No PayShare account, no password, no fees. You sign in with your Nimiq Pay wallet: no personal data collected, and every transaction stays verifiable on the Nimiq blockchain.",
+    "feature3Title": "Nothing to install, nothing to pay",
+    "heroSub": "With PayShare, you see who owes what in the group and settle up in seconds, no bank needed.",
     "inviteHint": "If the button doesn't work, copy the link and paste it in Nimiq Pay.",
     "inviteSub": "Open this link in Nimiq Pay to join the group and settle your shared expenses.",
     "inviteTitle": "You've been invited",
+    "inviteTitleNamed": "You've been invited to join the group {name}",
     "openInNimiq": "Open in Nimiq Pay",
     "privacy": "No personal data is collected.",
     "searchingPeers": "Searching for Nimiq peers…",
-    "storeHint": "Don't have Nimiq Pay? You'll be redirected to the store."
+    "storeHint": "Don't have Nimiq Pay? You'll be redirected to the store.",
+    "whySub": "Because chasing your friends for three weeks is over: everything gets calculated, everything gets settled.",
+    "whyTitle": "Why choose PayShare?"
   },
   "nameSetup": {
     "continue": "Continue",

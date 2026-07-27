@@ -29,6 +29,7 @@
     "cancel": "Abbrechen",
     "save": "Speichern",
     "saving": "Speichern…",
+    "slogan": "Teilt die Rechnung. Zahlt in Krypto.",
     "soon": "Bald"
   },
   "error": {
@@ -181,23 +182,30 @@
     "whoAreYou": "Wer von diesen Mitgliedern bist du?"
   },
   "login": {
+    "badgeFree": "100% kostenlos",
+    "badgeSecure": "Durch Blockchain gesichert",
+    "badgeSpeed": "Ausgleich in 2 Sekunden",
     "connectBtn": "Über Nimiq Pay verbinden",
     "connected": "Wallet verbunden!",
     "connecting": "Verbindung zum Netzwerk…",
     "desktopQr": "Scanne diesen QR-Code mit deinem Handy, um PayShare in Nimiq Pay zu öffnen.",
-    "feature1Sub": "Reisen, WGs, Restaurants — reibungslos teilen",
-    "feature1Title": "Ausgabengruppen",
-    "feature2Sub": "Zahle in Krypto, ohne Bank",
-    "feature2Title": "In 2 Sekunden begleichen",
-    "feature3Sub": "Alles wird auf der Nimiq-Blockchain aufgezeichnet",
-    "feature3Title": "Transparent & überprüfbar",
+    "feature1Sub": "Du erstellst die Gruppe, deine Freunde kommen per QR-Code dazu, jeder trägt seine Ausgaben ein. PayShare rechnet für dich.",
+    "feature1Title": "Keiner vergisst, wer was schuldet",
+    "feature2Sub": "Dein Anteil geht in NIM direkt aus der App raus. Keine IBAN erfragen, keine Überweisung abwarten. Alles ist in ~2 Sekunden bestätigt.",
+    "feature2Title": "In Sekunden zurückgezahlt",
+    "feature3Sub": "Kein PayShare-Konto, kein Passwort, keine Gebühren. Du verbindest dich mit deiner Nimiq-Pay-Wallet: keine personenbezogenen Daten, und jede Transaktion bleibt auf der Nimiq-Blockchain überprüfbar.",
+    "feature3Title": "Nichts installieren, nichts zahlen",
+    "heroSub": "Mit PayShare siehst du, wer in der Gruppe was schuldet, und begleichst alles in Sekunden, ohne Bank.",
     "inviteHint": "Wenn die Schaltfläche nicht funktioniert, kopiere den Link und füge ihn in Nimiq Pay ein.",
     "inviteSub": "Öffne diesen Link in Nimiq Pay, um der Gruppe beizutreten und deine geteilten Ausgaben zu begleichen.",
     "inviteTitle": "Du wurdest eingeladen",
+    "inviteTitleNamed": "Du wurdest eingeladen, der Gruppe {name} beizutreten",
     "openInNimiq": "In Nimiq Pay öffnen",
     "privacy": "Es werden keine personenbezogenen Daten erfasst.",
     "searchingPeers": "Suche nach Nimiq-Peers…",
-    "storeHint": "Nimiq Pay nicht installiert? Du wirst zum Store weitergeleitet."
+    "storeHint": "Nimiq Pay nicht installiert? Du wirst zum Store weitergeleitet.",
+    "whySub": "Weil wochenlanges Nachfragen vorbei ist: alles wird berechnet, alles wird beglichen.",
+    "whyTitle": "Warum PayShare?"
   },
   "nameSetup": {
     "continue": "Weiter",
