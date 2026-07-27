@@ -31,7 +31,7 @@
         <span class="tosettle-title">{{ t('group.toSettle') }}</span>
         <span class="tosettle-total">
           {{ grossDebt.toFixed(2) }} NIM
-          <template v-if="eurApprox(grossDebt)"> · {{ eurApprox(grossDebt) }}</template>
+          <template v-if="fiatApprox(grossDebt)"> · {{ fiatApprox(grossDebt) }}</template>
         </span>
       </div>
       <CreditorList :group="group" :debts="debts" />
@@ -41,7 +41,7 @@
     <div v-if="grossCredit > 0.005" class="credit-card">
       <div class="credit-title">{{ t('group.owedToYou') }}</div>
       <div class="credit-amount">{{ grossCredit.toFixed(2) }} NIM</div>
-      <div v-if="eurApprox(grossCredit)" class="eur-approx">{{ eurApprox(grossCredit) }}</div>
+      <div v-if="fiatApprox(grossCredit)" class="eur-approx">{{ fiatApprox(grossCredit) }}</div>
     </div>
 
     <!-- Settled: neither debt nor credit (only once the group has expenses) -->
@@ -231,7 +231,7 @@ import { useI18n } from '../stores/i18n';
 import { buildInviteUrl, buildInviteDeeplink } from '../utils/room';
 import ExpenseCard from '../components/ExpenseCard.vue';
 import { captureError } from '../utils/errors';
-import { fetchRate, eurApprox } from '../utils/rate';
+import { fetchRates, fiatApprox } from '../utils/rate';
 import InviteSheet from '../components/InviteSheet.vue';
 import CreditorList from '../components/CreditorList.vue';
 import BaseSheet from '../components/BaseSheet.vue';
@@ -285,7 +285,7 @@ onMounted(async () => {
     return;
   }
   await sync();
-  await fetchRate();
+  await fetchRates();
 });
 useForegroundRefresh(sync);
 

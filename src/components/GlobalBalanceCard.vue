@@ -2,7 +2,7 @@
   <div class="balance-card">
     <div class="balance-top">
       <div class="balance-title">{{ t('home.globalBalance') }}</div>
-      <button class="toggle-btn" @click="showEur = !showEur">
+      <button class="toggle-btn" @click="showFiat = !showFiat">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
           <path
             d="M1 3.5H9M1 6.5H9M3 1L1 3.5L3 6M7 9L9 6.5L7 4"
@@ -12,7 +12,7 @@
             stroke-linejoin="round"
           />
         </svg>
-        <span>{{ showEur ? 'NIM' : 'EUR' }}</span>
+        <span>{{ showFiat ? 'NIM' : currencyCode }}</span>
       </button>
     </div>
     <div class="balance-main">
@@ -36,32 +36,38 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { fetchRate, eurApprox } from '../utils/rate';
+import { fetchRates, fiatApprox } from '../utils/rate';
+import { usePrefs } from '../stores/prefs';
 import { useI18n } from '../stores/i18n';
 
 // "Global balance" card: what others owe you vs what you owe, aggregated.
 const props = defineProps<{ credited: number; owed: number }>();
 
 const { t } = useI18n();
+const { currency } = usePrefs();
 
-const showEur = ref(false);
+const currencyCode = computed(() => currency.value.toUpperCase());
+
+const showFiat = ref(false);
 onMounted(() => {
-  fetchRate();
+  fetchRates();
 });
 
-function eur(nim: number): string {
-  return eurApprox(nim) || '—';
+function fiat(nim: number): string {
+  return fiatApprox(nim) || '—';
 }
 
 const creditedStr = computed(() =>
-  showEur.value ? eur(props.credited) : `${props.credited.toFixed(1)} NIM`,
+  showFiat.value ? fiat(props.credited) : `${props.credited.toFixed(1)} NIM`,
 );
-const owedStr = computed(() => (showEur.value ? eur(props.owed) : `${props.owed.toFixed(1)} NIM`));
+const owedStr = computed(() =>
+  showFiat.value ? fiat(props.owed) : `${props.owed.toFixed(1)} NIM`,
+);
 
 // Net balance = what you're owed minus what you owe.
 const net = computed(() => props.credited - props.owed);
 const netStr = computed(() => {
-  if (showEur.value) return eur(net.value);
+  if (showFiat.value) return fiat(net.value);
   const sign = net.value < 0 ? '−' : '+';
   return sign + Math.abs(net.value).toFixed(1) + ' NIM';
 });

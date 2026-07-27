@@ -93,7 +93,7 @@ import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
 import { useI18n } from '../stores/i18n';
 import { useToast } from '../stores/toast';
-import { fetchRate, eurApprox } from '../utils/rate';
+import { fetchRates, fiatApprox } from '../utils/rate';
 import { captureError } from '../utils/errors';
 import type { ActivityEvent } from '../utils/history';
 import EmptyState from '../components/EmptyState.vue';
@@ -119,7 +119,7 @@ async function sync(): Promise<void> {
 }
 
 onMounted(async () => {
-  await fetchRate();
+  await fetchRates();
   await sync();
 });
 useForegroundRefresh(sync);
@@ -193,7 +193,7 @@ function amountText(event: ActivityEvent): string {
 
 function eurText(event: ActivityEvent): string {
   if (event.currency !== 'NIM') return '';
-  return eurApprox(event.amount);
+  return fiatApprox(event.amount);
 }
 
 function shortHash(hash: string): string {
