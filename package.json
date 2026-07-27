@@ -19,6 +19,7 @@
   "dependencies": {
     "@nimiq/identicons": "^1.6.2",
     "@nimiq/mini-app-sdk": "^0.1.0",
+    "@nimiq/utils": "^0.12.4",
     "@noble/ed25519": "^3.1.0",
     "@noble/hashes": "^2.2.0",
     "@sentry/vue": "^10.62.0",
