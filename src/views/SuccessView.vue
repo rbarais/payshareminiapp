@@ -64,10 +64,10 @@ const backLabel = computed(() =>
 
 function goBack() {
   if (props.groupId) {
-    router.push({ name: 'group', params: { id: props.groupId } });
+    router.replace({ name: 'group', params: { id: props.groupId } });
     return;
   }
-  router.push({ name: 'home' });
+  router.replace({ name: 'home' });
 }
 </script>
 

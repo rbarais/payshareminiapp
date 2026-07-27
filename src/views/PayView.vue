@@ -189,7 +189,9 @@ function goBack() {
 }
 
 function handleSuccess(amount: number, recipient: string) {
-  router.push({
+  // replace : l'écran de succès prend la place du paiement dans l'historique,
+  // un retour arrière ne doit jamais y revenir.
+  router.replace({
     name: 'success',
     query: {
       amount: amount.toString(),
