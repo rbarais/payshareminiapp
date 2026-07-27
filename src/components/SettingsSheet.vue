@@ -197,7 +197,7 @@
 
     <!-- About + Version -->
     <div class="card card-list">
-      <button class="list-row" @click="comingSoon">
+      <button class="list-row" @click="goToAbout">
         <div class="list-left">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" />
@@ -325,6 +325,10 @@ function openCommunity(url: string) {
   } else {
     comingSoon();
   }
+}
+
+function goToAbout() {
+  window.open('https://payshareapp.com/welcome', '_blank', 'noopener');
 }
 
 function comingSoon() {
