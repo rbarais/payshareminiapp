@@ -41,7 +41,7 @@
     <div v-if="grossCredit > 0.005" class="credit-card">
       <div class="credit-title">{{ t('group.owedToYou') }}</div>
       <div class="credit-amount">{{ grossCredit.toFixed(2) }} NIM</div>
-      <div v-if="fiatApprox(grossCredit)" class="eur-approx">{{ fiatApprox(grossCredit) }}</div>
+      <div v-if="fiatApprox(grossCredit)" class="fiat-approx">{{ fiatApprox(grossCredit) }}</div>
     </div>
 
     <!-- Settled: neither debt nor credit (only once the group has expenses) -->
@@ -758,7 +758,7 @@ const onCloseMemberSheet = () => {
   margin: 14px 0 10px;
 }
 
-.eur-approx {
+.fiat-approx {
   font-size: 11px;
   color: var(--text-mid);
   margin-top: 2px;

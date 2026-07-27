@@ -24,7 +24,7 @@
             <span>NIM</span>
           </div>
           <div class="balance-amount">{{ nimLabel }}</div>
-          <div v-if="nimFiatLabel" class="balance-eur">{{ nimFiatLabel }}</div>
+          <div v-if="nimFiatLabel" class="balance-fiat">{{ nimFiatLabel }}</div>
         </div>
       </div>
 
@@ -441,7 +441,7 @@ function comingSoon() {
   color: var(--dark);
   letter-spacing: -0.3px;
 }
-.balance-eur {
+.balance-fiat {
   font-size: 10px;
   color: var(--text);
   margin-top: 2px;

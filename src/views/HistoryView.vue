@@ -56,7 +56,7 @@
 
             <div class="amounts">
               <div class="amount" :class="event.kind">{{ amountText(event) }}</div>
-              <div v-if="eurText(event)" class="eur">{{ eurText(event) }}</div>
+              <div v-if="fiatText(event)" class="fiat">{{ fiatText(event) }}</div>
               <div class="time">{{ formatTime(event.date) }}</div>
             </div>
           </div>
@@ -119,7 +119,7 @@ async function sync(): Promise<void> {
 }
 
 onMounted(async () => {
-  await fetchRates();
+  void fetchRates();
   await sync();
 });
 useForegroundRefresh(sync);
@@ -191,7 +191,7 @@ function amountText(event: ActivityEvent): string {
   return `${sign}${event.amount.toFixed(2)} ${event.currency}`;
 }
 
-function eurText(event: ActivityEvent): string {
+function fiatText(event: ActivityEvent): string {
   if (event.currency !== 'NIM') return '';
   return fiatApprox(event.amount);
 }
@@ -350,7 +350,7 @@ function daySectionLabel(date: Date): string {
   font-weight: 600;
 }
 
-.eur {
+.fiat {
   font-size: 10px;
   color: var(--text);
   margin-top: 2px;

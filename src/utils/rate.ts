@@ -20,7 +20,8 @@ function isRates(value: unknown): value is Rates {
   return (
     typeof value === 'object' &&
     value !== null &&
-    Object.values(value).every((rate) => typeof rate === 'number')
+    !Array.isArray(value) &&
+    Object.values(value).every((rate) => typeof rate === 'number' && Number.isFinite(rate))
   );
 }
 
@@ -44,6 +45,7 @@ export function fiatApprox(nim: number): string {
   const formatted = new Intl.NumberFormat(i18n.global.locale.value, {
     style: 'currency',
     currency: code.toUpperCase(),
+    currencyDisplay: 'narrowSymbol',
   }).format(nim * rate);
   return `≈ ${formatted}`;
 }
@@ -64,7 +66,10 @@ function readUsdCrc(doc: unknown): number | null {
   if (typeof crc !== 'object' || crc === null) return null;
   const { doubleValue, integerValue } = crc as Record<string, unknown>;
   if (typeof doubleValue === 'number') return doubleValue;
-  if (typeof integerValue === 'string') return Number(integerValue);
+  if (typeof integerValue === 'string') {
+    const parsed = Number(integerValue);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
   return null;
 }
 

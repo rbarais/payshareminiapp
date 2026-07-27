@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ getExchangeRates: vi.fn() }));
 
@@ -20,12 +20,25 @@ function firestoreDoc(crc: number) {
   };
 }
 
+function firestoreDocIntegerValue(integerValue: string) {
+  return {
+    ok: true,
+    json: async () => ({
+      fields: { rates: { mapValue: { fields: { CRC: { integerValue } } } } },
+    }),
+  };
+}
+
 describe('rate', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.resetModules();
     vi.restoreAllMocks();
     mocks.getExchangeRates.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('expose les quatre taux et les met en cache', async () => {
@@ -67,6 +80,34 @@ describe('rate', () => {
     expect(rates.value).toEqual(FULL);
   });
 
+  it('ignore un cache contenant NaN et refetch', async () => {
+    const raw = JSON.stringify({ rates: { usd: 0.0005 }, ts: Date.now() }).replace('0.0005', 'NaN');
+    localStorage.setItem('payshare_rates', raw);
+    mocks.getExchangeRates.mockResolvedValue({ nim: FULL });
+    const { fetchRates, rates } = await import('../rate');
+    await fetchRates();
+    expect(mocks.getExchangeRates).toHaveBeenCalled();
+    expect(rates.value).toEqual(FULL);
+  });
+
+  it('ignore un cache contenant une valeur non finie (Infinity) et refetch', async () => {
+    localStorage.setItem('payshare_rates', `{"rates":{"usd":1e400},"ts":${Date.now()}}`);
+    mocks.getExchangeRates.mockResolvedValue({ nim: FULL });
+    const { fetchRates, rates } = await import('../rate');
+    await fetchRates();
+    expect(mocks.getExchangeRates).toHaveBeenCalled();
+    expect(rates.value).toEqual(FULL);
+  });
+
+  it('ignore un cache dont rates est un tableau et refetch', async () => {
+    localStorage.setItem('payshare_rates', JSON.stringify({ rates: [], ts: Date.now() }));
+    mocks.getExchangeRates.mockResolvedValue({ nim: FULL });
+    const { fetchRates, rates } = await import('../rate');
+    await fetchRates();
+    expect(mocks.getExchangeRates).toHaveBeenCalled();
+    expect(rates.value).toEqual(FULL);
+  });
+
   it('refetch si le cache est périmé (> 10 min)', async () => {
     localStorage.setItem(
       'payshare_rates',
@@ -96,6 +137,14 @@ describe('rate', () => {
     const { fetchRates, rates } = await import('../rate');
     await fetchRates();
     expect(rates.value!.crc).toBeCloseTo(0.0005 * 455, 10);
+  });
+
+  it('laisse le CRC sans taux quand integerValue Firestore est non numérique', async () => {
+    mocks.getExchangeRates.mockResolvedValue({ nim: { ...FULL, crc: undefined } });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(firestoreDocIntegerValue('abc')));
+    const { fetchRates, rates } = await import('../rate');
+    await fetchRates();
+    expect(rates.value!.crc).toBeUndefined();
   });
 
   it('laisse le CRC sans taux quand le secours échoue aussi', async () => {
