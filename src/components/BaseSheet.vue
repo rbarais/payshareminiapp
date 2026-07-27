@@ -31,6 +31,16 @@ useModalBack(() => emit('close'));
   background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: flex-end;
+  animation: overlay-in 0.22s ease;
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .sheet {
@@ -40,7 +50,7 @@ useModalBack(() => emit('close'));
   background: var(--bg-card);
   border-radius: 24px 24px 0 0;
   padding: 10px 20px 30px;
-  animation: sheet-up 0.22s ease;
+  animation: sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
   /* Cap the sheet to the viewport and scroll internally when content is tall. */
   max-height: 90vh;
   overflow-y: auto;

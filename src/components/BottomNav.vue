@@ -96,13 +96,30 @@ function go(key: 'home' | 'groups' | 'history' | 'profile') {
 
 <style scoped>
 .bottom-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
   border-top: 1px solid var(--border);
   background: var(--bg-card);
   padding: 10px 4px 26px;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  flex-shrink: 0;
+}
+
+.nav-enter-active,
+.nav-leave-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.nav-enter-from,
+.nav-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
 }
 
 .nav-item {

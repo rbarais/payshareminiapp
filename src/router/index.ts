@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import { handleModalBack } from '../composables/modalBack';
+import { updateTransition } from '../composables/routeTransition';
 import HomeView from '../views/HomeView.vue';
 import GroupsView from '../views/GroupsView.vue';
 import GroupView from '../views/GroupView.vue';
@@ -77,6 +78,8 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 });
+
+router.afterEach(updateTransition);
 
 // Double-back-to-quit for mini-apps
 if (typeof window !== 'undefined') {

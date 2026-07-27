@@ -156,7 +156,7 @@ function goToGroupFromNotification(groupId: string) {
 /* Content */
 .content {
   flex: 1;
-  padding: 0 18px 16px;
+  padding: 0 18px calc(16px + var(--nav-h));
   display: flex;
   flex-direction: column;
   gap: 14px;

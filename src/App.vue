@@ -2,19 +2,27 @@
   <LoginView v-if="!showApp" />
   <NameSetup v-else-if="needsName" />
   <template v-else>
-    <router-view
-      style="flex: 1; min-height: 0; overflow: hidden"
-      @new-group="router.push({ name: 'newGroup' })"
-      @open-group="router.push({ name: 'group' })"
-      @open-scanner="router.push({ name: 'scan' })"
-      @open-settings="showSettings = true"
-      @back="router.back()"
-      @add-expense="router.push({ name: 'addExpense' })"
-      @pay="router.push({ name: 'pay' })"
-      @scanned="handleScanned"
-      @success="handlePaySuccess"
-    />
-    <BottomNav v-if="showNav" :active="navActive" @open-settings="showSettings = true" />
+    <div class="view-stack">
+      <router-view v-slot="{ Component }">
+        <Transition :name="transitionName">
+          <component
+            :is="Component"
+            @new-group="router.push({ name: 'newGroup' })"
+            @open-group="router.push({ name: 'group' })"
+            @open-scanner="router.push({ name: 'scan' })"
+            @open-settings="showSettings = true"
+            @back="router.back()"
+            @add-expense="router.push({ name: 'addExpense' })"
+            @pay="router.push({ name: 'pay' })"
+            @scanned="handleScanned"
+            @success="handlePaySuccess"
+          />
+        </Transition>
+      </router-view>
+    </div>
+    <Transition name="nav">
+      <BottomNav v-if="showNav" :active="navActive" @open-settings="showSettings = true" />
+    </Transition>
     <SettingsSheet v-if="showSettings" @close="showSettings = false" @disconnect="askDisconnect" />
     <ConfirmDialog
       v-if="showDisconnectConfirm"
@@ -43,6 +51,7 @@ import BottomNav from './components/BottomNav.vue';
 import SettingsSheet from './components/SettingsSheet.vue';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import { usePrefs } from './stores/prefs';
+import { transitionName } from './composables/routeTransition';
 
 const router = useRouter();
 const route = useRoute();

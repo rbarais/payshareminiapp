@@ -236,7 +236,7 @@ function daySectionLabel(date: Date): string {
 
 .content {
   flex: 1;
-  padding: 4px 18px 16px;
+  padding: 4px 18px calc(16px + var(--nav-h));
   overflow-y: auto;
   min-height: 0;
   display: flex;

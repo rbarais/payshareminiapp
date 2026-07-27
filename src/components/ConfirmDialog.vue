@@ -43,6 +43,7 @@ useModalBack(() => emit('cancel'));
   justify-content: center;
   padding: 28px;
   z-index: 100;
+  animation: overlay-in 0.16s ease;
 }
 .dialog {
   width: 100%;
@@ -51,6 +52,27 @@ useModalBack(() => emit('cancel'));
   border-radius: 20px;
   padding: 22px 20px 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: dialog-in 0.16s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 .dialog-title {
   font-size: 17px;

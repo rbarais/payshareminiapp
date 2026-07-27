@@ -19,6 +19,10 @@
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
 
+  /* Hauteur réservée sous les écrans à onglets : la nav du bas les survole en
+     absolu pour que sa disparition ne reflow pas les écrans en transition. */
+  --nav-h: 78px;
+
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 16px;
   color: var(--dark);
@@ -66,6 +70,7 @@ body {
 }
 
 #app {
+  position: relative;
   max-width: 430px;
   margin: 0 auto;
   height: 100svh;
@@ -109,6 +114,142 @@ input {
   flex-direction: column;
   background: var(--bg);
   overflow: hidden;
+}
+
+/* Pile des écrans routés : pendant une transition l'écran sortant et l'écran
+   entrant coexistent, ils sont donc superposés en absolu dans ce conteneur.
+   Le nom de la transition est choisi par composables/routeTransition.ts. */
+.view-stack {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.view-stack > * {
+  position: absolute;
+  inset: 0;
+}
+
+/* Push / pop horizontal entre niveaux de hiérarchie */
+.slide-forward-enter-active,
+.slide-forward-leave-active,
+.slide-back-enter-active,
+.slide-back-leave-active {
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.slide-forward-enter-active,
+.slide-back-leave-active {
+  z-index: 2;
+  box-shadow: -8px 0 24px rgb(0 0 0 / 18%);
+}
+
+.slide-forward-leave-active,
+.slide-back-enter-active {
+  z-index: 1;
+}
+
+.slide-forward-enter-from,
+.slide-back-leave-to {
+  transform: translateX(100%);
+}
+
+.slide-forward-leave-to,
+.slide-back-enter-from {
+  transform: translateX(-25%);
+}
+
+/* Écrans d'action (formulaires, scanner) : montée depuis le bas */
+.modal-in-enter-active,
+.modal-in-leave-active,
+.modal-out-enter-active,
+.modal-out-leave-active {
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.modal-in-enter-active,
+.modal-out-leave-active {
+  z-index: 2;
+}
+
+.modal-in-leave-active,
+.modal-out-enter-active {
+  z-index: 1;
+}
+
+.modal-in-enter-from,
+.modal-out-leave-to {
+  transform: translateY(100%);
+}
+
+.modal-in-leave-to,
+.modal-out-enter-from {
+  transform: scale(0.96);
+}
+
+/* Onglets de la nav du bas : glissement court dans le sens du déplacement dans
+   la barre. Amplitude réduite pour rester distinct du push hiérarchique. */
+.tabs-forward-enter-active,
+.tabs-forward-leave-active,
+.tabs-back-enter-active,
+.tabs-back-leave-active {
+  transition:
+    transform 0.26s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.2s ease;
+}
+
+.tabs-forward-enter-active,
+.tabs-back-enter-active {
+  z-index: 2;
+}
+
+.tabs-forward-leave-active,
+.tabs-back-leave-active {
+  z-index: 1;
+}
+
+.tabs-forward-enter-from,
+.tabs-back-leave-to {
+  transform: translateX(28%);
+  opacity: 0;
+}
+
+.tabs-forward-leave-to,
+.tabs-back-enter-from {
+  transform: translateX(-28%);
+  opacity: 0;
+}
+
+/* Repli neutre : écrans de même niveau sans direction évidente */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.18s ease;
+}
+
+.fade-enter-active {
+  z-index: 2;
+}
+
+.fade-leave-active {
+  z-index: 1;
+}
+
+.fade-enter-from {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-stack > * {
+    transition: none !important;
+  }
+
+  .sheet-overlay,
+  .sheet,
+  .overlay,
+  .dialog {
+    animation: none !important;
+  }
 }
 
 /* Bouton icône rond 36px (headers, petites actions) */
