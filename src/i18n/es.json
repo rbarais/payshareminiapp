@@ -297,7 +297,8 @@
     "reason": "Liquidación · {groupName}"
   },
   "success": {
-    "backBtn": "← Volver al inicio",
+    "backBtn": "Volver al inicio",
+    "backBtnGroup": "Volver al grupo",
     "subtitle": "{amount} NIM enviados a {recipient}",
     "title": "¡Pago confirmado!",
     "txConfirmed": "Confirmado ✓",

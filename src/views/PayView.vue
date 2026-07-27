@@ -191,7 +191,11 @@ function goBack() {
 function handleSuccess(amount: number, recipient: string) {
   router.push({
     name: 'success',
-    query: { amount: amount.toString(), recipient },
+    query: {
+      amount: amount.toString(),
+      recipient,
+      ...(props.groupId ? { groupId: props.groupId } : {}),
+    },
   });
 }
 

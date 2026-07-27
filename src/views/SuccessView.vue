@@ -39,21 +39,34 @@
 
     <!-- Back button -->
     <div class="back-area">
-      <button class="btn-back" @click="goBack">{{ t('success.backBtn') }}</button>
+      <button class="btn-back" @click="goBack">
+        <ArrowLeftIcon width="17" height="17" />
+        <span>{{ backLabel }}</span>
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from '../stores/i18n';
+import ArrowLeftIcon from '../assets/svg/arrowLeft.svg';
 
-defineProps<{ amount: number; recipient: string }>();
+const props = defineProps<{ amount: number; recipient: string; groupId?: string }>();
 
 const router = useRouter();
 const { t } = useI18n();
 
+const backLabel = computed(() =>
+  props.groupId ? t('success.backBtnGroup') : t('success.backBtn'),
+);
+
 function goBack() {
+  if (props.groupId) {
+    router.push({ name: 'group', params: { id: props.groupId } });
+    return;
+  }
   router.push({ name: 'home' });
 }
 </script>
@@ -169,13 +182,15 @@ function goBack() {
 }
 
 .btn-back {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
   background: var(--ink);
   border: none;
   border-radius: 16px;
   padding: 17px;
-  text-align: center;
   font-size: 15px;
   font-weight: 700;
   color: var(--accent);

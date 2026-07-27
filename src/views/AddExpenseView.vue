@@ -11,17 +11,6 @@
     <!-- Amount -->
     <div class="amount-section">
       <div class="amount-display">{{ amount ? amount.toFixed(2) : '0.00' }}</div>
-      <div class="currency-row">
-        <button
-          v-for="currencyCode in CURRENCIES"
-          :key="currencyCode"
-          class="currency-pill"
-          :class="{ active: currency === currencyCode }"
-          @click="currency = currencyCode"
-        >
-          {{ currencyCode }}
-        </button>
-      </div>
     </div>
 
     <!-- Form -->
@@ -200,8 +189,6 @@ const myMemberId = computed(() => store.myMemberId(groupId.value, userId.value))
 onMounted(() => {
   if (!group.value) router.replace({ name: 'home' });
 });
-
-const CURRENCIES = ['NIM', 'ETH', 'USDT', 'EUR'];
 
 const description = ref('');
 const amount = ref<number | null>(null);

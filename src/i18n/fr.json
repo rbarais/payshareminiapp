@@ -297,7 +297,8 @@
     "reason": "Règlement · {groupName}"
   },
   "success": {
-    "backBtn": "← Retour à l'accueil",
+    "backBtn": "Retour à l'accueil",
+    "backBtnGroup": "Retour au groupe",
     "subtitle": "{amount} NIM envoyés à {recipient}",
     "title": "Paiement confirmé !",
     "txConfirmed": "Confirmé ✓",

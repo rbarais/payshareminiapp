@@ -62,7 +62,7 @@ const props = withDefaults(
     clickable?: boolean;
     canEdit?: boolean;
   }>(),
-  { clickable: true, progress: 0, canEdit: false },
+  { clickable: true, progress: 0, canEdit: false, txHash: null },
 );
 defineEmits<{ select: []; edit: [] }>();
 

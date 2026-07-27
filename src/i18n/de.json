@@ -297,7 +297,8 @@
     "reason": "Begleichung · {groupName}"
   },
   "success": {
-    "backBtn": "← Zurück zum Start",
+    "backBtn": "Zurück zum Start",
+    "backBtnGroup": "Zurück zur Gruppe",
     "subtitle": "{amount} NIM an {recipient} gesendet",
     "title": "Zahlung bestätigt!",
     "txConfirmed": "Bestätigt ✓",

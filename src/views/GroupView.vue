@@ -508,7 +508,7 @@ const onCloseMemberSheet = () => {
 .members-row {
   padding: 0 18px 16px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   flex-shrink: 0;
   flex-wrap: wrap;

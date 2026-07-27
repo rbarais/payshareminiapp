@@ -297,7 +297,8 @@
     "reason": "Settlement · {groupName}"
   },
   "success": {
-    "backBtn": "← Back to home",
+    "backBtn": "Back to home",
+    "backBtnGroup": "Back to group",
     "subtitle": "{amount} NIM sent to {recipient}",
     "title": "Payment confirmed!",
     "txConfirmed": "Confirmed ✓",

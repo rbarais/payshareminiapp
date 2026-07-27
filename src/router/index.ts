@@ -54,6 +54,7 @@ const routes: RouteRecordRaw[] = [
     props: (route) => ({
       amount: route.query.amount ? Number(route.query.amount) : 0,
       recipient: route.query.recipient || '',
+      groupId: (route.query.groupId as string) || undefined,
     }),
   },
   {
