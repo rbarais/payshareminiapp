@@ -169,6 +169,7 @@
     "nameLabel": "Your name",
     "namePlaceholder": "Your first name",
     "newMemberHint": "You are joining the group as a new member.",
+    "noneAvailable": "Nobody is waiting for you in this group yet. Ask the person who created it to add you, then open the link again.",
     "notInList": "I'm not in the list",
     "title": "Join a group",
     "toastAlreadyMember": "You are already a member of this group",

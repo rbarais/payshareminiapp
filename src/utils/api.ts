@@ -126,7 +126,7 @@ export async function fetchJoinPreview(
 export async function joinGroup(
   groupId: string,
   token: string,
-  options: { placeholderId: string } | { name: string },
+  options: { placeholderId: string },
 ): Promise<{ name: string; icon: string }> {
   return apiFetch<{ name: string; icon: string }>('/api/join', {
     method: 'POST',

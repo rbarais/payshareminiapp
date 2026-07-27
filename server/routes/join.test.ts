@@ -41,34 +41,40 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
-describe('POST /api/join — new member', () => {
-  it('inserts the member without a conflict target', async () => {
-    results.push([group]); // invite lookup
-    results.push([]); // insert
+describe('POST /api/join — without a placeholder', () => {
+  it('refuses to create a member from a name', async () => {
+    results.push([group]); // invite lookup, should not even be reached
     const res = await request(app)
       .post('/api/join')
       .send({ groupId: 'g1', token: 'tok', name: 'Léa' });
 
-    expect(res.status).toBe(200);
-    const insert = queries.find((query) => query.includes('INSERT INTO members'));
-    // A targeted ON CONFLICT (group_id, address) cannot be inferred: the unique
-    // index is partial (WHERE address IS NOT NULL), so Postgres raises 42P10.
-    expect(insert).toBeDefined();
-    expect(insert).not.toMatch(/ON CONFLICT\s*\(/i);
-  });
-
-  it('reports a database failure as 500, not as "already a member"', async () => {
-    results.push([group]);
-    results.push(new Error('there is no unique or exclusion constraint matching'));
-    const res = await request(app)
-      .post('/api/join')
-      .send({ groupId: 'g1', token: 'tok', name: 'Léa' });
-
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(queries.some((query) => query.includes('INSERT INTO members'))).toBe(false);
   });
 });
 
 describe('POST /api/join — claiming a placeholder', () => {
+  it('links the address to the claimed member', async () => {
+    results.push([group]);
+    results.push([{ id: 'm1' }]);
+    const res = await request(app)
+      .post('/api/join')
+      .send({ groupId: 'g1', token: 'tok', placeholderId: 'm1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ name: 'Rome', icon: 'person' });
+  });
+
+  it('reports a database failure as 500, not as "already a member"', async () => {
+    results.push([group]);
+    results.push(new Error('connection terminated unexpectedly'));
+    const res = await request(app)
+      .post('/api/join')
+      .send({ groupId: 'g1', token: 'tok', placeholderId: 'm1' });
+
+    expect(res.status).toBe(500);
+  });
+
   it('returns 409 when the address is already a member of the group', async () => {
     results.push([group]);
     results.push(Object.assign(new Error('duplicate key value'), { code: '23505' }));
@@ -77,16 +83,6 @@ describe('POST /api/join — claiming a placeholder', () => {
       .send({ groupId: 'g1', token: 'tok', placeholderId: 'm1' });
 
     expect(res.status).toBe(409);
-  });
-
-  it('reports any other database failure as 500', async () => {
-    results.push([group]);
-    results.push(new Error('connection terminated'));
-    const res = await request(app)
-      .post('/api/join')
-      .send({ groupId: 'g1', token: 'tok', placeholderId: 'm1' });
-
-    expect(res.status).toBe(500);
   });
 
   it('returns 409 when the placeholder is already claimed', async () => {

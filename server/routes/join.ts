@@ -47,20 +47,22 @@ router.get('/join/preview', async (req, res): Promise<void> => {
 });
 
 // POST /api/join
-// Two cases:
-//   1. placeholderId provided → link the address to the existing placeholder
-//   2. no placeholderId → insert a new member with their address
+// Joining means claiming a placeholder the group creator pre-added, which links
+// the address to it. There is no self-service way into a group.
 router.post('/join', requireAuth, async (req, res): Promise<void> => {
   const { address } = (req as AuthRequest).user;
-  const { groupId, token, placeholderId, name } = req.body as {
+  const { groupId, token, placeholderId } = req.body as {
     groupId?: string;
     token?: string;
     placeholderId?: string;
-    name?: string;
   };
 
   if (!groupId || !token) {
     res.status(400).json({ error: 'groupId and token required' });
+    return;
+  }
+  if (!placeholderId) {
+    res.status(400).json({ error: 'placeholderId required' });
     return;
   }
 
@@ -74,41 +76,24 @@ router.post('/join', requireAuth, async (req, res): Promise<void> => {
       return;
     }
 
-    if (placeholderId) {
-      // Case 1: the user claims a placeholder
-      let updated: { id: string }[];
-      try {
-        updated = await sql<{ id: string }[]>`
-          UPDATE members SET address = ${address}
-          WHERE id = ${placeholderId} AND group_id = ${groupId} AND address IS NULL
-          RETURNING id
-        `;
-      } catch (err) {
-        // 23505 = unique violation: the address is already in the group.
-        // Anything else is a real failure and must not be masked as a 409.
-        if ((err as { code?: string }).code !== '23505') throw err;
-        res.status(409).json({ error: 'already a member of this group' });
-        return;
-      }
-      if (updated.length === 0) {
-        // Either the placeholder does not exist, or it is already claimed
-        res.status(409).json({ error: 'placeholder not available' });
-        return;
-      }
-    } else {
-      // Case 2: new member
-      if (!name?.trim()) {
-        res.status(400).json({ error: 'name required' });
-        return;
-      }
-      // Untargeted ON CONFLICT: the unique index on (group_id, address) is
-      // partial (WHERE address IS NOT NULL), so naming the columns makes
-      // Postgres fail with 42P10 instead of ignoring the duplicate.
-      await sql`
-        INSERT INTO members (group_id, address, name)
-        VALUES (${groupId}, ${address}, ${name.trim()})
-        ON CONFLICT DO NOTHING
+    let updated: { id: string }[];
+    try {
+      updated = await sql<{ id: string }[]>`
+        UPDATE members SET address = ${address}
+        WHERE id = ${placeholderId} AND group_id = ${groupId} AND address IS NULL
+        RETURNING id
       `;
+    } catch (err) {
+      // 23505 = unique violation: the address is already in the group.
+      // Anything else is a real failure and must not be masked as a 409.
+      if ((err as { code?: string }).code !== '23505') throw err;
+      res.status(409).json({ error: 'already a member of this group' });
+      return;
+    }
+    if (updated.length === 0) {
+      // Either the placeholder does not exist, or it is already claimed
+      res.status(409).json({ error: 'placeholder not available' });
+      return;
     }
 
     const group = groups[0];

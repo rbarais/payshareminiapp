@@ -169,6 +169,7 @@
     "nameLabel": "Dein Name",
     "namePlaceholder": "Dein Vorname",
     "newMemberHint": "Du trittst der Gruppe als neues Mitglied bei.",
+    "noneAvailable": "In dieser Gruppe wartet noch niemand auf dich. Bitte die Person, die sie erstellt hat, dich hinzuzufügen, und öffne den Link erneut.",
     "notInList": "Ich bin nicht in der Liste",
     "title": "Einer Gruppe beitreten",
     "toastAlreadyMember": "Du bist bereits Mitglied dieser Gruppe",
