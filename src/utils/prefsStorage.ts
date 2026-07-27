@@ -1,8 +1,10 @@
 export type Theme = 'light' | 'dark' | 'auto';
 export type Locale = 'fr' | 'en' | 'de' | 'es';
+export type Currency = 'usd' | 'eur' | 'crc' | 'gmd';
 export interface Prefs {
   theme?: Theme;
   locale?: Locale;
+  currency?: Currency;
   displayName?: string;
 }
 

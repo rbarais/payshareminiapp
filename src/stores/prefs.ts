@@ -1,9 +1,10 @@
 import { reactive, computed } from 'vue';
-import { readPrefs, patchPrefs, type Theme } from '../utils/prefsStorage';
+import { readPrefs, patchPrefs, type Theme, type Currency } from '../utils/prefsStorage';
 
-const state = reactive<{ theme: Theme; displayName: string }>({
+const state = reactive<{ theme: Theme; displayName: string; currency: Currency }>({
   theme: readPrefs().theme ?? 'auto',
   displayName: readPrefs().displayName ?? '',
+  currency: readPrefs().currency ?? 'usd',
 });
 
 let listenerInstalled = false;
@@ -29,6 +30,13 @@ export function applyTheme(): void {
   }
 }
 
+export const currency = computed(() => state.currency);
+
+export function setCurrency(next: Currency): void {
+  state.currency = next;
+  patchPrefs({ currency: next });
+}
+
 export function usePrefs() {
   return {
     theme: computed(() => state.theme),
@@ -42,5 +50,7 @@ export function usePrefs() {
       state.displayName = name;
       patchPrefs({ displayName: name });
     },
+    currency,
+    setCurrency,
   };
 }
