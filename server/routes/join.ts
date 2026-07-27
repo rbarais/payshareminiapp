@@ -83,8 +83,10 @@ router.post('/join', requireAuth, async (req, res): Promise<void> => {
           WHERE id = ${placeholderId} AND group_id = ${groupId} AND address IS NULL
           RETURNING id
         `;
-      } catch {
-        // Unique constraint violated: the address is already in the group
+      } catch (err) {
+        // 23505 = unique violation: the address is already in the group.
+        // Anything else is a real failure and must not be masked as a 409.
+        if ((err as { code?: string }).code !== '23505') throw err;
         res.status(409).json({ error: 'already a member of this group' });
         return;
       }
@@ -99,16 +101,14 @@ router.post('/join', requireAuth, async (req, res): Promise<void> => {
         res.status(400).json({ error: 'name required' });
         return;
       }
-      try {
-        await sql`
-          INSERT INTO members (group_id, address, name)
-          VALUES (${groupId}, ${address}, ${name.trim()})
-          ON CONFLICT (group_id, address) DO NOTHING
-        `;
-      } catch {
-        res.status(409).json({ error: 'already a member of this group' });
-        return;
-      }
+      // Untargeted ON CONFLICT: the unique index on (group_id, address) is
+      // partial (WHERE address IS NOT NULL), so naming the columns makes
+      // Postgres fail with 42P10 instead of ignoring the duplicate.
+      await sql`
+        INSERT INTO members (group_id, address, name)
+        VALUES (${groupId}, ${address}, ${name.trim()})
+        ON CONFLICT DO NOTHING
+      `;
     }
 
     const group = groups[0];
