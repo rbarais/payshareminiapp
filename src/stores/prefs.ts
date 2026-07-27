@@ -1,10 +1,16 @@
 import { reactive, computed } from 'vue';
 import { readPrefs, patchPrefs, type Theme, type Currency } from '../utils/prefsStorage';
 
-const state = reactive<{ theme: Theme; displayName: string; currency: Currency }>({
+const state = reactive<{
+  theme: Theme;
+  displayName: string;
+  currency: Currency;
+  tourSeen: boolean;
+}>({
   theme: readPrefs().theme ?? 'auto',
   displayName: readPrefs().displayName ?? '',
   currency: readPrefs().currency ?? 'usd',
+  tourSeen: readPrefs().tourSeen ?? false,
 });
 
 let listenerInstalled = false;
@@ -52,5 +58,10 @@ export function usePrefs() {
     },
     currency,
     setCurrency,
+    tourSeen: computed(() => state.tourSeen),
+    setTourSeen(seen: boolean) {
+      state.tourSeen = seen;
+      patchPrefs({ tourSeen: seen });
+    },
   };
 }

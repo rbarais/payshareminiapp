@@ -211,8 +211,29 @@
       </div>
     </div>
 
-    <!-- About + Version -->
+    <!-- Tour + About + Version -->
     <div class="card card-list">
+      <button class="list-row" @click="$emit('replay-tour')">
+        <div class="list-left">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M2 8C2 4.7 4.7 2 8 2C10.4 2 12.5 3.4 13.4 5.5M14 8C14 11.3 11.3 14 8 14C5.6 14 3.5 12.6 2.6 10.5"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+            />
+            <path
+              d="M13.4 2.5V5.5H10.4M2.6 13.5V10.5H5.6"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span>{{ t('tour.replay') }}</span>
+        </div>
+        <ChevronRightIcon width="13" height="13" aria-hidden="true" />
+      </button>
       <button class="list-row" @click="goToAbout">
         <div class="list-left">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -254,7 +275,7 @@ import { fetchNimBalanceTotal } from '../utils/webclient';
 import { fiatApprox, fetchRates } from '../utils/rate';
 import type { Theme, Locale, Currency } from '../utils/prefsStorage';
 
-defineEmits<{ close: []; disconnect: [] }>();
+defineEmits<{ close: []; disconnect: []; 'replay-tour': [] }>();
 
 const session = useSession();
 const toast = useToast();
@@ -592,8 +613,10 @@ function comingSoon() {
   cursor: pointer;
   color: var(--text);
 }
-.list-row.static {
+.list-row + .list-row {
   border-top: 1px solid var(--border);
+}
+.list-row.static {
   cursor: default;
 }
 .list-left {

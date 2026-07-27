@@ -6,6 +6,7 @@ export interface Prefs {
   locale?: Locale;
   currency?: Currency;
   displayName?: string;
+  tourSeen?: boolean;
 }
 
 const KEY = 'payshare_prefs';

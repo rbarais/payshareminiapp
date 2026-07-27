@@ -23,7 +23,13 @@
     <Transition name="nav">
       <BottomNav v-if="showNav" :active="navActive" @open-settings="showSettings = true" />
     </Transition>
-    <SettingsSheet v-if="showSettings" @close="showSettings = false" @disconnect="askDisconnect" />
+    <SettingsSheet
+      v-if="showSettings"
+      @close="showSettings = false"
+      @disconnect="askDisconnect"
+      @replay-tour="replayTour"
+    />
+    <ProductTour v-if="showTour" @close="endTour" />
     <ConfirmDialog
       v-if="showDisconnectConfirm"
       :title="t('settings.disconnectConfirmTitle')"
@@ -50,13 +56,14 @@ import ToastHost from './components/ToastHost.vue';
 import BottomNav from './components/BottomNav.vue';
 import SettingsSheet from './components/SettingsSheet.vue';
 import ConfirmDialog from './components/ConfirmDialog.vue';
+import ProductTour from './components/ProductTour.vue';
 import { usePrefs } from './stores/prefs';
 import { transitionName } from './composables/routeTransition';
 
 const router = useRouter();
 const route = useRoute();
 const session = useSession();
-const { displayName } = usePrefs();
+const { displayName, tourSeen, setTourSeen } = usePrefs();
 
 const NAV_ROUTES = new Set(['home', 'groups', 'history']);
 const showNav = computed(() => NAV_ROUTES.has(route.name as string));
@@ -85,6 +92,30 @@ const showApp = computed(() => session.isLoggedIn.value && session.isNimiqApp.va
 
 // Once in the app, force the name-setup screen until a display name is chosen.
 const needsName = computed(() => showApp.value && !displayName.value);
+
+// ── Guided tour ───────────────────────────────────────────────────────────
+// Its steps point at the home screen, so it waits for the user to actually be
+// there (a deeplink can land the first session on the join or pay screen).
+const showTour = ref(false);
+
+watch(
+  () => showApp.value && !needsName.value && route.name === 'home',
+  (onHome) => {
+    if (onHome && !tourSeen.value && !showTour.value) showTour.value = true;
+  },
+  { immediate: true },
+);
+
+function endTour() {
+  showTour.value = false;
+  setTourSeen(true);
+}
+
+function replayTour() {
+  showSettings.value = false;
+  if (route.name !== 'home') router.push({ name: 'home' });
+  showTour.value = true;
+}
 
 // Replay any deeplink (?r=… payment, ?g=&t= invitation) as soon as we enter
 // the app.

@@ -3,29 +3,38 @@
     <!-- Header -->
     <div class="header">
       <div class="logo">PayShare</div>
-      <NotificationBell :unread="notifications.hasUnread.value" @click="openNotifications" />
+      <NotificationBell
+        data-tour="bell"
+        :unread="notifications.hasUnread.value"
+        @click="openNotifications"
+      />
     </div>
 
     <!-- Content -->
     <div class="content">
-      <GlobalBalanceCard :credited="credited" :owed="owed" />
+      <GlobalBalanceCard data-tour="balance" :credited="credited" :owed="owed" />
 
       <!-- Groups header -->
       <div class="section-row">
         <span class="section-title">{{ t('home.myGroups') }}</span>
         <div class="section-actions">
           <span v-if="syncing" class="syncing-dot" />
-          <button class="pill dark icon-btn" :aria-label="t('group.scanQr')" @click="goToScan">
+          <button
+            class="pill dark icon-btn"
+            data-tour="scan"
+            :aria-label="t('group.scanQr')"
+            @click="goToScan"
+          >
             <QrCodeIcon width="16" height="16" />
           </button>
-          <button class="pill dark icon-btn" @click="goToNewGroup">
+          <button class="pill dark icon-btn" data-tour="newgroup" @click="goToNewGroup">
             <PlusIcon width="16" height="16" />
           </button>
         </div>
       </div>
 
       <!-- Group list -->
-      <div v-if="groups.length" class="group-list">
+      <div v-if="groups.length" class="group-list" data-tour="grouplist">
         <GroupCard
           v-for="entry in groups"
           :key="entry.group.id"
@@ -40,6 +49,7 @@
       <!-- Empty state -->
       <EmptyState
         v-else
+        data-tour="grouplist"
         :title="t('home.emptyTitle')"
         :sub="t('home.emptySub')"
         :cta="t('home.emptyCta')"

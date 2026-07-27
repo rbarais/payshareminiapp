@@ -311,5 +311,40 @@
   },
   "toast": {
     "memberAdded": "{name} added"
+  },
+  "tour": {
+    "step": "Step {i}/{n}",
+    "skip": "Skip",
+    "next": "Next",
+    "finish": "Let's go!",
+    "replay": "Replay the tour",
+    "intro": {
+      "title": "Welcome to PayShare 👋",
+      "desc": "A quick tour of the essentials before you start."
+    },
+    "notifications": {
+      "title": "Stay in the loop",
+      "desc": "The bell lights up when an expense involves you, a payment arrives or a group is settled."
+    },
+    "balance": {
+      "title": "Your balances at a glance",
+      "desc": "What you are owed and what you owe, across every group, is always visible here."
+    },
+    "groupActions": {
+      "title": "Create or join a group",
+      "desc": "Trips, flatshares, dinners: add a group, or scan someone else’s QR code to join theirs."
+    },
+    "group": {
+      "title": "Open a group",
+      "desc": "That is where you add expenses, see who paid what, and settle your share with each creditor, expense by expense."
+    },
+    "tabs": {
+      "title": "History and profile",
+      "desc": "Find every payment recorded on the Nimiq blockchain here, and your wallet, language, currency and theme in the profile tab."
+    },
+    "outro": {
+      "title": "You are all set 🎉",
+      "desc": "You can replay this tour anytime from the settings."
+    }
   }
 }

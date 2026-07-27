@@ -31,7 +31,12 @@
       </svg>
       <span>{{ t('nav.groups') }}</span>
     </div>
-    <div class="nav-item" :class="{ active: active === 'history' }" @click="go('history')">
+    <div
+      class="nav-item"
+      data-tour="nav-history"
+      :class="{ active: active === 'history' }"
+      @click="go('history')"
+    >
       <svg :width="sizeIconBtn" :height="sizeIconBtn" viewBox="0 0 22 22" fill="none">
         <rect
           x="3"
@@ -57,7 +62,12 @@
       </svg>
       <span>{{ t('nav.history') }}</span>
     </div>
-    <div class="nav-item" :class="{ active: active === 'profile' }" @click="go('profile')">
+    <div
+      class="nav-item"
+      data-tour="nav-profile"
+      :class="{ active: active === 'profile' }"
+      @click="go('profile')"
+    >
       <div class="nav-identicon" :class="{ active: active === 'profile' }">
         <NimiqIdenticon :address="session.user.value?.id ?? ''" :size="sizeIconBtn" />
       </div>

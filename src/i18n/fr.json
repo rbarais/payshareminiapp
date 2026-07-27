@@ -311,5 +311,40 @@
   },
   "toast": {
     "memberAdded": "{name} ajouté"
+  },
+  "tour": {
+    "step": "Étape {i}/{n}",
+    "skip": "Passer",
+    "next": "Suivant",
+    "finish": "C'est parti !",
+    "replay": "Revoir la visite guidée",
+    "intro": {
+      "title": "Bienvenue sur PayShare 👋",
+      "desc": "Un tour rapide des fonctionnalités essentielles avant de commencer."
+    },
+    "notifications": {
+      "title": "Reste au courant",
+      "desc": "La cloche s’allume quand une dépense te concerne, qu’un paiement arrive ou qu’un groupe est soldé."
+    },
+    "balance": {
+      "title": "Tes soldes en un coup d’œil",
+      "desc": "Ce qu’on te doit et ce que tu dois, tous groupes confondus, sont toujours visibles ici."
+    },
+    "groupActions": {
+      "title": "Crée ou rejoins un groupe",
+      "desc": "Voyages, colocation, restos : ajoute un groupe, ou scanne le QR code d’un proche pour rejoindre le sien."
+    },
+    "group": {
+      "title": "Ouvre un groupe",
+      "desc": "Tu y ajoutes les dépenses, tu vois qui a payé quoi et tu règles ta part à chaque créancier, dépense par dépense."
+    },
+    "tabs": {
+      "title": "Historique et profil",
+      "desc": "Retrouve tous tes paiements enregistrés sur la blockchain Nimiq, et ton wallet, la langue, la devise et le thème dans l’onglet profil."
+    },
+    "outro": {
+      "title": "Tu es prêt 🎉",
+      "desc": "Tu peux revoir cette visite guidée à tout moment depuis les réglages."
+    }
   }
 }
