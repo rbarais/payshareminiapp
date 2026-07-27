@@ -15,11 +15,11 @@
         <span class="section-title">{{ t('home.myGroups') }}</span>
         <div class="section-actions">
           <span v-if="syncing" class="syncing-dot" />
-          <button class="pill dark" :aria-label="t('group.scanQr')" @click="goToScan">
-            <QrCodeIcon width="12" height="12" />
+          <button class="pill dark icon-btn" :aria-label="t('group.scanQr')" @click="goToScan">
+            <QrCodeIcon width="16" height="16" />
           </button>
-          <button class="pill dark" @click="goToNewGroup">
-            <PlusIcon width="12" height="12" />
+          <button class="pill dark icon-btn" @click="goToNewGroup">
+            <PlusIcon width="16" height="16" />
           </button>
         </div>
       </div>
@@ -182,6 +182,14 @@ function goToGroupFromNotification(groupId: string) {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .syncing-dot {

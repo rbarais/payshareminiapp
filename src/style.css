@@ -191,7 +191,7 @@ input {
   margin-top: 8px;
 }
 
-/* Pilules (filtres, petites actions) : .accent = jaune, .dark = sombre */
+/* Pilules (filtres, petites actions) : .accent = jaune, .dark = jaune en clair / sombre en dark */
 .pill {
   border: none;
   cursor: pointer;
@@ -219,12 +219,16 @@ input {
   padding: 6px 14px;
 }
 .pill.dark {
-  background: var(--ink);
-  color: var(--accent);
+  background: var(--accent);
+  color: var(--ink);
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 6px;
+}
+[data-theme='dark'] .pill.dark {
+  background: var(--ink);
+  color: var(--accent);
 }
 
 /* Formulaires : label uppercase + champ bordé */
