@@ -97,6 +97,7 @@ import { fetchRate, eurApprox } from '../utils/rate';
 import { captureError } from '../utils/errors';
 import type { ActivityEvent } from '../utils/history';
 import EmptyState from '../components/EmptyState.vue';
+import { useForegroundRefresh } from '../composables/useForegroundRefresh';
 
 type Filter = 'all' | 'sent' | 'received' | 'other';
 
@@ -108,15 +109,20 @@ const toast = useToast();
 const filters: Filter[] = ['all', 'sent', 'received', 'other'];
 const filter = ref<Filter>('all');
 
-onMounted(async () => {
-  fetchRate();
+async function sync(): Promise<void> {
   try {
     await store.refreshAll();
   } catch (err) {
     captureError(err, 'HistoryView.refreshAll');
     toast.show(t('error.syncFailed'), 'error');
   }
+}
+
+onMounted(async () => {
+  await fetchRate();
+  await sync();
 });
+useForegroundRefresh(sync);
 
 const userId = computed(() => session.user.value?.id ?? '');
 const feed = computed(() => store.activityFeed(userId.value));

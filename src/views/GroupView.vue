@@ -244,6 +244,7 @@ import DotsIcon from '../assets/svg/dots.svg';
 import PlusIcon from '../assets/svg/plus.svg';
 import CheckIcon from '../assets/svg/check.svg';
 import NimiqIdenticon from '../components/NimiqIdenticon.vue';
+import { useForegroundRefresh } from '../composables/useForegroundRefresh';
 
 const props = defineProps<{ id: string }>();
 
@@ -266,21 +267,27 @@ const debts = computed(() => store.grossDebtsForUser(props.id, userId.value));
 const grossDebt = computed(() => store.grossDebtTotal(props.id, userId.value));
 const grossCredit = computed(() => store.grossCreditForUser(props.id, userId.value));
 
-// Redirect if the group does not exist (invalid / deleted id).
-onMounted(async () => {
-  if (!group.value) {
-    await router.replace({ name: 'home' });
-    return;
-  }
-  // Refresh the group's expenses from Supabase on open.
+// Refresh the group's expenses from Supabase on open.
+async function sync(): Promise<void> {
+  if (!group.value) return;
   try {
     await store.refreshGroupExpenses(props.id);
   } catch (err) {
     captureError(err, 'GroupView.refreshGroupExpenses');
     toast.show(t('error.syncFailed'), 'error');
   }
+}
+
+// Redirect if the group does not exist (invalid / deleted id).
+onMounted(async () => {
+  if (!group.value) {
+    await router.replace({ name: 'home' });
+    return;
+  }
+  await sync();
   await fetchRate();
 });
+useForegroundRefresh(sync);
 
 const monthLabel = computed(() =>
   group.value

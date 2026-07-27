@@ -76,6 +76,7 @@ import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
 import { useNotifications } from '../composables/useNotifications';
 import { closeForNavigation } from '../composables/modalBack';
+import { useForegroundRefresh } from '../composables/useForegroundRefresh';
 
 const router = useRouter();
 const session = useSession();
@@ -86,14 +87,17 @@ const notifications = useNotifications();
 const showNotifications = ref(false);
 
 // Hydrate groups + expenses from the DB on open (stale-while-revalidate).
-onMounted(async () => {
+async function sync(): Promise<void> {
   try {
     await store.refreshAll();
   } catch (err) {
     captureError(err, 'HomeView.refreshAll');
     toast.show(t('error.syncFailed'), 'error');
   }
-});
+}
+
+onMounted(sync);
+useForegroundRefresh(sync);
 
 const userId = computed(() => session.user.value?.id ?? '');
 const syncing = computed(() => store.syncing.value);
