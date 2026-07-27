@@ -16,12 +16,20 @@ interface Entry {
   ts: number;
 }
 
+function isRates(value: unknown): value is Rates {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    Object.values(value).every((rate) => typeof rate === 'number')
+  );
+}
+
 function readEntry(): Entry | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Entry;
-    return parsed && typeof parsed.ts === 'number' && parsed.rates ? parsed : null;
+    return parsed && typeof parsed.ts === 'number' && isRates(parsed.rates) ? parsed : null;
   } catch {
     return null;
   }

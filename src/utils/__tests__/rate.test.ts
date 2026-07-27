@@ -55,6 +55,18 @@ describe('rate', () => {
     expect(rates.value).toEqual(FULL);
   });
 
+  it('ignore un cache mal formé (valeur non numérique) et refetch', async () => {
+    localStorage.setItem(
+      'payshare_rates',
+      JSON.stringify({ rates: { usd: 'abc' }, ts: Date.now() }),
+    );
+    mocks.getExchangeRates.mockResolvedValue({ nim: FULL });
+    const { fetchRates, rates } = await import('../rate');
+    await fetchRates();
+    expect(mocks.getExchangeRates).toHaveBeenCalled();
+    expect(rates.value).toEqual(FULL);
+  });
+
   it('refetch si le cache est périmé (> 10 min)', async () => {
     localStorage.setItem(
       'payshare_rates',
