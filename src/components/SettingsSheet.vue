@@ -24,7 +24,7 @@
             <span>NIM</span>
           </div>
           <div class="balance-amount">{{ nimLabel }}</div>
-          <div v-if="nimEurLabel" class="balance-eur">{{ nimEurLabel }}</div>
+          <div v-if="nimFiatLabel" class="balance-eur">{{ nimFiatLabel }}</div>
         </div>
       </div>
 
@@ -179,6 +179,22 @@
       </div>
     </div>
 
+    <!-- Currency -->
+    <div class="card">
+      <div class="card-label">{{ t('settings.currency') }}</div>
+      <div class="segmented">
+        <button
+          v-for="opt in currencies"
+          :key="opt.key"
+          class="seg"
+          :class="{ active: currency === opt.key }"
+          @click="setCurrency(opt.key)"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
+    </div>
+
     <!-- Theme -->
     <div class="card">
       <div class="card-label">{{ t('settings.theme') }}</div>
@@ -235,15 +251,15 @@ import { useToast } from '../stores/toast';
 import { useI18n } from '../stores/i18n';
 import { getConsensusEstablished, getBlockNumber } from '../utils/nimiq';
 import { fetchNimBalanceTotal } from '../utils/webclient';
-import { eurRate, fetchRate } from '../utils/rate';
-import type { Theme, Locale } from '../utils/prefsStorage';
+import { fiatApprox, fetchRates } from '../utils/rate';
+import type { Theme, Locale, Currency } from '../utils/prefsStorage';
 
 defineEmits<{ close: []; disconnect: [] }>();
 
 const session = useSession();
 const toast = useToast();
 
-const { theme, setTheme, displayName, setDisplayName } = usePrefs();
+const { theme, setTheme, displayName, setDisplayName, currency, setCurrency } = usePrefs();
 const { locale, setLocale, t } = useI18n();
 
 // Displayed in the "About" card. Bump manually with releases.
@@ -274,7 +290,7 @@ const blockLabel = computed(() =>
   blockNumber.value !== null ? '#' + blockNumber.value.toLocaleString('fr-FR') : '—',
 );
 
-// ── NIM balance (public JSON-RPC) + ≈ EUR (CoinGecko rate) ─────────────────
+// ── NIM balance (public JSON-RPC) + ≈ fiat (CoinGecko rate) ────────────────
 const nimBalance = ref<number | null>(null);
 const nimLabel = computed(() =>
   nimBalance.value !== null
@@ -284,11 +300,9 @@ const nimLabel = computed(() =>
       })
     : '—',
 );
-const nimEurLabel = computed(() => {
-  if (nimBalance.value === null || eurRate.value === null) return '';
-  const eur = nimBalance.value * eurRate.value;
-  return `≈ ${eur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR`;
-});
+const nimFiatLabel = computed(() =>
+  nimBalance.value !== null ? fiatApprox(nimBalance.value) : '',
+);
 
 // Chaque valeur s'affiche dès qu'elle arrive : un appel lent ou muet (pont natif
 // après une mise en veille) ne doit pas retenir l'affichage des autres.
@@ -303,7 +317,7 @@ onMounted(() => {
   void fetchNimBalanceTotal(addresses).then((balance) => {
     nimBalance.value = balance;
   });
-  void fetchRate();
+  void fetchRates();
 });
 
 // ── Options ────────────────────────────────────────────────────────────────
@@ -317,6 +331,12 @@ const locales: { key: Locale; label: string }[] = [
   { key: 'de', label: '🇩🇪 DE' },
   { key: 'en', label: '🇬🇧 EN' },
   { key: 'es', label: '🇪🇸 ES' },
+];
+const currencies: { key: Currency; label: string }[] = [
+  { key: 'usd', label: 'USD' },
+  { key: 'eur', label: 'EUR' },
+  { key: 'crc', label: 'CRC' },
+  { key: 'gmd', label: 'GMD' },
 ];
 
 function openCommunity(url: string) {

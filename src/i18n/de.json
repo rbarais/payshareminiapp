@@ -275,6 +275,7 @@
     "consensus": "Konsens",
     "consensusConnecting": "Verbindung…",
     "consensusEstablished": "Hergestellt",
+    "currency": "Währung",
     "disconnect": "Abmelden",
     "disconnectConfirmBody": "Du musst dich erneut über Nimiq Pay verbinden.",
     "disconnectConfirmTitle": "Abmelden?",

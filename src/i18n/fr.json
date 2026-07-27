@@ -275,6 +275,7 @@
     "consensus": "Consensus",
     "consensusConnecting": "Connexion…",
     "consensusEstablished": "Établi",
+    "currency": "Devise",
     "disconnect": "Se déconnecter",
     "disconnectConfirmBody": "Tu devras te reconnecter via Nimiq Pay.",
     "disconnectConfirmTitle": "Se déconnecter ?",

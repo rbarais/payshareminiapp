@@ -275,6 +275,7 @@
     "consensus": "Consensus",
     "consensusConnecting": "Connecting…",
     "consensusEstablished": "Established",
+    "currency": "Currency",
     "disconnect": "Sign out",
     "disconnectConfirmBody": "You'll need to reconnect through Nimiq Pay.",
     "disconnectConfirmTitle": "Sign out?",
