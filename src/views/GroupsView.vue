@@ -118,7 +118,7 @@ function goToGroup(id: string) {
 
 <style scoped>
 .header {
-  padding: 14px 20px;
+  padding: 14px var(--gutter);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -141,13 +141,13 @@ function goToGroup(id: string) {
 .filters {
   display: flex;
   gap: 8px;
-  padding: 0 20px 12px;
+  padding: 0 var(--gutter) 12px;
   flex-shrink: 0;
 }
 
 .content {
   flex: 1;
-  padding: 0 18px calc(16px + var(--nav-h));
+  padding: 0 var(--gutter) calc(16px + var(--nav-h));
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -166,5 +166,14 @@ function goToGroup(id: string) {
   display: flex;
   flex-direction: column;
   gap: 9px;
+}
+
+@media (min-width: 600px) {
+  .group-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    align-content: start;
+    gap: 12px;
+  }
 }
 </style>

@@ -119,6 +119,13 @@ function go(key: 'home' | 'groups' | 'history' | 'profile') {
   align-items: center;
 }
 
+@media (min-width: 600px) {
+  .bottom-nav {
+    justify-content: center;
+    gap: 64px;
+  }
+}
+
 .nav-enter-active,
 .nav-leave-active {
   transition:

@@ -72,6 +72,11 @@ function goBack() {
 </script>
 
 <style scoped>
+.screen {
+  max-width: var(--pane-max);
+  margin-inline: auto;
+}
+
 .center {
   flex: 1;
   display: flex;
@@ -177,7 +182,7 @@ function goBack() {
 
 /* Back button */
 .back-area {
-  padding: 0 18px 36px;
+  padding: 0 var(--gutter) 36px;
   animation: psFadeIn 0.4s ease 0.9s both;
 }
 

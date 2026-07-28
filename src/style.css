@@ -39,6 +39,23 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+@media (min-width: 600px) {
+  :root {
+    --app-max: 760px;
+    --gutter: 28px;
+    --pane-max: 520px;
+    --sheet-max: 520px;
+  }
+}
+
+@media (min-width: 840px) {
+  :root {
+    --app-max: 920px;
+    --gutter: 36px;
+    --sheet-max: 560px;
+  }
+}
+
 [data-theme='dark'] {
   --bg: #15130e;
   --bg-card: #1e1b15;
@@ -79,7 +96,8 @@ body {
 
 #app {
   position: relative;
-  max-width: 430px;
+  width: 100%;
+  max-width: var(--app-max);
   margin: 0 auto;
   height: 100svh;
   display: flex;

@@ -223,7 +223,7 @@ function daySectionLabel(date: Date): string {
 
 <style scoped>
 .header {
-  padding: 14px 20px 10px;
+  padding: 14px var(--gutter) 10px;
   flex-shrink: 0;
 }
 
@@ -242,7 +242,7 @@ function daySectionLabel(date: Date): string {
 
 .content {
   flex: 1;
-  padding: 4px 18px calc(16px + var(--nav-h));
+  padding: 4px var(--gutter) calc(16px + var(--nav-h));
   overflow-y: auto;
   min-height: 0;
   display: flex;
@@ -262,6 +262,18 @@ function daySectionLabel(date: Date): string {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 12px 0 2px;
+}
+
+@media (min-width: 600px) {
+  .day-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    align-content: start;
+  }
+
+  .day-label {
+    grid-column: 1 / -1;
+  }
 }
 
 .row {

@@ -306,10 +306,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.screen {
+  max-width: var(--pane-max);
+  margin-inline: auto;
+}
+
 .scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 0 18px;
+  padding: 0 var(--gutter);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -521,7 +526,7 @@ onUnmounted(() => {
 
 /* Buttons */
 .actions {
-  padding: 0 18px 10px;
+  padding: 0 var(--gutter) 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -563,7 +568,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 18px 40px;
+  padding: 20px var(--gutter) 40px;
   gap: 8px;
 }
 

@@ -163,9 +163,14 @@ async function done() {
 </script>
 
 <style scoped>
+.screen {
+  max-width: var(--pane-max);
+  margin-inline: auto;
+}
+
 .content {
   flex: 1;
-  padding: 0 18px;
+  padding: 0 var(--gutter);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -300,7 +305,7 @@ async function done() {
 
 /* CTA */
 .cta-area {
-  padding: 14px 18px 28px;
+  padding: 14px var(--gutter) 28px;
   flex-shrink: 0;
 }
 </style>

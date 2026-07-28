@@ -513,7 +513,7 @@ const onCloseMemberSheet = () => {
 <style scoped>
 /* Members */
 .members-row {
-  padding: 0 18px 16px;
+  padding: 0 var(--gutter) 16px;
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -575,7 +575,7 @@ const onCloseMemberSheet = () => {
 
 /* Balance cards */
 .tosettle-section {
-  margin: 0 18px 14px;
+  margin: 0 var(--gutter) 14px;
   flex-shrink: 0;
 }
 
@@ -599,7 +599,7 @@ const onCloseMemberSheet = () => {
 }
 
 .credit-card {
-  margin: 0 18px 14px;
+  margin: 0 var(--gutter) 14px;
   background: var(--green-bg);
   border: 1px solid var(--green-border);
   border-radius: 16px;
@@ -621,7 +621,7 @@ const onCloseMemberSheet = () => {
 }
 
 .settled-card {
-  margin: 0 18px 14px;
+  margin: 0 var(--gutter) 14px;
   background: var(--green-bg);
   border: 1px solid var(--green-border);
   border-radius: 16px;
@@ -658,7 +658,7 @@ const onCloseMemberSheet = () => {
 
 /* Expenses */
 .expenses-header {
-  padding: 0 18px;
+  padding: 0 var(--gutter);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -674,11 +674,20 @@ const onCloseMemberSheet = () => {
 
 .expense-list {
   flex: 1;
-  padding: 0 18px 14px;
+  padding: 0 var(--gutter) 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
+}
+
+@media (min-width: 600px) {
+  .expense-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    align-content: start;
+    gap: 12px;
+  }
 }
 
 /* Empty expenses */
@@ -689,7 +698,7 @@ const onCloseMemberSheet = () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 30px 18px;
+  padding: 30px var(--gutter);
   text-align: center;
 }
 

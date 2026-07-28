@@ -184,9 +184,14 @@ const canJoin = () => choice.value !== null;
 </script>
 
 <style scoped>
+.screen {
+  max-width: var(--pane-max);
+  margin-inline: auto;
+}
+
 .content {
   flex: 1;
-  padding: 0 18px;
+  padding: 0 var(--gutter);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -312,7 +317,7 @@ const canJoin = () => choice.value !== null;
   align-self: flex-start;
 }
 .cta-area {
-  padding: 16px 18px calc(16px + env(safe-area-inset-bottom));
+  padding: 16px var(--gutter) calc(16px + env(safe-area-inset-bottom));
   flex-shrink: 0;
 }
 </style>

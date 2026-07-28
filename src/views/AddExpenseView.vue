@@ -328,6 +328,11 @@ function goBack() {
 </script>
 
 <style scoped>
+.screen {
+  max-width: var(--pane-max);
+  margin-inline: auto;
+}
+
 .icon-btn.accent {
   background: var(--accent);
   color: var(--ink);
@@ -335,7 +340,7 @@ function goBack() {
 
 /* Amount */
 .amount-section {
-  padding: 4px 18px 18px;
+  padding: 4px var(--gutter) 18px;
   text-align: center;
   flex-shrink: 0;
 }
@@ -378,7 +383,7 @@ function goBack() {
 /* Form */
 .form-area {
   flex: 1;
-  padding: 0 18px;
+  padding: 0 var(--gutter);
   display: flex;
   flex-direction: column;
   gap: 9px;
@@ -593,7 +598,7 @@ function goBack() {
 
 /* CTA */
 .cta-area {
-  padding: 14px 18px 28px;
+  padding: 14px var(--gutter) 28px;
   flex-shrink: 0;
 }
 </style>

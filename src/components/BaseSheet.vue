@@ -45,7 +45,7 @@ useModalBack(() => emit('close'));
 
 .sheet {
   width: 100%;
-  max-width: 430px;
+  max-width: var(--sheet-max);
   margin: 0 auto;
   background: var(--bg-card);
   border-radius: 24px 24px 0 0;

@@ -24,7 +24,7 @@ defineEmits<{ back: [] }>();
 
 <style scoped>
 .screen-header {
-  padding: 8px 18px 16px;
+  padding: 8px var(--gutter) 16px;
   display: flex;
   align-items: center;
   gap: 12px;

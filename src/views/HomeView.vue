@@ -153,7 +153,7 @@ function goToGroupFromNotification(groupId: string) {
 <style scoped>
 /* Header */
 .header {
-  padding: 10px 20px 14px;
+  padding: 10px var(--gutter) 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -170,7 +170,7 @@ function goToGroupFromNotification(groupId: string) {
 /* Content */
 .content {
   flex: 1;
-  padding: 0 18px calc(16px + var(--nav-h));
+  padding: 0 var(--gutter) calc(16px + var(--nav-h));
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -232,5 +232,14 @@ function goToGroupFromNotification(groupId: string) {
   display: flex;
   flex-direction: column;
   gap: 9px;
+}
+
+@media (min-width: 600px) {
+  .group-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    align-content: start;
+    gap: 12px;
+  }
 }
 </style>
