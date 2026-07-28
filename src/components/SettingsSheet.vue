@@ -284,7 +284,7 @@ const { theme, setTheme, displayName, setDisplayName, currency, setCurrency } = 
 const { locale, setLocale, t } = useI18n();
 
 // Displayed in the "About" card. Bump manually with releases.
-const appVersion = 'v0.1.0-proto';
+const appVersion = 'v1.0.0';
 
 // ── Name editing ──────────────────────────────────────────────────────────
 const currentName = () => displayName.value || session.user.value?.name || '';
