@@ -1,4 +1,4 @@
-import { i18n } from '.';
+import { i18n, FALLBACK_LOCALE } from '.';
 import type { Locale } from '../utils/prefsStorage';
 
 // URL du Content Delivery Tolgee (publique, pas de clé). Non définie → no-op :
@@ -22,11 +22,11 @@ async function fetchLocale(locale: Locale): Promise<void> {
  * Rafraîchit les traductions depuis Tolgee au démarrage, sans bloquer l'affichage :
  * l'app est déjà montée avec les trads bundlées, et vue-i18n met à jour l'UI de
  * façon réactive dès que le fetch aboutit. On hydrate la langue active + le
- * fallback `fr`.
+ * fallback (anglais).
  */
 export async function hydrateFromTolgee(): Promise<void> {
   if (!CDN) return;
   const active = i18n.global.locale.value as Locale;
-  const locales = Array.from(new Set<Locale>([active, 'fr']));
+  const locales = Array.from(new Set<Locale>([active, FALLBACK_LOCALE]));
   await Promise.all(locales.map(fetchLocale));
 }

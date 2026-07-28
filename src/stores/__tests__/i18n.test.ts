@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { i18n, messages } from '../../i18n';
+import type { Locale } from '../../utils/prefsStorage';
 
 const { t } = i18n.global;
 
@@ -16,10 +17,10 @@ describe('i18n', () => {
     expect(t('toast.memberAdded', { name: 'Alice' })).toBe('Alice ajouté');
   });
 
-  it('retombe sur le FR (fallbackLocale) quand la clé manque dans la locale', () => {
-    i18n.global.locale.value = 'en';
-    // On vérifie surtout qu'on ne renvoie pas la clé brute.
-    expect(t('common.cancel')).not.toBe('common.cancel');
+  it("retombe sur l'anglais pour une langue non traduite (ex. pt de Nimiq Pay)", () => {
+    expect(i18n.global.fallbackLocale.value).toBe('en');
+    i18n.global.locale.value = 'pt' as Locale;
+    expect(t('common.cancel')).toBe('Cancel');
   });
 
   it('renvoie la clé brute si elle est totalement inconnue', () => {
@@ -42,15 +43,16 @@ describe('i18n', () => {
     expect(t('group.membersCount', { count: 2 }, 2)).toBe('2 membres');
   });
 
-  it('FR et EN exposent exactement le même ensemble de clés', () => {
+  it("toutes les locales exposent le même ensemble de clés que l'anglais (référence)", () => {
     const flatten = (obj: object, prefix = ''): string[] =>
       Object.entries(obj).flatMap(([key, val]) =>
         val && typeof val === 'object'
           ? flatten(val as object, `${prefix}${key}.`)
           : [`${prefix}${key}`],
       );
-    const frKeys = flatten(messages.fr).sort();
     const enKeys = flatten(messages.en).sort();
-    expect(enKeys).toEqual(frKeys);
+    for (const locale of ['fr', 'de', 'es'] as const) {
+      expect(flatten(messages[locale]).sort(), locale).toEqual(enKeys);
+    }
   });
 });
