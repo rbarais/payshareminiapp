@@ -23,6 +23,7 @@
     "@noble/ed25519": "^3.1.0",
     "@noble/hashes": "^2.2.0",
     "@sentry/vue": "^10.62.0",
+    "@vercel/analytics": "^2.0.1",
     "express": "^5.2.1",
     "jose": "^6.2.3",
     "jsqr": "^1.4.0",

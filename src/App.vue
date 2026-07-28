@@ -1,4 +1,5 @@
 <template>
+  <Analytics />
   <LoginView v-if="!showApp" />
   <NameSetup v-else-if="needsName" />
   <template v-else>
@@ -59,6 +60,7 @@ import ConfirmDialog from './components/ConfirmDialog.vue';
 import ProductTour from './components/ProductTour.vue';
 import { usePrefs } from './stores/prefs';
 import { transitionName } from './composables/routeTransition';
+import { Analytics } from '@vercel/analytics/vue';
 
 const router = useRouter();
 const route = useRoute();
