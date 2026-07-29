@@ -15,30 +15,38 @@ withDefaults(
 
 <style scoped>
 .skeleton-block {
-  background: linear-gradient(
-    90deg,
-    var(--border-subtle) 25%,
-    var(--border) 37%,
-    var(--border-subtle) 63%
-  );
-  background-size: 400% 100%;
-  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+  background: var(--border-subtle);
   flex-shrink: 0;
 }
 
+.skeleton-block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 15%,
+    rgba(255, 255, 255, 0.65) 50%,
+    transparent 85%
+  );
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
 @keyframes skeleton-shimmer {
-  0% {
-    background-position: 100% 50%;
+  from {
+    transform: translateX(-100%);
   }
-  100% {
-    background-position: 0 50%;
+  to {
+    transform: translateX(100%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton-block {
+  .skeleton-block::after {
     animation: none;
-    background: var(--border-subtle);
+    content: none;
   }
 }
 </style>
