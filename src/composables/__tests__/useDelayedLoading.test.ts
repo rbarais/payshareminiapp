@@ -54,10 +54,28 @@ describe('useDelayedLoading', () => {
     expect(loading.active.value).toBe(false);
   });
 
-  it('a second start() replaces a still-pending timer', () => {
+  it('a second start() restarts the delay instead of letting the first timer fire', () => {
     const loading = useDelayedLoading();
     loading.start(350);
+    vi.advanceTimersByTime(100);
+    loading.start(350);
+    vi.advanceTimersByTime(300); // 400ms since the first start(), but only 300ms since the second
+    expect(loading.active.value).toBe(false);
+    vi.advanceTimersByTime(50); // now 350ms since the second start()
+    expect(loading.active.value).toBe(true);
+  });
+
+  it('stop() before any start() is a no-op', () => {
+    const loading = useDelayedLoading();
+    loading.stop();
+    expect(loading.active.value).toBe(false);
+  });
+
+  it('start(350) while already active stays active', () => {
+    const loading = useDelayedLoading();
     loading.start(0);
+    expect(loading.active.value).toBe(true);
+    loading.start(350);
     expect(loading.active.value).toBe(true);
   });
 });
