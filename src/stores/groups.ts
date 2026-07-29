@@ -38,6 +38,8 @@ interface State {
   expenses: Expense[];
   settlements: Settlement[];
   syncing: boolean;
+  hydrated: boolean;
+  hydratedGroupIds: Set<string>;
 }
 
 const state = reactive<State>({
@@ -45,6 +47,8 @@ const state = reactive<State>({
   expenses: loadExpenses(),
   settlements: loadSettlements(),
   syncing: false,
+  hydrated: false,
+  hydratedGroupIds: new Set(),
 });
 
 watch(
@@ -317,6 +321,8 @@ export function useGroupsStore() {
     groups: computed(() => state.groups),
     expenses: computed(() => state.expenses),
     syncing: computed(() => state.syncing),
+    hydrated: computed(() => state.hydrated),
+    isGroupHydrated: (groupId: string): boolean => state.hydratedGroupIds.has(groupId),
 
     getGroup: (id: string) => state.groups.find((group) => group.id === id) ?? null,
     groupExpenses: (groupId: string) =>
@@ -559,25 +565,30 @@ export function useGroupsStore() {
         state.settlements = allSettlements;
       } finally {
         state.syncing = false;
+        state.hydrated = true;
       }
     },
 
     async refreshGroupExpenses(groupId: string): Promise<void> {
-      const [members, expenses, settlements] = await Promise.all([
-        fetchGroupMembers(groupId),
-        fetchGroupExpenses(groupId),
-        fetchGroupSettlements(groupId),
-      ]);
-      const group = state.groups.find((item) => item.id === groupId);
-      if (group) group.members = members;
-      state.expenses = [
-        ...state.expenses.filter((expense) => expense.groupId !== groupId),
-        ...expenses,
-      ];
-      state.settlements = [
-        ...state.settlements.filter((settlement) => settlement.groupId !== groupId),
-        ...settlements,
-      ];
+      try {
+        const [members, expenses, settlements] = await Promise.all([
+          fetchGroupMembers(groupId),
+          fetchGroupExpenses(groupId),
+          fetchGroupSettlements(groupId),
+        ]);
+        const group = state.groups.find((item) => item.id === groupId);
+        if (group) group.members = members;
+        state.expenses = [
+          ...state.expenses.filter((expense) => expense.groupId !== groupId),
+          ...expenses,
+        ];
+        state.settlements = [
+          ...state.settlements.filter((settlement) => settlement.groupId !== groupId),
+          ...settlements,
+        ];
+      } finally {
+        state.hydratedGroupIds.add(groupId);
+      }
     },
 
     computeShares,

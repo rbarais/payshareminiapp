@@ -1,5 +1,7 @@
 import { ref, type Ref } from 'vue';
 
+export const SKELETON_DELAY_MS = 350;
+
 export interface DelayedLoading {
   active: Ref<boolean>;
   start(delayMs?: number): void;
