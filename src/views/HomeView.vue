@@ -101,7 +101,7 @@ import { useI18n } from '../stores/i18n';
 import { useNotifications } from '../composables/useNotifications';
 import { closeForNavigation } from '../composables/modalBack';
 import { useForegroundRefresh } from '../composables/useForegroundRefresh';
-import { useDelayedLoading } from '../composables/useDelayedLoading';
+import { useDelayedLoading, SKELETON_DELAY_MS } from '../composables/useDelayedLoading';
 import SkeletonBlock from '../components/SkeletonBlock.vue';
 
 const router = useRouter();
@@ -117,7 +117,7 @@ const showNotifications = ref(false);
 // Skeleton shows immediately if there is nothing cached yet, or after a
 // short delay if a refresh of already-visible data takes a while.
 async function sync(): Promise<void> {
-  skeleton.start(store.groups.value.length ? 350 : 0);
+  skeleton.start(store.hydrated.value || store.groups.value.length ? SKELETON_DELAY_MS : 0);
   try {
     await store.refreshAll();
   } catch (err) {

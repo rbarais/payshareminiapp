@@ -263,7 +263,7 @@ import PlusIcon from '../assets/svg/plus.svg';
 import CheckIcon from '../assets/svg/check.svg';
 import NimiqIdenticon from '../components/NimiqIdenticon.vue';
 import { useForegroundRefresh } from '../composables/useForegroundRefresh';
-import { useDelayedLoading } from '../composables/useDelayedLoading';
+import { useDelayedLoading, SKELETON_DELAY_MS } from '../composables/useDelayedLoading';
 
 const props = defineProps<{ id: string }>();
 
@@ -290,7 +290,9 @@ const skeleton = useDelayedLoading();
 // Refresh the group's expenses from Supabase on open.
 async function sync(): Promise<void> {
   if (!group.value) return;
-  skeleton.start(expenses.value.length ? 350 : 0);
+  skeleton.start(
+    store.isGroupHydrated(props.id) || expenses.value.length ? SKELETON_DELAY_MS : 0,
+  );
   try {
     await store.refreshGroupExpenses(props.id);
   } catch (err) {

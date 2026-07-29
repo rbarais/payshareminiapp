@@ -114,7 +114,7 @@ import type { ActivityEvent } from '../utils/history';
 import EmptyState from '../components/EmptyState.vue';
 import SkeletonBlock from '../components/SkeletonBlock.vue';
 import { useForegroundRefresh } from '../composables/useForegroundRefresh';
-import { useDelayedLoading } from '../composables/useDelayedLoading';
+import { useDelayedLoading, SKELETON_DELAY_MS } from '../composables/useDelayedLoading';
 
 type Filter = 'all' | 'sent' | 'received' | 'other';
 
@@ -127,12 +127,13 @@ const filters: Filter[] = ['all', 'sent', 'received', 'other'];
 const filter = ref<Filter>('all');
 const skeleton = useDelayedLoading();
 
-// `sections` is declared further down (it's a computed derived from the
-// store), but sync() is only ever invoked from onMounted/useForegroundRefresh
-// — both run after this whole setup() body has finished — so referencing it
-// here is safe.
+// Keyed on the unfiltered feed (not `sections`, which is derived from the
+// active filter) — a filter's "no match" state shouldn't be confused with
+// "still loading". `feed` is declared further down, but sync() is only ever
+// invoked from onMounted/useForegroundRefresh — both run after this whole
+// setup() body has finished — so referencing it here is safe.
 async function sync(): Promise<void> {
-  skeleton.start(sections.value.length ? 350 : 0);
+  skeleton.start(store.hydrated.value || feed.value.length ? SKELETON_DELAY_MS : 0);
   try {
     await store.refreshAll();
   } catch (err) {

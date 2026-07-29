@@ -78,7 +78,7 @@ import { useI18n } from '../stores/i18n';
 import { useToast } from '../stores/toast';
 import { captureError } from '../utils/errors';
 import { useForegroundRefresh } from '../composables/useForegroundRefresh';
-import { useDelayedLoading } from '../composables/useDelayedLoading';
+import { useDelayedLoading, SKELETON_DELAY_MS } from '../composables/useDelayedLoading';
 import GroupCard from '../components/GroupCard.vue';
 import EmptyState from '../components/EmptyState.vue';
 import SkeletonBlock from '../components/SkeletonBlock.vue';
@@ -100,7 +100,7 @@ const skeleton = useDelayedLoading();
 // same store but wasn't triggering its own fetch, so a direct visit to
 // /groups could show a stale or empty list with no refresh in flight.
 async function sync(): Promise<void> {
-  skeleton.start(store.groups.value.length ? 350 : 0);
+  skeleton.start(store.hydrated.value || store.groups.value.length ? SKELETON_DELAY_MS : 0);
   try {
     await store.refreshAll();
   } catch (err) {
