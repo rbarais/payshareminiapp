@@ -33,8 +33,22 @@
         </div>
       </div>
 
+      <!-- Group list skeleton: immediate on cold start, delayed on a slow refresh -->
+      <div v-if="skeleton.active" class="group-list" data-tour="grouplist">
+        <div v-for="n in 3" :key="n" class="group-card-skeleton">
+          <SkeletonBlock width="44px" height="44px" radius="13px" />
+          <div class="group-card-skeleton-info">
+            <SkeletonBlock width="60%" height="13px" />
+            <SkeletonBlock width="40%" height="11px" />
+          </div>
+          <div class="group-card-skeleton-amount">
+            <SkeletonBlock width="50px" height="13px" />
+          </div>
+        </div>
+      </div>
+
       <!-- Group list -->
-      <div v-if="groups.length" class="group-list" data-tour="grouplist">
+      <div v-else-if="groups.length" class="group-list" data-tour="grouplist">
         <GroupCard
           v-for="entry in groups"
           :key="entry.group.id"
@@ -87,6 +101,8 @@ import { useI18n } from '../stores/i18n';
 import { useNotifications } from '../composables/useNotifications';
 import { closeForNavigation } from '../composables/modalBack';
 import { useForegroundRefresh } from '../composables/useForegroundRefresh';
+import { useDelayedLoading } from '../composables/useDelayedLoading';
+import SkeletonBlock from '../components/SkeletonBlock.vue';
 
 const router = useRouter();
 const session = useSession();
@@ -94,15 +110,21 @@ const store = useGroupsStore();
 const toast = useToast();
 const { t } = useI18n();
 const notifications = useNotifications();
+const skeleton = useDelayedLoading();
 const showNotifications = ref(false);
 
 // Hydrate groups + expenses from the DB on open (stale-while-revalidate).
+// Skeleton shows immediately if there is nothing cached yet, or after a
+// short delay if a refresh of already-visible data takes a while.
 async function sync(): Promise<void> {
+  skeleton.start(store.groups.value.length ? 350 : 0);
   try {
     await store.refreshAll();
   } catch (err) {
     captureError(err, 'HomeView.refreshAll');
     toast.show(t('error.syncFailed'), 'error');
+  } finally {
+    skeleton.stop();
   }
 }
 
@@ -241,5 +263,28 @@ function goToGroupFromNotification(groupId: string) {
     align-content: start;
     gap: 12px;
   }
+}
+
+.group-card-skeleton {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.group-card-skeleton-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.group-card-skeleton-amount {
+  flex-shrink: 0;
 }
 </style>
