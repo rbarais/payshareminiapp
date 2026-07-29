@@ -34,7 +34,7 @@
       </div>
 
       <!-- Group list skeleton: immediate on cold start, delayed on a slow refresh -->
-      <div v-if="skeleton.active" class="group-list" data-tour="grouplist">
+      <div v-if="skeleton.active.value" class="group-list" data-tour="grouplist">
         <div v-for="n in 3" :key="n" class="group-card-skeleton">
           <SkeletonBlock width="44px" height="44px" radius="13px" />
           <div class="group-card-skeleton-info">
