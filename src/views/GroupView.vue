@@ -61,8 +61,25 @@
       <button class="pill accent" @click="goToAddExpense">{{ t('group.addExpense') }}</button>
     </div>
 
+    <!-- Expense list skeleton: immediate on cold start, delayed on a slow refresh -->
+    <div v-if="skeleton.active.value" class="expense-list">
+      <div v-for="n in 2" :key="n" class="expense-card-skeleton">
+        <div class="expense-card-skeleton-top">
+          <div class="expense-card-skeleton-left">
+            <SkeletonBlock width="70%" height="13px" />
+            <SkeletonBlock width="45%" height="11px" />
+          </div>
+          <div class="expense-card-skeleton-right">
+            <SkeletonBlock width="60px" height="13px" />
+            <SkeletonBlock width="40px" height="10px" />
+          </div>
+        </div>
+        <SkeletonBlock height="3px" radius="2px" />
+      </div>
+    </div>
+
     <!-- Expense list -->
-    <div v-if="expenses.length" class="expense-list">
+    <div v-else-if="expenses.length" class="expense-list">
       <ExpenseCard
         v-for="exp in expenses"
         :key="exp.id"
@@ -239,12 +256,14 @@ import ScreenHeader from '../components/ScreenHeader.vue';
 import ButtonSpinner from '../components/ButtonSpinner.vue';
 import GroupIconPicker from '../components/GroupIconPicker.vue';
 import QRCodeGenerator from '../components/QRCodeGenerator.vue';
+import SkeletonBlock from '../components/SkeletonBlock.vue';
 import ShareIcon from '../assets/svg/share.svg';
 import DotsIcon from '../assets/svg/dots.svg';
 import PlusIcon from '../assets/svg/plus.svg';
 import CheckIcon from '../assets/svg/check.svg';
 import NimiqIdenticon from '../components/NimiqIdenticon.vue';
 import { useForegroundRefresh } from '../composables/useForegroundRefresh';
+import { useDelayedLoading } from '../composables/useDelayedLoading';
 
 const props = defineProps<{ id: string }>();
 
@@ -266,15 +285,19 @@ const isCreator = computed(() => group.value?.creatorId === userId.value);
 const debts = computed(() => store.grossDebtsForUser(props.id, userId.value));
 const grossDebt = computed(() => store.grossDebtTotal(props.id, userId.value));
 const grossCredit = computed(() => store.grossCreditForUser(props.id, userId.value));
+const skeleton = useDelayedLoading();
 
 // Refresh the group's expenses from Supabase on open.
 async function sync(): Promise<void> {
   if (!group.value) return;
+  skeleton.start(expenses.value.length ? 350 : 0);
   try {
     await store.refreshGroupExpenses(props.id);
   } catch (err) {
     captureError(err, 'GroupView.refreshGroupExpenses');
     toast.show(t('error.syncFailed'), 'error');
+  } finally {
+    skeleton.stop();
   }
 }
 
@@ -688,6 +711,40 @@ const onCloseMemberSheet = () => {
     align-content: start;
     gap: 12px;
   }
+}
+
+.expense-card-skeleton {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 13px 15px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.expense-card-skeleton-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.expense-card-skeleton-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-right: 12px;
+}
+
+.expense-card-skeleton-right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
 }
 
 /* Empty expenses */
