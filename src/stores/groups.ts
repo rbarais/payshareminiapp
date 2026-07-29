@@ -27,6 +27,7 @@ import {
   fetchGroupSettlements,
   fetchGroupMembers,
   addPlaceholderMember,
+  fetchAllExpenses,
   fetchAllSettlements,
 } from '../utils/api';
 import { buildActivityFeed, type ActivityEvent } from '../utils/history';
@@ -548,13 +549,13 @@ export function useGroupsStore() {
     async refreshAll(): Promise<void> {
       state.syncing = true;
       try {
-        const groups = await fetchMyGroups();
-        const [allExpenses, allSettlements] = await Promise.all([
-          Promise.all(groups.map((group) => fetchGroupExpenses(group.id))),
+        const [groups, allExpenses, allSettlements] = await Promise.all([
+          fetchMyGroups(),
+          fetchAllExpenses(),
           fetchAllSettlements(),
         ]);
         state.groups = groups;
-        state.expenses = allExpenses.flat();
+        state.expenses = allExpenses;
         state.settlements = allSettlements;
       } finally {
         state.syncing = false;

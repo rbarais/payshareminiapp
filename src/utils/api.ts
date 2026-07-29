@@ -49,6 +49,11 @@ export async function fetchMyGroups(): Promise<Group[]> {
   }));
 }
 
+export async function fetchAllExpenses(): Promise<Expense[]> {
+  const expenses = await apiFetch<SerializedExpense[]>('/api/groups/expenses');
+  return expenses.map((expense) => ({ ...expense, createdAt: new Date(expense.createdAt) }));
+}
+
 export async function fetchGroupExpenses(groupId: string): Promise<Expense[]> {
   const expenses = await apiFetch<SerializedExpense[]>(`/api/groups/${groupId}/expenses`);
   return expenses.map((expense) => ({ ...expense, createdAt: new Date(expense.createdAt) }));

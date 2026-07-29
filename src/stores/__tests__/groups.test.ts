@@ -12,6 +12,7 @@ vi.mock('../../utils/api', () => ({
   insertExpense: vi.fn(async () => {}),
   insertSettlement: vi.fn(async () => {}),
   fetchMyGroups: vi.fn(async () => []),
+  fetchAllExpenses: vi.fn(async () => []),
   fetchGroupExpenses: vi.fn(async () => []),
   fetchGroupSettlements: vi.fn(async () => []),
   addPlaceholderMember: vi.fn(async () => ({ id: 'm', name: 'x', joinedAt: new Date() })),

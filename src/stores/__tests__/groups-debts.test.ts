@@ -5,6 +5,7 @@ vi.mock('../../utils/api', () => ({
   insertExpense: vi.fn(),
   insertSettlement: vi.fn(async () => {}),
   fetchMyGroups: vi.fn(async () => []),
+  fetchAllExpenses: vi.fn(async () => []),
   fetchGroupExpenses: vi.fn(async () => []),
   fetchGroupSettlements: vi.fn(async () => []),
   fetchGroupMembers: vi.fn(async () => []),

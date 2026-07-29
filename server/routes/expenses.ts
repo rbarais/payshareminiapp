@@ -4,6 +4,52 @@ import { requireAuth, type AuthRequest } from '../lib/auth.js';
 
 const router = Router();
 
+type ExpenseRow = {
+  id: string;
+  group_id: string;
+  description: string;
+  amount: string;
+  currency: string;
+  paid_by: string;
+  split: string;
+  shares: unknown[];
+  created_at: Date;
+  created_by: string | null;
+};
+
+function serializeExpense(row: ExpenseRow) {
+  return {
+    id: row.id,
+    groupId: row.group_id,
+    description: row.description,
+    amount: Number(row.amount),
+    currency: row.currency,
+    paidBy: row.paid_by,
+    split: row.split,
+    shares: row.shares ?? [],
+    createdAt: row.created_at,
+    createdBy: row.created_by ?? undefined,
+  };
+}
+
+router.get('/expenses', requireAuth, async (req, res): Promise<void> => {
+  const { address } = (req as AuthRequest).user;
+
+  try {
+    const rows = await sql<ExpenseRow[]>`
+      SELECT id, group_id, description, amount, currency, paid_by, split, shares, created_at, created_by
+      FROM expenses
+      WHERE group_id IN (SELECT group_id FROM members WHERE address = ${address})
+      ORDER BY created_at DESC
+    `;
+
+    res.json(rows.map(serializeExpense));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'internal server error' });
+  }
+});
+
 router.get('/:id/expenses', requireAuth, async (req, res): Promise<void> => {
   const { address } = (req as AuthRequest).user;
   const groupId = req.params.id;
@@ -17,40 +63,14 @@ router.get('/:id/expenses', requireAuth, async (req, res): Promise<void> => {
       return;
     }
 
-    const rows = await sql<
-      {
-        id: string;
-        group_id: string;
-        description: string;
-        amount: string;
-        currency: string;
-        paid_by: string;
-        split: string;
-        shares: unknown[];
-        created_at: Date;
-        created_by: string | null;
-      }[]
-    >`
+    const rows = await sql<ExpenseRow[]>`
       SELECT id, group_id, description, amount, currency, paid_by, split, shares, created_at, created_by
       FROM expenses
       WHERE group_id = ${groupId}
       ORDER BY created_at DESC
     `;
 
-    res.json(
-      rows.map((row) => ({
-        id: row.id,
-        groupId: row.group_id,
-        description: row.description,
-        amount: Number(row.amount),
-        currency: row.currency,
-        paidBy: row.paid_by,
-        split: row.split,
-        shares: row.shares ?? [],
-        createdAt: row.created_at,
-        createdBy: row.created_by ?? undefined,
-      })),
-    );
+    res.json(rows.map(serializeExpense));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'internal server error' });
