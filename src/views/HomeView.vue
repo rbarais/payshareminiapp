@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
 import { useGroupsStore } from '../stores/groups';
@@ -92,7 +92,6 @@ import GroupCard from '../components/GroupCard.vue';
 import GlobalBalanceCard from '../components/GlobalBalanceCard.vue';
 import EmptyState from '../components/EmptyState.vue';
 import NotificationBell from '../components/NotificationBell.vue';
-import NotificationsSheet from '../components/NotificationsSheet.vue';
 import PlusIcon from '../assets/svg/plus.svg';
 import QrCodeIcon from '../assets/svg/qrCode.svg';
 import UsersIcon from '../assets/svg/users.svg';
@@ -103,6 +102,10 @@ import { closeForNavigation } from '../composables/modalBack';
 import { useForegroundRefresh } from '../composables/useForegroundRefresh';
 import { useDelayedLoading, SKELETON_DELAY_MS } from '../composables/useDelayedLoading';
 import SkeletonBlock from '../components/SkeletonBlock.vue';
+
+const NotificationsSheet = defineAsyncComponent(
+  () => import('../components/NotificationsSheet.vue'),
+);
 
 const router = useRouter();
 const session = useSession();

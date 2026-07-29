@@ -179,14 +179,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, defineAsyncComponent, onMounted } from 'vue';
 import { useSession } from '../stores/session';
 import { t } from '../stores/i18n';
 import { decodeInviteFromText } from '../utils/room';
 import { fetchJoinPreview } from '../utils/api';
 import { detectPlatform, openInNimiqPay as handoffToNimiqPay } from '../utils/appLinks';
 import PayshareIcon from '../assets/svg/payshareIcon.svg';
-import DesktopQRHandoff from '../components/DesktopQRHandoff.vue';
+
+const DesktopQRHandoff = defineAsyncComponent(() => import('../components/DesktopQRHandoff.vue'));
 
 const session = useSession();
 const emit = defineEmits<{ connected: [] }>();

@@ -1,47 +1,38 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import { handleModalBack } from '../composables/modalBack';
 import { updateTransition } from '../composables/routeTransition';
-import HomeView from '../views/HomeView.vue';
-import GroupsView from '../views/GroupsView.vue';
-import GroupView from '../views/GroupView.vue';
-import AddExpenseView from '../views/AddExpenseView.vue';
-import PayView from '../views/PayView.vue';
-import SuccessView from '../views/SuccessView.vue';
-import NewGroupView from '../views/NewGroupView.vue';
-import JoinGroupView from '../views/JoinGroupView.vue';
-import HistoryView from '../views/HistoryView.vue';
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: HomeView,
+    component: () => import('../views/HomeView.vue'),
   },
   {
     path: '/groups',
     name: 'groups',
-    component: GroupsView,
+    component: () => import('../views/GroupsView.vue'),
   },
   {
     path: '/history',
     name: 'history',
-    component: HistoryView,
+    component: () => import('../views/HistoryView.vue'),
   },
   {
     path: '/group/:id',
     name: 'group',
-    component: GroupView,
+    component: () => import('../views/GroupView.vue'),
     props: true,
   },
   {
     path: '/add-expense',
     name: 'addExpense',
-    component: AddExpenseView,
+    component: () => import('../views/AddExpenseView.vue'),
   },
   {
     path: '/pay',
     name: 'pay',
-    component: PayView,
+    component: () => import('../views/PayView.vue'),
     props: (route) => ({
       room: route.query.room ? JSON.parse(decodeURIComponent(route.query.room as string)) : null,
       groupId: (route.query.groupId as string) || undefined,
@@ -50,7 +41,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/success',
     name: 'success',
-    component: SuccessView,
+    component: () => import('../views/SuccessView.vue'),
     props: (route) => ({
       amount: route.query.amount ? Number(route.query.amount) : 0,
       recipient: route.query.recipient || '',
@@ -60,12 +51,12 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/new-group',
     name: 'newGroup',
-    component: NewGroupView,
+    component: () => import('../views/NewGroupView.vue'),
   },
   {
     path: '/join',
     name: 'join',
-    component: JoinGroupView,
+    component: () => import('../views/JoinGroupView.vue'),
     props: (route) => ({ groupId: route.query.g ?? '', token: route.query.t ?? '' }),
   },
   {
