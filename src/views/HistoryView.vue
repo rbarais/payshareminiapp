@@ -16,7 +16,22 @@
     </div>
 
     <div class="content">
-      <template v-if="sections.length">
+      <template v-if="skeleton.active.value">
+        <div class="day-group">
+          <div v-for="n in 4" :key="n" class="history-row-skeleton">
+            <SkeletonBlock width="38px" height="38px" radius="12px" />
+            <div class="history-row-skeleton-info">
+              <SkeletonBlock width="55%" height="13px" />
+              <SkeletonBlock width="35%" height="11px" />
+            </div>
+            <div class="history-row-skeleton-amount">
+              <SkeletonBlock width="46px" height="13px" />
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template v-else-if="sections.length">
         <div v-for="section in sections" :key="section.key" class="day-group">
           <div class="day-label">{{ section.label }}</div>
           <div v-for="event in section.events" :key="event.kind + event.id" class="row">
@@ -97,7 +112,9 @@ import { fetchRates, fiatApprox } from '../utils/rate';
 import { captureError } from '../utils/errors';
 import type { ActivityEvent } from '../utils/history';
 import EmptyState from '../components/EmptyState.vue';
+import SkeletonBlock from '../components/SkeletonBlock.vue';
 import { useForegroundRefresh } from '../composables/useForegroundRefresh';
+import { useDelayedLoading } from '../composables/useDelayedLoading';
 
 type Filter = 'all' | 'sent' | 'received' | 'other';
 
@@ -108,13 +125,21 @@ const toast = useToast();
 
 const filters: Filter[] = ['all', 'sent', 'received', 'other'];
 const filter = ref<Filter>('all');
+const skeleton = useDelayedLoading();
 
+// `sections` is declared further down (it's a computed derived from the
+// store), but sync() is only ever invoked from onMounted/useForegroundRefresh
+// — both run after this whole setup() body has finished — so referencing it
+// here is safe.
 async function sync(): Promise<void> {
+  skeleton.start(sections.value.length ? 350 : 0);
   try {
     await store.refreshAll();
   } catch (err) {
     captureError(err, 'HistoryView.refreshAll');
     toast.show(t('error.syncFailed'), 'error');
+  } finally {
+    skeleton.stop();
   }
 }
 
@@ -274,6 +299,28 @@ function daySectionLabel(date: Date): string {
   .day-label {
     grid-column: 1 / -1;
   }
+}
+
+.history-row-skeleton {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.history-row-skeleton-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-row-skeleton-amount {
+  flex-shrink: 0;
 }
 
 .row {
