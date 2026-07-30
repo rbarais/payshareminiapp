@@ -32,17 +32,26 @@
   </svg>
   <svg v-else-if="type === 'food'" :width="size" :height="size" viewBox="0 0 22 22" fill="none">
     <path
-      d="M8 2V9C8 10.1 8.9 11 10 11V20M14 2V20M12 2C12 2 16 5 16 8"
+      d="M5.5 3V8.5C5.5 9.6 6.4 10.5 7.5 10.5H8.5C9.6 10.5 10.5 9.6 10.5 8.5V3"
       :stroke="color"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
+    <path d="M8 3V7.5M8 10.5V19" :stroke="color" stroke-width="1.5" stroke-linecap="round" />
+    <path
+      d="M16.5 3V11H15C14.2 11 13.5 10.3 13.5 9.5V8C13.5 5.9 14.7 3.9 16.5 3Z"
+      :stroke="color"
+      stroke-width="1.5"
+      stroke-linejoin="round"
+    />
+    <path d="M16.5 11V19" :stroke="color" stroke-width="1.5" stroke-linecap="round" />
   </svg>
   <svg v-else-if="type === 'sport'" :width="size" :height="size" viewBox="0 0 22 22" fill="none">
-    <circle cx="11" cy="11" r="8.5" :stroke="color" stroke-width="1.5" />
+    <rect x="5" y="6.5" width="3" height="9" rx="1.2" :stroke="color" stroke-width="1.5" />
+    <rect x="14" y="6.5" width="3" height="9" rx="1.2" :stroke="color" stroke-width="1.5" />
     <path
-      d="M5 6.5C7 8.5 9 10 11 10.5C13 11 15 12.5 17 14.5"
+      d="M8 11H14M2.5 9V13M19.5 9V13"
       :stroke="color"
       stroke-width="1.5"
       stroke-linecap="round"
@@ -59,9 +68,9 @@
   </svg>
   <svg v-else-if="type === 'travel'" :width="size" :height="size" viewBox="0 0 22 22" fill="none">
     <path
-      d="M3 16L7.5 14.5L13 20H16L13 12.5L19.5 8C20.5 7.2 20.5 5.8 19.5 5C18.7 4.2 17.3 4.2 16.5 5L10 11.5L3 8.5V11L8.5 13L3 16Z"
+      d="M11 2C11.9 2 12.6 3.4 12.6 5.2V8.6L20 13V15L12.6 12.6V16.4L15 18.2V19.6L11 18.4L7 19.6V18.2L9.4 16.4V12.6L2 15V13L9.4 8.6V5.2C9.4 3.4 10.1 2 11 2Z"
       :stroke="color"
-      stroke-width="1.3"
+      stroke-width="1.4"
       stroke-linejoin="round"
     />
   </svg>
