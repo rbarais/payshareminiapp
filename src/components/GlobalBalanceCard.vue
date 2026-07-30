@@ -18,16 +18,20 @@
     <div class="balance-main">
       <div class="balance-net">
         <div class="balance-net-label">{{ t('home.net') }}</div>
-        <div class="balance-net-amount">{{ netStr }}</div>
+        <div class="balance-net-amount" :class="netTone">{{ netStr }}</div>
       </div>
       <div class="balance-detail">
         <div class="balance-detail-col">
           <div class="balance-detail-label">{{ t('home.credited') }}</div>
-          <div class="balance-detail-amount">{{ creditedStr }}</div>
+          <div class="balance-detail-amount" :class="credited > 0.005 ? 'credit' : ''">
+            {{ creditedStr }}
+          </div>
         </div>
         <div class="balance-detail-col">
           <div class="balance-detail-label">{{ t('home.owed') }}</div>
-          <div class="balance-detail-amount">{{ owedStr }}</div>
+          <div class="balance-detail-amount" :class="owed > 0.005 ? 'debt' : ''">
+            {{ owedStr }}
+          </div>
         </div>
       </div>
     </div>
@@ -70,6 +74,12 @@ const netStr = computed(() => {
   if (showFiat.value) return fiat(net.value);
   const sign = net.value < 0 ? '−' : '+';
   return sign + Math.abs(net.value).toFixed(1) + ' NIM';
+});
+
+const netTone = computed(() => {
+  if (net.value > 0.005) return 'credit';
+  if (net.value < -0.005) return 'debt';
+  return '';
 });
 </script>
 
@@ -167,5 +177,14 @@ const netStr = computed(() => {
   font-weight: 700;
   color: rgba(0, 0, 0, 0.65);
   white-space: nowrap;
+}
+
+/* Darker than --green/--red: those tones drop under 3:1 on the amber card. */
+.credit {
+  color: #0d5943;
+}
+
+.debt {
+  color: #a32020;
 }
 </style>
