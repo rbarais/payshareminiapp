@@ -3,11 +3,11 @@
     <div class="header">
       <div class="title">{{ t('groups.title') }}</div>
       <div class="header-actions">
-        <button class="icon-btn" :aria-label="t('group.scanQr')" @click="goToScan">
+        <button class="pill dark icon-btn" :aria-label="t('group.scanQr')" @click="goToScan">
           <QrCodeIcon width="16" height="16" />
         </button>
-        <button class="icon-btn dark" :aria-label="t('groups.new')" @click="goToNewGroup">
-          <PlusIcon width="14" height="14" />
+        <button class="pill dark icon-btn" :aria-label="t('groups.new')" @click="goToNewGroup">
+          <PlusIcon width="16" height="16" />
         </button>
       </div>
     </div>
@@ -177,6 +177,14 @@ function goToGroup(id: string) {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .filters {
