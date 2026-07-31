@@ -13,6 +13,7 @@
       <div class="amount-display">
         {{ amount ? amount.toFixed(2) : '0.00' }} <span class="amount-currency">{{ currency }}</span>
       </div>
+      <div v-if="amount && fiatApprox(amount)" class="fiat-approx">{{ fiatApprox(amount) }}</div>
     </div>
 
     <!-- Form -->
@@ -176,6 +177,7 @@ import ChevronDownIcon from '../assets/svg/chevronDown.svg';
 import { captureError } from '../utils/errors';
 import { useI18n } from '../stores/i18n';
 import { useModalBackWhen } from '../composables/modalBack';
+import { fetchRates, fiatApprox } from '../utils/rate';
 
 const route = useRoute();
 const router = useRouter();
@@ -193,6 +195,7 @@ const myMemberId = computed(() => store.myMemberId(groupId.value, userId.value))
 
 onMounted(() => {
   if (!group.value) router.replace({ name: 'home' });
+  void fetchRates();
 });
 
 const description = ref('');
@@ -363,6 +366,13 @@ function goBack() {
   font-weight: 600;
   color: var(--text-mid);
   letter-spacing: 0;
+}
+
+.fiat-approx {
+  font-size: 13px;
+  color: var(--text-mid);
+  font-weight: 600;
+  margin-top: 4px;
 }
 
 .currency-row {
