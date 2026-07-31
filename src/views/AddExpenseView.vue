@@ -10,7 +10,9 @@
 
     <!-- Amount -->
     <div class="amount-section">
-      <div class="amount-display">{{ amount ? amount.toFixed(2) : '0.00' }}</div>
+      <div class="amount-display">
+        {{ amount ? amount.toFixed(2) : '0.00' }} <span class="amount-currency">{{ currency }}</span>
+      </div>
     </div>
 
     <!-- Form -->
@@ -29,15 +31,18 @@
       <!-- Amount input -->
       <div class="field-card">
         <div class="form-label">{{ t('addExpense.amountLabel') }}</div>
-        <input
-          v-model.number="amount"
-          class="field-input"
-          type="number"
-          placeholder="0"
-          min="0.01"
-          step="0.01"
-          @input="mode !== 'equal' && distributeEvenly()"
-        />
+        <div class="amount-input-wrap">
+          <input
+            v-model.number="amount"
+            class="field-input"
+            type="number"
+            placeholder="0"
+            min="0.01"
+            step="0.01"
+            @input="mode !== 'equal' && distributeEvenly()"
+          />
+          <span class="amount-input-unit">{{ currency }}</span>
+        </div>
       </div>
 
       <!-- Paid by -->
@@ -353,6 +358,13 @@ function goBack() {
   line-height: 1.05;
 }
 
+.amount-currency {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-mid);
+  letter-spacing: 0;
+}
+
 .currency-row {
   display: flex;
   gap: 8px;
@@ -416,6 +428,19 @@ function goBack() {
 
 .field-input::placeholder {
   color: var(--text-faint);
+}
+
+.amount-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amount-input-unit {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid);
+  flex-shrink: 0;
 }
 
 /* Payer */
