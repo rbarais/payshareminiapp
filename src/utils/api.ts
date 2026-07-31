@@ -1,4 +1,5 @@
 import { getStoredJwt, setStoredJwt } from './auth';
+import { reportApiOutcome } from '../stores/connection';
 import type {
   Group,
   GroupIcon,
@@ -13,18 +14,28 @@ import type {
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const jwt = getStoredJwt();
-  const res = await fetch(path, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
-      ...(init?.headers ?? {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+        ...(init?.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    reportApiOutcome(false);
+    throw err;
+  }
   if (res.status === 401) {
+    // Clearing the token before reporting is what flips the indicator to red:
+    // the server did answer, so reachability alone would stay green.
     setStoredJwt(null);
+    reportApiOutcome(true);
     throw new Error('Session expirée'); // user-facing message (kept in French)
   }
+  reportApiOutcome(true);
   if (!res.ok) throw new Error(`API ${res.status}`);
   const text = await res.text();
   if (!text) return undefined as T;
