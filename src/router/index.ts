@@ -73,6 +73,32 @@ const router = createRouter({
 
 router.afterEach(updateTransition);
 
+// After a deploy the hashed chunks of the previously loaded build are gone, and
+// the SPA rewrite answers those requests with index.html — so the lazy import
+// fails ("'text/html' is not a valid JavaScript MIME type" on Safari/WKWebView)
+// and the tap silently does nothing. index.html is served no-store, so reloading
+// on the target route picks up the new build. The timestamp guards against a
+// reload loop if the chunk is missing for any other reason.
+const staleChunkPattern =
+  /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|is not a valid JavaScript MIME type|Unable to preload CSS/i;
+
+const RELOAD_KEY = 'staleChunkReloadAt';
+
+router.onError((error, to) => {
+  if (!staleChunkPattern.test(String((error as Error)?.message ?? ''))) return;
+
+  let last = 0;
+  try {
+    last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0);
+    sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+  } catch {
+    // sessionStorage unavailable: reload without the loop guard
+  }
+  if (Date.now() - last < 10_000) return;
+
+  window.location.replace(to.fullPath);
+});
+
 // Double-back-to-quit for mini-apps
 if (typeof window !== 'undefined') {
   let lastBackTime = 0;
