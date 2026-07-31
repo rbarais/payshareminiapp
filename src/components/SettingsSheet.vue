@@ -249,6 +249,48 @@
         </div>
         <ChevronRightIcon width="13" height="13" aria-hidden="true" />
       </button>
+      <button class="list-row" @click="openLegal('legal-notice')">
+        <div class="list-left">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M3.5 1.5H9L12.5 5V14.5H3.5V1.5Z"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linejoin="round"
+            />
+            <path d="M9 1.5V5H12.5" stroke="currentColor" stroke-width="1.2" />
+            <path
+              d="M5.5 8H10.5M5.5 10.5H9"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span>{{ t('settings.legalNotice') }}</span>
+        </div>
+        <ChevronRightIcon width="13" height="13" aria-hidden="true" />
+      </button>
+      <button class="list-row" @click="openLegal('terms')">
+        <div class="list-left">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M8 2.5V13.5M3 4.5H13"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            />
+            <path
+              d="M3 4.5L1.5 8.5H4.5L3 4.5ZM13 4.5L11.5 8.5H14.5L13 4.5Z"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linejoin="round"
+            />
+            <path d="M6 13.5H10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+          </svg>
+          <span>{{ t('settings.terms') }}</span>
+        </div>
+        <ChevronRightIcon width="13" height="13" aria-hidden="true" />
+      </button>
       <div class="list-row static">
         <span class="version-label">{{ t('settings.version') }}</span>
         <span class="version-value mono">{{ appVersion }}</span>
@@ -370,6 +412,10 @@ function openCommunity(url: string) {
 
 function goToAbout() {
   window.open('https://payshareapp.com/welcome', '_blank', 'noopener');
+}
+
+function openLegal(page: 'legal-notice' | 'terms') {
+  window.open(`https://payshareapp.com/legal/${locale.value}/${page}`, '_blank', 'noopener');
 }
 
 function comingSoon() {
