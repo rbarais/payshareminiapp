@@ -207,7 +207,7 @@ async function done() {
   outline: none;
   font-size: 14px;
   font-weight: 500;
-  color: var(--text);
+  color: var(--dark);
   background: transparent;
   font-family: inherit;
 }
@@ -283,6 +283,7 @@ async function done() {
   padding: 10px 12px;
   font-size: 14px;
   outline: none;
+  color: var(--dark);
   background: var(--bg);
   font-family: inherit;
 }
