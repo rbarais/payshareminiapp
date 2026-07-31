@@ -11,7 +11,8 @@
     <!-- Amount -->
     <div class="amount-section">
       <div class="amount-display">
-        {{ amount ? amount.toFixed(2) : '0.00' }} <span class="amount-currency">{{ currency }}</span>
+        {{ amount ? amount.toFixed(2) : '0.00' }}
+        <span class="amount-currency">{{ currency }}</span>
       </div>
       <div v-if="amount && fiatApprox(amount)" class="fiat-approx">{{ fiatApprox(amount) }}</div>
     </div>
@@ -373,33 +374,6 @@ function goBack() {
   color: var(--text-mid);
   font-weight: 600;
   margin-top: 4px;
-}
-
-.currency-row {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 12px;
-}
-
-.currency-pill {
-  background: var(--border);
-  color: var(--text-mid);
-  border: none;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 7px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-family: inherit;
-  transition:
-    background 0.15s,
-    color 0.15s;
-}
-
-.currency-pill.active {
-  background: var(--ink);
-  color: var(--accent);
 }
 
 /* Form */
