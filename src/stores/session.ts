@@ -2,7 +2,7 @@ import { reactive, computed } from 'vue';
 import { getHostLanguage } from '@nimiq/mini-app-sdk';
 import { getCurrentUser, formatAddressShort, detectNimiqApp, isNimiqHost } from '../utils/nimiq';
 import { authenticate, refreshToken } from '../utils/auth';
-import { getStoredJwt, setStoredJwt } from '../utils/auth';
+import { setStoredJwt, isJwtExpired } from '../utils/auth';
 import { t } from './i18n';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -30,20 +30,6 @@ interface SessionState {
 }
 
 const SESSION_KEY = 'payshare_session';
-
-function isJwtExpired(): boolean {
-  const jwt = getStoredJwt();
-  if (!jwt) return true;
-  try {
-    // JWT uses base64url (- and _ instead of + and /) — convert before atob()
-    const base64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64));
-    // 30s buffer to avoid races near the end of validity
-    return Date.now() / 1000 > payload.exp - 30;
-  } catch {
-    return true;
-  }
-}
 
 function detectLanguage(): string {
   // Language exposed by Nimiq Pay (seeded before the page script runs).

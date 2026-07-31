@@ -12,6 +12,20 @@ export function setStoredJwt(token: string | null): void {
   else localStorage.removeItem(JWT_KEY);
 }
 
+export function isJwtExpired(): boolean {
+  const jwt = getStoredJwt();
+  if (!jwt) return true;
+  try {
+    // JWT uses base64url (- and _ instead of + and /) — convert before atob()
+    const base64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
+    // 30s buffer to avoid races near the end of validity
+    return Date.now() / 1000 > payload.exp - 30;
+  } catch {
+    return true;
+  }
+}
+
 async function request(path: string, init?: RequestInit): Promise<unknown> {
   const res = await fetch(path, init);
   if (!res.ok) {

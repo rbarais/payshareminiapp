@@ -33,3 +33,44 @@ describe('authenticate (navigateur de dev, hors Nimiq Pay)', () => {
     expect(JSON.parse(init.body)).toEqual({ devAddress: 'NQ_ALICE' });
   });
 });
+
+describe('isJwtExpired', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.resetModules();
+  });
+
+  const makeJwt = (exp: number): string => {
+    const payload = btoa(JSON.stringify({ exp })).replace(/\+/g, '-').replace(/\//g, '_');
+    return `header.${payload}.signature`;
+  };
+
+  it('returns true when no token is stored', async () => {
+    const { isJwtExpired } = await import('../auth');
+    expect(isJwtExpired()).toBe(true);
+  });
+
+  it('returns false for a token valid well into the future', async () => {
+    const { isJwtExpired, setStoredJwt } = await import('../auth');
+    setStoredJwt(makeJwt(Date.now() / 1000 + 3600));
+    expect(isJwtExpired()).toBe(false);
+  });
+
+  it('returns true for an already expired token', async () => {
+    const { isJwtExpired, setStoredJwt } = await import('../auth');
+    setStoredJwt(makeJwt(Date.now() / 1000 - 10));
+    expect(isJwtExpired()).toBe(true);
+  });
+
+  it('treats the last 30 seconds of validity as expired', async () => {
+    const { isJwtExpired, setStoredJwt } = await import('../auth');
+    setStoredJwt(makeJwt(Date.now() / 1000 + 10));
+    expect(isJwtExpired()).toBe(true);
+  });
+
+  it('returns true for a malformed token', async () => {
+    const { isJwtExpired, setStoredJwt } = await import('../auth');
+    setStoredJwt('not-a-jwt');
+    expect(isJwtExpired()).toBe(true);
+  });
+});
