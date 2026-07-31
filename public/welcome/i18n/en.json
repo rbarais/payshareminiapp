@@ -150,11 +150,15 @@
   "meta.1": "PayShare — Split the bill, pay in crypto",
   "meta.2": "PayShare splits group expenses and lets you settle up in NIM in seconds. 100% free, no sign-up, on Nimiq Pay.",
   "cta.11": "QR code to payshareapp.com",
-  "footer.4": "Split the costs.<br/>Settle in crypto.",
+  "footer.4": "Split the costs.<br/>Pay in crypto.",
   "footer.5": "Why PayShare?",
   "footer.6": "How does it work",
   "footer.7": "Frequently asked questions",
   "footer.8": "Contact",
   "footer.9": "No personal data collected · PayShare is not a payment institution.",
-  "footer.10": "Publishers: Thomas Feuillâtre and Robinson Barais · Host: Vercel Inc., vercel.com"
+  "footer.10": "Publishers: Thomas Feuillâtre and Robinson Barais · Host: Vercel Inc., vercel.com",
+  "footer.11": "Legal Notice",
+  "footer.12": "/legal/en/legal-notice",
+  "footer.13": "Terms of Use",
+  "footer.14": "/legal/en/terms"
 }

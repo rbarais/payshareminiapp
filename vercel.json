@@ -2,6 +2,7 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/welcome", "destination": "/welcome/index.html" },
+    { "source": "/legal/:lang/:page", "destination": "/legal/:lang/:page.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
@@ -19,6 +20,10 @@
     },
     {
       "source": "/welcome/i18n/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
+    },
+    {
+      "source": "/legal/legal.css",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
     }
   ]

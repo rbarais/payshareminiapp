@@ -1,0 +1,261 @@
+:root {
+  --ps-bg: #faf9f7;
+  --ps-ink: #1a1916;
+  --ps-body: #3d3b35;
+  --ps-soft: #6b685f;
+  --ps-line: #edecea;
+  --ps-accent: #f6b221;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ps-bg);
+  color: var(--ps-ink);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ps-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 64px;
+  padding: 0 48px;
+  background: rgba(250, 249, 247, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--ps-line);
+}
+
+.ps-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.ps-brand img {
+  display: block;
+}
+
+.ps-brand b {
+  font-weight: 700;
+  color: var(--ps-accent);
+}
+
+.ps-back {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ps-body);
+  transition: color 0.15s ease;
+}
+
+.ps-back:hover {
+  color: var(--ps-ink);
+}
+
+.ps-doc {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 64px 24px 80px;
+}
+
+.ps-doc h1 {
+  margin: 0 0 32px;
+  font-size: 38px;
+  line-height: 1.15;
+  letter-spacing: -1px;
+}
+
+.ps-prose {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ps-body);
+  text-wrap: pretty;
+}
+
+.ps-updated {
+  margin: -20px 0 36px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ps-soft);
+}
+
+.ps-prose h2 {
+  margin: 44px 0 12px;
+  font-size: 21px;
+  line-height: 1.3;
+  letter-spacing: -0.4px;
+  color: var(--ps-ink);
+}
+
+.ps-prose h3 {
+  margin: 28px 0 8px;
+  font-size: 16px;
+  color: var(--ps-ink);
+}
+
+.ps-prose p {
+  margin: 0 0 16px;
+}
+
+.ps-prose ul,
+.ps-prose ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+
+.ps-prose li {
+  margin-bottom: 8px;
+}
+
+.ps-prose a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(26, 25, 22, 0.3);
+}
+
+.ps-prose a:hover {
+  text-decoration-color: var(--ps-ink);
+}
+
+.ps-prose :first-child {
+  margin-top: 0;
+}
+
+.ps-doc-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  margin-top: 56px;
+  padding-top: 22px;
+  border-top: 1px solid var(--ps-line);
+  font-size: 13px;
+}
+
+.ps-doc-nav a {
+  font-weight: 600;
+  color: var(--ps-body);
+  transition: color 0.15s ease;
+}
+
+.ps-doc-nav a:hover {
+  color: var(--ps-ink);
+}
+
+.ps-langs {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--ps-soft);
+}
+
+.ps-langs span {
+  font-weight: 500;
+}
+
+.ps-langs a {
+  font-weight: 500;
+  color: var(--ps-soft);
+}
+
+.ps-langs a[aria-current='true'] {
+  font-weight: 700;
+  color: var(--ps-ink);
+}
+
+.ps-footer {
+  background: #111009;
+  padding: 40px 48px 30px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ps-footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.ps-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ps-footer a {
+  transition: color 0.15s ease;
+}
+
+.ps-footer a:hover {
+  color: var(--ps-accent);
+}
+
+.ps-footer a[aria-current='page'] {
+  color: #ffffff;
+}
+
+.ps-footer p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .ps-topbar {
+    padding: 0 20px;
+  }
+
+  .ps-doc {
+    padding: 44px 20px 64px;
+  }
+
+  .ps-doc h1 {
+    font-size: 30px;
+    letter-spacing: -0.7px;
+  }
+
+  .ps-doc-nav {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ps-footer {
+    padding: 34px 20px 26px;
+  }
+}
+
+@media print {
+  .ps-topbar,
+  .ps-doc-nav,
+  .ps-footer {
+    display: none;
+  }
+
+  .ps-doc {
+    max-width: none;
+    padding: 0;
+  }
+}
