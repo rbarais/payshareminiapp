@@ -175,14 +175,19 @@ function go(key: 'home' | 'groups' | 'history' | 'profile') {
   display: flex;
 }
 
+/* Identicons are hexagons with points left and right, so the bounding box's
+   bottom-right corner is empty. These coordinates sit the dot on the lower-right
+   edge of the hexagon instead, where its ring has something to separate it from.
+   box-sizing is border-box globally: 14px minus the 2px ring leaves a 10px dot. */
 .conn-dot {
   position: absolute;
-  right: -2px;
-  bottom: -2px;
-  width: 8px;
-  height: 8px;
+  left: 21.8px;
+  top: 18.8px;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: var(--green);
+  background: var(--green-live);
   border: 2px solid var(--bg-card);
 }
 
