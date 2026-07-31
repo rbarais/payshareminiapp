@@ -32,6 +32,10 @@
     "slogan": "Split the bill. Pay in crypto.",
     "soon": "Soon"
   },
+  "connection": {
+    "offline": "Disconnected",
+    "online": "Connected"
+  },
   "error": {
     "connectFailed": "Connection failed or refused",
     "openInNimiq": "Open PayShare from Nimiq Pay for real payments.",

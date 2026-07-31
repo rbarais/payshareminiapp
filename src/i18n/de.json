@@ -32,6 +32,10 @@
     "slogan": "Teilt die Rechnung. Zahlt in Krypto.",
     "soon": "Bald"
   },
+  "connection": {
+    "offline": "Getrennt",
+    "online": "Verbunden"
+  },
   "error": {
     "connectFailed": "Verbindung fehlgeschlagen oder abgelehnt",
     "openInNimiq": "Öffne PayShare in Nimiq Pay für echte Zahlungen.",

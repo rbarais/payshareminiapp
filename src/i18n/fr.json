@@ -32,6 +32,10 @@
     "slogan": "Partage les frais. Règle en crypto.",
     "soon": "Bientôt"
   },
+  "connection": {
+    "offline": "Déconnecté",
+    "online": "Connecté"
+  },
   "error": {
     "connectFailed": "Connexion impossible ou refusée",
     "openInNimiq": "Ouvre PayShare depuis Nimiq Pay pour les paiements réels.",

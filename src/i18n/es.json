@@ -32,6 +32,10 @@
     "slogan": "Divide la cuenta. Paga en cripto.",
     "soon": "Pronto"
   },
+  "connection": {
+    "offline": "Desconectado",
+    "online": "Conectado"
+  },
   "error": {
     "connectFailed": "Conexión fallida o rechazada",
     "openInNimiq": "Abre PayShare desde Nimiq Pay para pagos reales.",

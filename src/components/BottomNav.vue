@@ -68,8 +68,16 @@
       :class="{ active: active === 'profile' }"
       @click="go('profile')"
     >
-      <div class="nav-identicon" :class="{ active: active === 'profile' }">
-        <NimiqIdenticon :address="session.user.value?.id ?? ''" :size="sizeIconBtn" />
+      <div class="nav-avatar">
+        <div class="nav-identicon" :class="{ active: active === 'profile' }">
+          <NimiqIdenticon :address="session.user.value?.id ?? ''" :size="sizeIconBtn" />
+        </div>
+        <span
+          class="conn-dot"
+          :class="{ off: !isConnected }"
+          role="status"
+          :aria-label="isConnected ? t('connection.online') : t('connection.offline')"
+        />
       </div>
       <span>{{ t('nav.profile') }}</span>
     </div>
@@ -80,10 +88,12 @@
 import { useRouter } from 'vue-router';
 import { useI18n } from '../stores/i18n';
 import { useSession } from '../stores/session';
+import { useConnection } from '../stores/connection';
 import NimiqIdenticon from './NimiqIdenticon.vue';
 
 const props = defineProps<{ active: 'home' | 'groups' | 'history' | 'profile' }>();
 const session = useSession();
+const { isConnected } = useConnection();
 const emit = defineEmits<{ 'open-settings': [] }>();
 
 const router = useRouter();
@@ -158,6 +168,26 @@ function go(key: 'home' | 'groups' | 'history' | 'profile') {
 .nav-item.active span {
   color: var(--accent);
   font-weight: 700;
+}
+
+.nav-avatar {
+  position: relative;
+  display: flex;
+}
+
+.conn-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 2px solid var(--bg-card);
+}
+
+.conn-dot.off {
+  background: var(--red);
 }
 
 .nav-identicon {
