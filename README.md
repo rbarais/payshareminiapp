@@ -1,30 +1,30 @@
+# PayShare
 
-# PayShare - Split the bill. Pay in crypto.
 <img width="3000" height="1000" alt="payshare_banner" src="https://github.com/user-attachments/assets/fc89d9c8-5a2a-46bf-9932-ce9fb9d4cffe" />
 
 PayShare turns splitting bills with friends into a one-tap wallet flow: one person pays, PayShare calculates who owes what, and everyone settles directly in NIM—no accounts, spreadsheets, or payment chasing.
 
-## Links
+## 🔗 Links
 
-- Application: [https://payshareapp.com](https://payshareapp.com)
 - Website: [https://payshareapp.com/welcome](https://payshareapp.com/welcome)
+- Application: [https://payshareapp.com](https://payshareapp.com)
 - Twitter: [@PayShareApp](https://twitter.com/payshareapp)
 
-## Table of Contents
+## 📑 Table of Contents
 
 - [PayShare: The simplest way to share and repay expenses with crypto](#payshare-the-simplest-way-to-share-and-repay-expenses-with-crypto)
-- [How does it work?](#how-does-it-work)
+- [🚀 How does it work?](#-how-does-it-work)
   - [1. Create a group](#1-create-a-group)
   - [2. Add expenses](#2-add-expenses)
   - [3. Repay directly in crypto](#3-repay-directly-in-crypto)
   - [4. Track repayments](#4-track-repayments)
-- [Main features](#main-features)
-- [A crypto experience designed for everyday use](#a-crypto-experience-designed-for-everyday-use)
-- [Contributing](#contributing)
+- [✨ Main features](#-main-features)
+- [🌍 A crypto experience designed for everyday use](#-a-crypto-experience-designed-for-everyday-use)
+- [🤝 Contributing](#-contributing)
 
 ---
 
-## PayShare: The simplest way to share and repay expenses with crypto
+## 💰 PayShare: The simplest way to share and repay expenses with crypto
 
 PayShare is a Mini App available through Nimiq Pay that allows users to share expenses with friends and repay their share directly in cryptocurrency.
 
@@ -34,7 +34,7 @@ PayShare simplifies the entire process by bringing expense sharing, calculation,
 
 ---
 
-## How does it work?
+## 🚀 How does it work?
 
 ### 1. Create a group
 
@@ -54,7 +54,7 @@ Monitor expenses, completed payments, and remaining balances in real time until 
 
 ---
 
-## Main features
+## ✨ Main features
 
 - Direct payments in NIM through Nimiq Pay
 - Automatically calculated and pre-filled repayment amounts
@@ -73,7 +73,7 @@ Monitor expenses, completed payments, and remaining balances in real time until 
 
 ---
 
-## A crypto experience designed for everyday use
+## 🌍 A crypto experience designed for everyday use
 
 PayShare does not replace wallets: it gives them a practical use case.
 
@@ -85,7 +85,7 @@ Our goal is simple: remove technical complexity and make crypto payments feel na
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 Contributions, issues, and suggestions are welcome.
 
