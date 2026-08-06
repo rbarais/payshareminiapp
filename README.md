@@ -12,7 +12,7 @@ PayShare turns splitting bills with friends into a one-tap wallet flow: one pers
 
 ## 📑 Table of Contents
 
-- [PayShare: The simplest way to share and repay expenses with crypto](#payshare-the-simplest-way-to-share-and-repay-expenses-with-crypto)
+- [💰 PayShare: The simplest way to share and repay expenses with crypto](#payshare-the-simplest-way-to-share-and-repay-expenses-with-crypto)
 - [🚀 How does it work?](#-how-does-it-work)
   - [1. Create a group](#1-create-a-group)
   - [2. Add expenses](#2-add-expenses)
