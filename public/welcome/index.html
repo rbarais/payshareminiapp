@@ -45,8 +45,10 @@
     .ps-in-2 { animation-delay:0.12s; }
     .ps-in-3 { animation-delay:0.24s; }
     .ps-in-4 { animation-delay:0.36s; }
-    .ps-anim .ps-armed { opacity:0; transform:translateY(48px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2,0.7,0.2,1); }
+    .ps-anim .ps-armed { opacity:0; transform:translateY(18px); transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.22,0.61,0.36,1); }
     .ps-anim .ps-armed[data-ps-in] { opacity:1; transform:translateY(0); }
+    .ps-bento-card { transition: transform 0.55s cubic-bezier(0.22,0.61,0.36,1), opacity 0.5s ease, box-shadow 0.24s ease; }
+    .ps-bento-card:hover { transform: translateY(-3px) !important; box-shadow: 0 18px 44px rgba(0,0,0,0.34); }
     .ps-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
     .ps-card:hover { transform: translateY(-8px); box-shadow: 0 20px 48px rgba(26,25,22,0.13); }
     .ps-btn { transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease; }
@@ -56,7 +58,7 @@
     a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid #F6B221; outline-offset: 3px; border-radius: 6px; }
     .ps-burger { display: none; }
     .ps-menu { display: none; }
-    .ps-footer a:hover { color: #F6B221 !important; }
+    .ps-footer a:hover { color: #F6B221 !important; border-color: rgba(246,178,33,0.6) !important; }
     @media (max-width: 900px) {
       .ps-burger { display: flex !important; }
       .ps-nav a[href="#cta"] { display: none !important; }
@@ -80,6 +82,12 @@
       .ps-sec h2 { font-size: 30px !important; letter-spacing: -0.8px !important; }
       .ps-sec p { font-size: 15px !important; }
       .ps-grid-3 { grid-template-columns: 1fr !important; }
+      .ps-bento { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+      .ps-bento-card { grid-column: 1 / -1 !important; height: auto !important; padding: 22px 20px 0 !important; }
+      .ps-tile-wide { flex-direction: column !important; align-items: stretch !important; gap: 16px !important; padding: 22px 20px 0 !important; }
+      .ps-tile-wide .ps-tile-txt { flex: none !important; }
+      .ps-tile-wide .ps-tile-shot { flex: none !important; align-self: auto !important; border-radius: 11px 11px 0 0 !important; margin: 0 -20px !important; }
+      .ps-tile-wide .ps-tile-shot img { height: auto !important; object-position: center !important; }
       .ps-grid-4 { grid-template-columns: 1fr 1fr !important; gap: 32px 16px !important; }
       .ps-connector, .ps-story-arrow { display: none !important; }
       .ps-story { width: 189px !important; }
@@ -97,10 +105,16 @@
     .ps-anim .ps-grid-3 > *:nth-child(2), .ps-anim .ps-story-row > .ps-story:nth-child(3) { transition-delay: 0.09s; }
     .ps-anim .ps-grid-3 > *:nth-child(3), .ps-anim .ps-story-row > .ps-story:nth-child(5) { transition-delay: 0.18s; }
     .ps-anim .ps-story-row > .ps-story:nth-child(7) { transition-delay: 0.27s; }
+    .ps-anim .ps-bento > .ps-bento-card:nth-child(2), .ps-anim .ps-bento > .ps-bento-card:nth-child(5) { transition-delay: 0.06s; }
+    .ps-anim .ps-bento > .ps-bento-card:nth-child(3), .ps-anim .ps-bento > .ps-bento-card:nth-child(6) { transition-delay: 0.12s; }
+    .ps-anim .ps-bento > .ps-bento-card:nth-child(4), .ps-anim .ps-bento > .ps-bento-card:nth-child(7) { transition-delay: 0.18s; }
+    .ps-anim .ps-bento > .ps-bento-card:nth-child(8) { transition-delay: 0.06s; }
+    .ps-anim .ps-bento > .ps-bento-card:nth-child(9) { transition-delay: 0.12s; }
     .ps-anim details.ps-armed:nth-child(2) { transition-delay: 0.06s; }
     .ps-anim details.ps-armed:nth-child(3) { transition-delay: 0.12s; }
     .ps-anim details.ps-armed:nth-child(4) { transition-delay: 0.18s; }
     .ps-anim details.ps-armed:nth-child(5) { transition-delay: 0.24s; }
+    .ps-anim details.ps-armed:nth-child(6) { transition-delay: 0.30s; }
     .ps-nav button { transition: background 0.15s ease; }
     .ps-nav button:hover { background: #E7E3DC !important; }
     details summary { transition: color 0.15s ease; }
@@ -649,6 +663,95 @@
     </div>
   </section>
 
+  <!-- ══════════ CAPABILITIES ══════════ -->
+  <section id="app" class="ps-sec" style="background:#16140F;padding:76px 48px;">
+    <div style="max-width:1120px;margin:0 auto;">
+      <div class="ps-reveal ps-armed" style="text-align:center;margin-bottom:40px;">
+        <h2 style="font-size:38px;font-weight:700;letter-spacing:-1.2px;margin:0 0 12px;color:#FAF9F7;" data-i18n="app.1">Tout <span style="color:#F6B221;">ce que fait l’app</span> pour toi</h2>
+        <p style="font-size:15px;color:rgba(250,249,247,0.55);margin:0;" data-i18n="app.2">Tout est là où tu l’attends, dès le premier lancement.</p>
+      </div>
+      <div class="ps-bento" style="display:grid;grid-template-columns:repeat(6,1fr);gap:16px;align-items:stretch;">
+        <div class="ps-reveal ps-armed ps-bento-card ps-tile-wide" style="grid-column:span 6;background:radial-gradient(110% 150% at 92% 4%, rgba(246,178,33,0.2) 0%, rgba(246,178,33,0) 58%), linear-gradient(155deg, #2A2519 0%, #211E17 48%, #1B1913 100%);border:1px solid rgba(246,178,33,0.12);border-radius:24px;padding:28px 0 0 30px;display:flex;align-items:flex-start;gap:26px;overflow:hidden;">
+          <div class="ps-tile-txt" style="flex:0 0 31%;padding-bottom:28px;">
+            <h3 style="font-size:27px;font-weight:700;color:#FAF9F7;margin:0 0 7px;letter-spacing:-0.4px;line-height:1.25;" data-i18n="app.3">Ton solde, en un seul nombre</h3>
+            <p style="margin:0;font-size:13.5px;color:rgba(250,249,247,0.5);line-height:1.55;text-wrap:pretty;" data-i18n="app.4">Ce qu’on te doit et ce que tu dois se résument en un seul montant. Affiché en NIM ou dans ta monnaie habituelle.</p>
+          </div>
+          <div class="ps-tile-shot" style="flex:1;min-width:0;align-self:flex-end;aspect-ratio:884 / 470;border-radius:11px 0 0 0;overflow:hidden;box-shadow:-8px -6px 28px rgba(0,0,0,0.28);">
+            <img src="/welcome/assets/feat-balance.png" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+          </div>
+        </div>
+
+        <div class="ps-reveal ps-armed ps-bento-card" style="grid-column:span 2;background:radial-gradient(120% 90% at 12% 0%, rgba(246,178,33,0.14) 0%, rgba(246,178,33,0) 58%), linear-gradient(155deg, #2A2519 0%, #211E17 48%, #1B1913 100%);border:1px solid rgba(246,178,33,0.12);border-radius:24px;padding:24px 22px 0;display:flex;flex-direction:column;overflow:hidden;">
+          <h3 style="font-size:17px;font-weight:700;color:#FAF9F7;margin:0 0 7px;letter-spacing:-0.4px;line-height:1.25;" data-i18n="app.5">Un groupe pour chaque occasion</h3>
+          <p style="margin:0;font-size:13.5px;color:rgba(250,249,247,0.5);line-height:1.55;text-wrap:pretty;" data-i18n="app.6">Un resto, une coloc ou un road trip&nbsp;: chaque groupe reste à part, et tu vois d’un coup d’œil ceux qui sont encore ouverts.</p>
+          <div style="margin:22px -4px 0 -4px;margin-top:auto;padding-top:22px;aspect-ratio:884 / 860;border-radius:11px 11px 0 0;overflow:hidden;box-shadow:0 -2px 26px rgba(0,0,0,0.22);">
+            <img src="/welcome/assets/feat-filters.png" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+          </div>
+        </div>
+
+        <div class="ps-reveal ps-armed ps-bento-card" style="grid-column:span 2;background:radial-gradient(120% 90% at 88% 0%, rgba(246,178,33,0.14) 0%, rgba(246,178,33,0) 58%), linear-gradient(155deg, #2A2519 0%, #211E17 48%, #1B1913 100%);border:1px solid rgba(246,178,33,0.12);border-radius:24px;padding:24px 22px 0;display:flex;flex-direction:column;overflow:hidden;">
+          <h3 style="font-size:17px;font-weight:700;color:#FAF9F7;margin:0 0 7px;letter-spacing:-0.4px;line-height:1.25;" data-i18n="app.7">Un QR code et c’est rejoint</h3>
+          <p style="margin:0;font-size:13.5px;color:rgba(250,249,247,0.5);line-height:1.55;text-wrap:pretty;" data-i18n="app.8">Tes amis scannent le QR code sur ton écran ou ouvrent le lien que tu leur envoies. Leur wallet Nimiq Pay suffit, rien d’autre à installer.</p>
+          <div style="margin:22px -4px 0 -4px;margin-top:auto;padding-top:22px;aspect-ratio:884 / 860;border-radius:11px 11px 0 0;overflow:hidden;box-shadow:0 -2px 26px rgba(0,0,0,0.22);">
+            <img src="/welcome/assets/feat-qr.png" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+          </div>
+        </div>
+
+        <div class="ps-reveal ps-armed ps-bento-card" style="grid-column:span 2;background:radial-gradient(120% 90% at 50% 0%, rgba(246,178,33,0.12) 0%, rgba(246,178,33,0) 58%), linear-gradient(155deg, #2A2519 0%, #211E17 48%, #1B1913 100%);border:1px solid rgba(246,178,33,0.12);border-radius:24px;padding:24px 22px 0;display:flex;flex-direction:column;overflow:hidden;">
+          <h3 style="font-size:17px;font-weight:700;color:#FAF9F7;margin:0 0 7px;letter-spacing:-0.4px;line-height:1.25;" data-i18n="app.9">Crée ton groupe en quelques secondes</h3>
+          <p style="margin:0;font-size:13.5px;color:rgba(250,249,247,0.5);line-height:1.55;text-wrap:pretty;" data-i18n="app.10">Donne-lui un nom, choisis une icône, puis ajoute les participants quand tu veux.</p>
+          <div style="margin:22px -4px 0 -4px;margin-top:auto;padding-top:22px;aspect-ratio:884 / 860;border-radius:11px 11px 0 0;overflow:hidden;box-shadow:0 -2px 26px rgba(0,0,0,0.22);">
+            <img src="/welcome/assets/feat-icons.png" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+          </div>
+        </div>
+
+        <div class="ps-reveal ps-armed ps-bento-card ps-tile-wide" style="grid-column:span 3;background:radial-gradient(120% 130% at 96% 10%, rgba(246,178,33,0.16) 0%, rgba(246,178,33,0) 58%), linear-gradient(155deg, #2A2519 0%, #211E17 48%, #1B1913 100%);border:1px solid rgba(246,178,33,0.12);border-radius:24px;padding:28px 0 0 30px;display:flex;align-items:flex-start;gap:26px;overflow:hidden;">
+          <div class="ps-tile-txt" style="flex:0 0 36%;padding-bottom:28px;">
+            <h3 style="font-size:19px;font-weight:700;color:#FAF9F7;margin:0 0 7px;letter-spacing:-0.4px;line-height:1.25;" data-i18n="app.11">Qui doit quoi, et à qui</h3>
+            <p style="margin:0;font-size:13.5px;color:rgba(250,249,247,0.5);line-height:1.55;text-wrap:pretty;" data-i18n="app.12">Le détail personne par personne, avec un bouton pour tout régler d’un coup.</p>
+          </div>
+          <div class="ps-tile-shot" style="flex:1;min-width:0;align-self:flex-end;aspect-ratio:884 / 700;border-radius:11px 0 0 0;overflow:hidden;box-shadow:-8px -6px 28px rgba(0,0,0,0.28);">
+            <img src="/welcome/assets/feat-settle.png" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+          </div>
+        </div>
+
+        <div class="ps-reveal ps-armed ps-bento-card ps-tile-wide" style="grid-column:span 3;background:radial-gradient(120% 130% at 96% 10%, rgba(246,178,33,0.13) 0%, rgba(246,178,33,0) 58%), linear-gradient(155deg, #2A2519 0%, #211E17 48%, #1B1913 100%);border:1px solid rgba(246,178,33,0.12);border-radius:24px;padding:28px 0 0 30px;display:flex;align-items:flex-start;gap:26px;overflow:hidden;">
+          <div class="ps-tile-txt" style="flex:0 0 36%;padding-bottom:28px;">
+            <h3 style="font-size:19px;font-weight:700;color:#FAF9F7;margin:0 0 7px;letter-spacing:-0.4px;line-height:1.25;" data-i18n="app.13">Chaque dépense reste visible</h3>
+            <p style="margin:0;font-size:13.5px;color:rgba(250,249,247,0.5);line-height:1.55;text-wrap:pretty;" data-i18n="app.14">Tu retrouves le montant, la date, qui a payé, ta part, et ce qui a déjà été remboursé.</p>
+          </div>
+          <div class="ps-tile-shot" style="flex:1;min-width:0;align-self:flex-end;aspect-ratio:884 / 700;border-radius:11px 0 0 0;overflow:hidden;box-shadow:-8px -6px 28px rgba(0,0,0,0.28);">
+            <img src="/welcome/assets/feat-expenses.png" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+          </div>
+        </div>
+
+        <div class="ps-reveal ps-armed ps-bento-card" style="grid-column:span 2;background:radial-gradient(120% 110% at 12% 100%, rgba(246,178,33,0.13) 0%, rgba(246,178,33,0) 58%), linear-gradient(155deg, #2A2519 0%, #211E17 48%, #1B1913 100%);border:1px solid rgba(246,178,33,0.12);border-radius:24px;padding:24px 22px 0;display:flex;flex-direction:column;overflow:hidden;">
+          <h3 style="font-size:17px;font-weight:700;color:#FAF9F7;margin:0 0 7px;letter-spacing:-0.4px;line-height:1.25;" data-i18n="app.15">Trois façons de partager</h3>
+          <p style="margin:0;font-size:13.5px;color:rgba(250,249,247,0.5);line-height:1.55;text-wrap:pretty;" data-i18n="app.16">Parts égales, pourcentages ou montants à la main, pour répondre à toutes les situations.</p>
+          <div style="margin:22px -4px 0 -4px;margin-top:auto;padding-top:22px;aspect-ratio:884 / 470;border-radius:11px 11px 0 0;overflow:hidden;box-shadow:0 -2px 26px rgba(0,0,0,0.22);">
+            <img src="/welcome/assets/feat-split.png" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+          </div>
+        </div>
+
+        <div class="ps-reveal ps-armed ps-bento-card" style="grid-column:span 2;background:radial-gradient(130% 110% at 8% 100%, rgba(246,178,33,0.16) 0%, rgba(246,178,33,0) 58%), linear-gradient(155deg, #2A2519 0%, #211E17 48%, #1B1913 100%);border:1px solid rgba(246,178,33,0.12);border-radius:24px;padding:24px 22px 0;display:flex;flex-direction:column;overflow:hidden;">
+          <h3 style="font-size:17px;font-weight:700;color:#FAF9F7;margin:0 0 7px;letter-spacing:-0.4px;line-height:1.25;" data-i18n="app.17">Un suivi en temps réel</h3>
+          <p style="margin:0;font-size:13.5px;color:rgba(250,249,247,0.5);line-height:1.55;text-wrap:pretty;" data-i18n="app.18">Chaque remboursement apparaît dès qu’il est reçu, et reste vérifiable sur la blockchain.</p>
+          <div style="margin:22px -4px 0 -4px;margin-top:auto;padding-top:22px;aspect-ratio:884 / 410;border-radius:11px 11px 0 0;overflow:hidden;box-shadow:0 -2px 26px rgba(0,0,0,0.22);">
+            <img src="/welcome/assets/feat-progress.png" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+          </div>
+        </div>
+
+        <div class="ps-reveal ps-armed ps-bento-card" style="grid-column:span 2;background:radial-gradient(130% 110% at 92% 100%, rgba(246,178,33,0.18) 0%, rgba(246,178,33,0) 58%), linear-gradient(155deg, #2A2519 0%, #211E17 48%, #1B1913 100%);border:1px solid rgba(246,178,33,0.12);border-radius:24px;padding:24px 22px 0;display:flex;flex-direction:column;overflow:hidden;">
+          <h3 style="font-size:17px;font-weight:700;color:#FAF9F7;margin:0 0 7px;letter-spacing:-0.4px;line-height:1.25;" data-i18n="app.19">Rembourse en une action</h3>
+          <p style="margin:0;font-size:13.5px;color:rgba(250,249,247,0.5);line-height:1.55;text-wrap:pretty;" data-i18n="app.20">Le montant est déjà rempli. Tu valides le paiement depuis ton wallet Nimiq Pay, et ton ami reçoit l’argent en quelques secondes.</p>
+          <div style="margin:22px -4px 0 -4px;margin-top:auto;padding-top:22px;aspect-ratio:884 / 410;border-radius:11px 11px 0 0;overflow:hidden;box-shadow:0 -2px 26px rgba(0,0,0,0.22);">
+            <img src="/welcome/assets/feat-pay.png" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ══════════ FAQ ══════════ -->
   <section id="faq" class="ps-sec" style="background:#F0EEE9;padding:88px 48px;">
     <div style="max-width:720px;margin:0 auto;">
@@ -670,12 +773,16 @@
         <p style="margin:0;padding:0 44px 20px 24px;font-size:14px;color:#8B8880;line-height:1.65;text-wrap:pretty;" data-i18n="faq.8">Aucun souci&nbsp;: ils installent l’application mobile Nimiq Pay en quelques secondes, rejoignent ton groupe en scannant un QR code et l’app s’occupe du reste. Pas de jargon technique, pas de perte de temps.</p>
       </details>
       <details class="ps-reveal ps-armed" style="background:#FAF9F7;border:1px solid #E8E5E0;border-radius:16px;overflow:hidden;">
-        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:19px 24px;font-size:15px;font-weight:700;color:#1A1916;letter-spacing:-0.2px;" data-i18n="faq.9">Quelle devise puis-je utiliser&nbsp;?<span class="ps-faq-plus" style="color:#F6B221;font-size:22px;font-weight:500;line-height:1;flex-shrink:0;transition:transform 0.2s;">+</span></summary>
-        <p style="margin:0;padding:0 44px 20px 24px;font-size:14px;color:#8B8880;line-height:1.65;text-wrap:pretty;" data-i18n="faq.10">Le NIM, la cryptomonnaie de la blockchain Nimiq. Les montants sont aussi affichés en euros ou en dollars à titre indicatif pour garder des repères familiers.</p>
+        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:19px 24px;font-size:15px;font-weight:700;color:#1A1916;letter-spacing:-0.2px;" data-i18n="faq.9">Comment inviter quelqu’un dans un groupe&nbsp;?<span class="ps-faq-plus" style="color:#F6B221;font-size:22px;font-weight:500;line-height:1;flex-shrink:0;transition:transform 0.2s;">+</span></summary>
+        <p style="margin:0;padding:0 44px 20px 24px;font-size:14px;color:#8B8880;line-height:1.65;text-wrap:pretty;" data-i18n="faq.10">Montre-lui le QR code de ton groupe à scanner, ou envoie-lui le lien d’invitation.</p>
       </details>
       <details class="ps-reveal ps-armed" style="background:#FAF9F7;border:1px solid #E8E5E0;border-radius:16px;overflow:hidden;">
-        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:19px 24px;font-size:15px;font-weight:700;color:#1A1916;letter-spacing:-0.2px;" data-i18n="faq.11">Mes fonds sont-ils en sécurité&nbsp;?<span class="ps-faq-plus" style="color:#F6B221;font-size:22px;font-weight:500;line-height:1;flex-shrink:0;transition:transform 0.2s;">+</span></summary>
-        <p style="margin:0;padding:0 44px 20px 24px;font-size:14px;color:#8B8880;line-height:1.65;text-wrap:pretty;" data-i18n="faq.12">Tes fonds restent dans ton wallet Nimiq Pay à tout moment&nbsp;: PayShare ne détient jamais ton argent et tes clés ne sont jamais exposées. Chaque transaction est vérifiable sur la blockchain Nimiq.</p>
+        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:19px 24px;font-size:15px;font-weight:700;color:#1A1916;letter-spacing:-0.2px;" data-i18n="faq.11">Quelle devise puis-je utiliser&nbsp;?<span class="ps-faq-plus" style="color:#F6B221;font-size:22px;font-weight:500;line-height:1;flex-shrink:0;transition:transform 0.2s;">+</span></summary>
+        <p style="margin:0;padding:0 44px 20px 24px;font-size:14px;color:#8B8880;line-height:1.65;text-wrap:pretty;" data-i18n="faq.12">Le NIM, la cryptomonnaie de la blockchain Nimiq. Les montants sont aussi affichés en euros ou en dollars à titre indicatif pour garder des repères familiers.</p>
+      </details>
+      <details class="ps-reveal ps-armed" style="background:#FAF9F7;border:1px solid #E8E5E0;border-radius:16px;overflow:hidden;">
+        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:19px 24px;font-size:15px;font-weight:700;color:#1A1916;letter-spacing:-0.2px;" data-i18n="faq.13">Mes fonds sont-ils en sécurité&nbsp;?<span class="ps-faq-plus" style="color:#F6B221;font-size:22px;font-weight:500;line-height:1;flex-shrink:0;transition:transform 0.2s;">+</span></summary>
+        <p style="margin:0;padding:0 44px 20px 24px;font-size:14px;color:#8B8880;line-height:1.65;text-wrap:pretty;" data-i18n="faq.14">Tes fonds restent dans ton wallet Nimiq Pay à tout moment&nbsp;: PayShare ne détient jamais ton argent et tes clés ne sont jamais exposées. Chaque transaction est vérifiable sur la blockchain Nimiq.</p>
       </details>
       </div>
     </div>
@@ -768,7 +875,7 @@
       </div>
     </div>
     <div class="ps-footer-bottom" style="max-width:1100px;margin:38px auto 0;padding-top:18px;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;gap:24px;">
-      <div style="font-size:11.5px;color:rgba(255,255,255,0.55);" data-i18n="footer.3">© 2026 PayShare · Propulsé par la blockchain Nimiq</div>
+      <div style="font-size:11.5px;color:rgba(255,255,255,0.55);" data-i18n="footer.3">© 2026 PayShare · Propulsé par la <a href="https://nimiq.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.25);padding-bottom:1px;transition:color 0.15s ease, border-color 0.15s ease;">blockchain Nimiq</a></div>
       <div style="font-size:12px;color:rgba(255,255,255,0.5);text-align:right;text-wrap:pretty;" data-i18n="footer.9">Aucune donnée personnelle collectée · PayShare n’est pas un établissement de paiement.</div>
     </div>
     <div style="max-width:1100px;margin:8px auto 0;display:flex;flex-wrap:wrap;gap:4px 18px;font-size:11.5px;color:rgba(255,255,255,0.55);">
