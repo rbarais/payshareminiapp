@@ -67,7 +67,8 @@
     "iconLabel": "Icon",
     "invite": "Invite",
     "inviteCopied": "Invite link copied",
-    "inviteQrNote": "The link also works via messaging (Messenger, etc.)",
+    "inviteQrHint": "In person: native camera → Nimiq Pay opens directly",
+    "inviteQrNote": "You can share this link via your messengers (Messenger, Telegram, etc.)",
     "inviteSheetSub": "Have the QR scanned or share the link",
     "inviteSheetTitle": "Invite to group",
     "membersCount": "{count} member | {count} members",
@@ -128,7 +129,7 @@
     "filterSent": "Paid",
     "justNow": "just now",
     "minutesAgo": "{n} min ago",
-    "nExpenses": "{n} expense | {n} expenses",
+    "nExpenses": "{count} expense | {count} expenses",
     "paidTo": "Paid {name}",
     "receivedFrom": "Received from {name}",
     "title": "History",
@@ -167,6 +168,7 @@
     "chooseNameHint": "You've been invited to join a PayShare group. Choose the name that will appear to others.",
     "chooseOther": "← Choose another",
     "confirmHint": "You are linking your Nimiq wallet to this group member.",
+    "hint": "You've been invited to join group {name}. Which member are you?",
     "invitation": "Invitation",
     "joinBtn": "Join the group",
     "joining": "Joining…",
@@ -193,12 +195,12 @@
     "connected": "Wallet connected!",
     "connecting": "Connecting to network…",
     "desktopQr": "Scan this QR code with your phone to open PayShare in Nimiq Pay.",
-    "feature1Sub": "You create the group, friends join by QR code, everyone adds their expenses. PayShare does the maths for you.",
-    "feature1Title": "Nobody forgets who owes what",
-    "feature2Sub": "Your share goes out in NIM from the app. No bank details to ask for, no transfer to wait on. It all confirms in ~2 seconds.",
-    "feature2Title": "Paid back in seconds",
-    "feature3Sub": "No PayShare account, no password, no fees. You sign in with your Nimiq Pay wallet: no personal data collected, and every transaction stays verifiable on the Nimiq blockchain.",
-    "feature3Title": "Nothing to install, nothing to pay",
+    "feature1Sub": "Trips, flat shares, restaurants — split without friction",
+    "feature1Title": "Expense groups",
+    "feature2Sub": "Pay in crypto, no bank needed",
+    "feature2Title": "Settle in 2 seconds",
+    "feature3Sub": "Everything is recorded on the Nimiq blockchain",
+    "feature3Title": "Transparent & verifiable",
     "heroSub": "With PayShare, you see who owes what in the group and settle up in seconds, no bank needed.",
     "inviteHint": "If the button doesn't work, copy the link and paste it in Nimiq Pay.",
     "inviteSub": "Open this link in Nimiq Pay to join the group and settle your shared expenses.",
@@ -282,7 +284,7 @@
     "about": "About",
     "balances": "Amount available on Nimiq Pay",
     "block": "Block",
-    "community": "Community",
+    "community": "Nimiq Community",
     "connected": "Connected",
     "consensus": "Consensus",
     "consensusConnecting": "Connecting…",
@@ -313,7 +315,7 @@
     "reason": "Settlement · {groupName}"
   },
   "success": {
-    "backBtn": "Back to home",
+    "backBtn": "← Back to home",
     "backBtnGroup": "Back to group",
     "subtitle": "{amount} NIM sent to {recipient}",
     "title": "Payment confirmed!",
@@ -327,38 +329,38 @@
     "memberAdded": "{name} added"
   },
   "tour": {
-    "step": "Step {i}/{n}",
-    "skip": "Skip",
-    "next": "Next",
-    "finish": "Let's go!",
-    "replay": "Replay the tour",
-    "intro": {
-      "title": "Welcome to PayShare 👋",
-      "desc": "A quick tour of the essentials before you start."
-    },
-    "notifications": {
-      "title": "Stay in the loop",
-      "desc": "The bell lights up when an expense involves you, a payment arrives or a group is settled."
-    },
     "balance": {
-      "title": "Your balances at a glance",
-      "desc": "What you are owed and what you owe, across every group, is always visible here."
+      "desc": "What you are owed and what you owe, across every group, is always visible here.",
+      "title": "Your balances at a glance"
     },
+    "finish": "Let's go!",
     "groupActions": {
-      "title": "Create or join a group",
-      "desc": "Trips, flatshares, dinners: add a group, or scan someone else’s QR code to join theirs."
+      "desc": "Trips, flatshares, dinners: add a group, or scan someone else’s QR code to join theirs.",
+      "title": "Create or join a group"
     },
     "group": {
-      "title": "Open a group",
-      "desc": "That is where you add expenses, see who paid what, and settle your share with each creditor, expense by expense."
+      "desc": "That is where you add expenses, see who paid what, and settle your share with each creditor, expense by expense.",
+      "title": "Open a group"
     },
-    "tabs": {
-      "title": "History and profile",
-      "desc": "Find every payment recorded on the Nimiq blockchain here, and your wallet, language, currency and theme in the profile tab."
+    "intro": {
+      "desc": "A quick tour of the essentials before you start.",
+      "title": "Welcome to PayShare 👋"
+    },
+    "next": "Next",
+    "notifications": {
+      "desc": "The bell lights up when an expense involves you, a payment arrives or a group is settled.",
+      "title": "Stay in the loop"
     },
     "outro": {
-      "title": "You are all set 🎉",
-      "desc": "You can replay this tour anytime from the settings."
+      "desc": "You can replay this tour anytime from the settings.",
+      "title": "You are all set 🎉"
+    },
+    "replay": "Replay the tour",
+    "skip": "Skip",
+    "step": "Step {i}/{n}",
+    "tabs": {
+      "desc": "Find all your saved payments on the Nimiq blockchain and configure your profile (language, default currency, theme) according to your preferences.",
+      "title": "History and profile"
     }
   }
 }
